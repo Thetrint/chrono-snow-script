@@ -122,10 +122,12 @@ class BasicTask(object):
             if event.unbind[self.mapp].is_set():
                 break
             if (self.coord('副本挂机', histogram_process=True, threshold=0.7)
-                    and not self.coord('自动寻路中', binary_process=True, threshold=0.3, search_scope=(531, 498, 870, 615))):
+                    and not self.coord('自动寻路中', binary_process=True, threshold=0.3,
+                                       search_scope=(531, 498, 870, 615))):
                 time.sleep(6)
                 if (self.coord('副本挂机', histogram_process=True, threshold=0.7)
-                        and not self.coord('自动寻路中', binary_process=True, threshold=0.3, search_scope=(531, 498, 879, 615))):
+                        and not self.coord('自动寻路中', binary_process=True, threshold=0.3,
+                                           search_scope=(531, 498, 879, 615))):
                     break
             time.sleep(2)
 
@@ -190,7 +192,6 @@ class BasicTask(object):
         :param args:
         :return:
         """
-        print()
         if not event.unbind[self.mapp].is_set():
             with event.stop[self.mapp]:
 
@@ -625,27 +626,33 @@ class DailyCopiesTask(BasicTask):
 
                 # 脱离卡死
                 if count_stuck != 0:
+                    self.journal('副本超时执行脱离卡死')
                     self.escape_stuck()
 
                 self.Visual('主界面任务', histogram_process=True, threshold=0.7)
                 self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
                 self.Visual('副本任务', binary_process=True, threshold=0.6, search_scope=(36, 209, 102, 418), x=68,
                             y=44)
+                self.journal('激活任务等待副本完成')
 
                 count_stuck += 1
                 start_time = time.time()
             if count_stuck == 3:
+                self.journal('脱离卡死次数上限 >>> 退队')
                 self.leave_team()
                 # 等待返回主界面
                 self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
                 break
-            self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25, tap_ago_timeout=0)
+            if self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25, tap_ago_timeout=0):
+                self.journal('跳过剧情')
             if self.coord('副本完成', histogram_process=True, threshold=0.6):
                 time.sleep(2)
                 if self.coord('副本完成', histogram_process=True, threshold=0.6):
+                    self.journal('副本完成 >>> 退出副本')
                     self.Visual('副本退出', histogram_process=True, threshold=0.7)
                     if self.Visual('确定', laplacian_process=True):
                         self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
+                        self.journal('返回主界面')
                         break
 
     # 判断是否进入副本
@@ -657,9 +664,12 @@ class DailyCopiesTask(BasicTask):
             self.Visual('确认', wait_count=2, laplacian_process=True, threshold=0.25)
             while not event.unbind[self.mapp].is_set():
                 if (self.coord('副本退出', histogram_process=True, threshold=0.7) or
-                        self.Visual('跳过剧情', wait_count=1, laplacian_process=True, tap_ago_timeout=0)):
-                    self.journal('副本中 >>> 开始任务')
-                    return False
+                        self.Visual('跳过剧情', wait_count=1, laplacian_process=True, tap_ago_timeout=0, tap=False)):
+                    time.sleep(2)
+                    if (self.coord('副本退出', histogram_process=True, threshold=0.7) or
+                            self.Visual('跳过剧情', wait_count=1, laplacian_process=True, tap_ago_timeout=0)):
+                        self.journal('副本中 >>> 开始任务')
+                        return False
                 elif not self.coord('副本退出', histogram_process=True, threshold=0.7) and self.coord(
                         '副本挂机', histogram_process=True, threshold=0.7) and time.time() - start_time >= 20:
                     count += 1
@@ -668,7 +678,7 @@ class DailyCopiesTask(BasicTask):
                     self.journal('进入副本失败 >>> 再次尝试进入')
                     break
                 if count == 4:
-                    self.journal('进入副本失败')
+                    self.journal('多次进入失败 >>> 退队')
                     return True
                 time.sleep(10)
 
@@ -810,9 +820,8 @@ class FactionTask(BasicTask):
                     start_num = 0
                     while not event.unbind[self.mapp].is_set():
                         if (time.time() - start_time_1 > 30 and not
-                            self.coord('自动寻路中', histogram_process=True, threshold=0.7) and
+                        self.coord('自动寻路中', histogram_process=True, threshold=0.7) and
                                 self.coord('副本挂机', histogram_process=True, threshold=0.7)):
-
                             self.faction_task_2()
                             # self.Visual('主界面任务', histogram_process=True, threshold=0.7, wait_count=1)
                             # self.Visual('主界面江湖', histogram_process=True, threshold=0.7, wait_count=1)
@@ -990,8 +999,8 @@ class GangBanquet(BasicTask):
     def gangs_set_up_feasts_2(self):
         if self.Visual('摆摊购买', y=-71, histogram_process=True, threshold=0.7):
             if self.Visual('购买', laplacian_process=True):
-                self.Visual('确定', '确认', laplacian_process=True)
-                self.Visual('确认', wait_count=12, laplacian_process=True)
+                self.Visual('确定', binary_process=True, threshold=0.4)
+                self.Visual('确认', wait_count=12, binary_process=True, threshold=0.4)
                 if self.coord('交易界面', laplacian_process=True):
                     self.Visual('关闭', histogram_process=True, threshold=0.65)
             else:
@@ -1200,7 +1209,8 @@ class LessonTask(BasicTask):
             self.Visual('主界面任务', histogram_process=True, threshold=0.7)
             self.Visual('主界面江湖', histogram_process=True, threshold=0.7)
             self.mouse_move(158, 239, 198, 639, 2)
-            self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务', histogram_process=True, threshold=0.7)
+            self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
+                        histogram_process=True, threshold=0.7)
 
         return 0
 
@@ -1210,7 +1220,8 @@ class LessonTask(BasicTask):
             self.Visual('主界面任务', histogram_process=True, threshold=0.7)
             self.Visual('主界面江湖', histogram_process=True, threshold=0.7)
             self.mouse_move(158, 239, 198, 639, 2)
-            self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务', histogram_process=True, threshold=0.7)
+            self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
+                        histogram_process=True, threshold=0.7)
             self.Visual('商城购买', histogram_process=True, threshold=0.7, y=-45)
             for _ in range(6):
                 if event.unbind[self.mapp].is_set():
@@ -1384,10 +1395,12 @@ class UrgentDeliveryTask(BasicTask):
 
     def implement(self):
         implement = True
+        buy = False
         for _ in range(30):
             if event.unbind[self.mapp].is_set():
                 break
             if implement:
+                self.journal('打开帮派接取急送任务')
                 self.key_down_up('O')
                 self.Visual('势力', histogram_process=True, threshold=0.7)
                 self.Visual('江湖急送', laplacian_process=True)
@@ -1396,15 +1409,27 @@ class UrgentDeliveryTask(BasicTask):
                     self.journal('今日订单已达上限')
                     break
                 self.Visual('抢单', histogram_process=True, threshold=0.7)
+                self.journal('接取成功')
                 self.close_win(2, random_tap=False)
                 implement = False
 
             self.Visual('主界面任务', histogram_process=True, threshold=0.7, wait_count=1)
             self.Visual('主界面江湖', histogram_process=True, threshold=0.7, wait_count=1)
             self.mouse_move(158, 239, 198, 639)
-            self.Visual('外卖', binary_process=True, threshold=0.6, wait_count=3, search_scope=(41, 211, 268, 422))
+            if self.Visual('外卖', binary_process=True, threshold=0.4, wait_count=3, search_scope=(41, 211, 268, 422)):
+                self.journal('激活急送任务')
 
-            if self.Visual('前往购买', histogram_process=True, threshold=0.7, x=90):
+            if self.Visual('前往购买', histogram_process=True, threshold=0.7, x=90, tap=False):
+                if buy:
+                    self.journal('当前订单购买次数上限 >>> 放弃本次订单')
+                    self.Visual('放弃订单', binary_process=True, threshold=0.4)
+                    self.Visual('确定', binary_process=True, threshold=0.4)
+                    self.journal('放弃完成 >>> 开始再次购买')
+                    implement = True
+                    buy = False
+                    continue
+                self.Visual('前往购买', histogram_process=True, threshold=0.7, x=90)
+                self.journal('准备商会购买物品')
                 self.Visual('神厨商会', histogram_process=True, threshold=0.7, y=-45)
                 self.Visual('菜品标签', histogram_process=True, threshold=0.7)
                 if count := self.coord('选中标签', histogram_process=True, threshold=0.8):
@@ -1414,6 +1439,7 @@ class UrgentDeliveryTask(BasicTask):
                         if self.Visual('符合', histogram_process=True, threshold=0.7):
                             self.Visual('购买1', histogram_process=True, threshold=0.7)
                             self.Visual('确定', histogram_process=True, threshold=0.7)
+                            buy = True
                             break
                         else:
                             if i == 0:
@@ -1427,6 +1453,9 @@ class UrgentDeliveryTask(BasicTask):
                                 self.Visual('选中标签', histogram_process=True, threshold=0.8)
                                 self.mouse_down_up(1334, 750)
                     self.Visual('关闭', histogram_process=True, threshold=0.65)
+                    if not buy:
+                        buy = True
+                        self.journal('购买失败 >>> 放弃任务')
             elif self.Visual('领取食盆', histogram_process=True, threshold=0.7):
                 self.Visual('菜品打包', histogram_process=True, threshold=0.6, wait_count=180)
                 self.Visual('选择菜品', histogram_process=True, threshold=0.7, x=-120)
@@ -1434,16 +1463,20 @@ class UrgentDeliveryTask(BasicTask):
                 self.Visual('选择菜品', histogram_process=True, threshold=0.7)
                 self.Visual('确定', laplacian_process=True)
             elif (self.coord('自动寻路中', histogram_process=True, threshold=0.7) or
-                  self.coord('菜品送达', binary_process=True, threshold=0.6, search_scope=(731, 200, 1234, 604))):
+                  self.coord('菜品送达', binary_process=True, threshold=0.4, search_scope=(731, 200, 1234, 604))):
                 for _ in range(20):
                     if event.unbind[self.mapp].is_set():
                         break
-                    if self.Visual('菜品送达', binary_process=True, threshold=0.6, search_scope=(731, 200, 1234, 604), wait_count=10):
-                        self.Visual('菜品送达', binary_process=True, threshold=0.6, search_scope=(731, 200, 1234, 604), wait_count=1)
+                    if self.Visual('菜品送达', binary_process=True, threshold=0.4, search_scope=(731, 200, 1234, 604),
+                                   wait_count=10):
+                        self.Visual('菜品送达', binary_process=True, threshold=0.4, search_scope=(731, 200, 1234, 604),
+                                    wait_count=1)
                         if self.Visual('确认1', histogram_process=True, threshold=0.7, wait_count=20):
                             implement = True
+                            buy = False
                             break
-                    self.Visual('外卖', binary_process=True, threshold=0.6, wait_count=3, search_scope=(41, 211, 268, 422))
+                    self.Visual('外卖', binary_process=True, threshold=0.4, wait_count=3,
+                                search_scope=(41, 211, 268, 422))
 
 
 # 精进行当豪侠-狂饮豪拳
@@ -2029,12 +2062,15 @@ class GangPoints(BasicTask):
             self.mouse_down_up(768, 530)
             self.mouse_down_up(768, 530)
             self.key_down_up('M')
-            if self.Visual('挑水', histogram_process=True, threshold=0.7, tap_ago_timeout=1, wait_count=30, search_scope=(800, 270, 1033, 650)):
+            if self.Visual('挑水', histogram_process=True, threshold=0.7, tap_ago_timeout=1, wait_count=30,
+                           search_scope=(800, 270, 1033, 650)):
                 time.sleep(1)
-                self.Visual('挑水', histogram_process=True, threshold=0.7, wait_count=1, search_scope=(800, 270, 1033, 650), tap_time_out=0)
+                self.Visual('挑水', histogram_process=True, threshold=0.7, wait_count=1,
+                            search_scope=(800, 270, 1033, 650), tap_time_out=0)
                 self.Visual('确认', laplacian_process=True)
 
-                if self.Visual('打水', histogram_process=True, threshold=0.65, tap_ago_timeout=1, wait_count=18, search_scope=(800, 270, 1033, 650)):
+                if self.Visual('打水', histogram_process=True, threshold=0.65, tap_ago_timeout=1, wait_count=18,
+                               search_scope=(800, 270, 1033, 650)):
                     while not event.unbind[self.mapp].is_set():
                         if coord := self.coord('水滴', search_scope=(312, 580, 1014, 637), laplacian_process=True,
                                                threshold=0.25):
@@ -2261,5 +2297,6 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
                 '江湖急送': UrgentDeliveryTask}
 
-TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537), '扫摆摊': (0, 1074),
+TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537),
+             '扫摆摊': (0, 1074),
              '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148), '江湖英雄榜': (0, 2148)}

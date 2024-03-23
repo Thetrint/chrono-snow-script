@@ -168,31 +168,31 @@ class MainWindow(QWidget, Ui_MainWindow):
 
         dialog = ConfigDialog()
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            if not (file_name := dialog.file_name_input.text()):
-                if file_name := dialog.get_selected_items()[1]:
+            file_name = dialog.file_name_input.text() if dialog.file_name_input.text() else dialog.get_selected_items()[
+                1] if dialog.get_selected_items() else False
+            if file_name:
+                # 创建配置对象
+                config = configparser.ConfigParser()
 
-                    # 创建配置对象
-                    config = configparser.ConfigParser()
+                # 添加一些配置项
+                config['日常任务'] = self.return_data()
 
-                    # 添加一些配置项
-                    config['日常任务'] = self.return_data()
+                with open(f'{config_path}\\{file_name}.ini', 'w', encoding='utf-8') as configfile:
+                    config.write(configfile)
 
-                    with open(f'{config_path}\\{file_name}.ini', 'w', encoding='utf-8') as configfile:
-                        config.write(configfile)
+                # 配置文件加入了列表
+                # 判断 file_name 是否已经存在于 config_selector 中
+                if file_name in [self.script.comboBox.itemText(i) for i in range(self.script.comboBox.count())]:
+                    # 如果存在，则移除它
+                    index_to_remove = self.script.comboBox.findText(file_name)
+                    self.script.comboBox.removeItem(index_to_remove)
 
-                    # 配置文件加入了列表
-                    # 判断 file_name 是否已经存在于 config_selector 中
-                    if file_name in [self.script.comboBox.itemText(i) for i in range(self.script.comboBox.count())]:
-                        # 如果存在，则移除它
-                        index_to_remove = self.script.comboBox.findText(file_name)
-                        self.script.comboBox.removeItem(index_to_remove)
+                # 添加新的 file_name
+                self.script.comboBox.addItem(file_name)
 
-                    # 添加新的 file_name
-                    self.script.comboBox.addItem(file_name)
-
-                    # 设置当前选中项的索引为新添加的项
-                    index_of_new_item = self.script.comboBox.findText(file_name)
-                    self.script.comboBox.setCurrentIndex(index_of_new_item)
+                # 设置当前选中项的索引为新添加的项
+                index_of_new_item = self.script.comboBox.findText(file_name)
+                self.script.comboBox.setCurrentIndex(index_of_new_item)
 
     # 读取配置文件
     def load_config(self, file_name):
@@ -427,10 +427,13 @@ class ConfigDialog(QDialog):
         self.setLayout(layout)
 
     def get_selected_items(self):
-        selected_item_text = self.list_widget.selectedItems()[0].text()
+        try:
+            selected_item_text = self.list_widget.selectedItems()[0].text()
 
-        all_items = [self.list_widget.item(index).text() for index in range(self.list_widget.count())]
-        return all_items, selected_item_text
+            all_items = [self.list_widget.item(index).text() for index in range(self.list_widget.count())]
+            return all_items, selected_item_text
+        except IndexError:
+            pass
 
 
 class DelConfigDialog(QDialog):
