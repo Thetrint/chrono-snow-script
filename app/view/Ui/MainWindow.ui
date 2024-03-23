@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QWidget" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>677</width>
+    <height>535</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>时雪</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#menu_widget {
+	
+	background-color: rgb(243, 243, 243);
+}
+
+#main_widget {
+	border-top-left-radius: 20px;
+	background-color: rgb(255, 255, 255);
+}
+QWidget#MainWindow {
+    background-color: rgb(243, 243, 243); /* 设置标题栏背景颜色 */
+    color: white; /* 设置标题栏文字颜色 */
+}</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="menu_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>64</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+            background-color: transparent;
+            border: 2px solid transparent; /* 初始时透明边框 */
+            border-radius: 15px; /* 圆角 */
+            padding: 10px 20px;
+        }
+        QPushButton:hover {
+            border-color: #555; /* 鼠标悬停时边框颜色 */
+        }
+        QPushButton:pressed {
+            border-color: #555; /* 鼠标点击时边框颜色 */
+        }</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>1</number>
+      </property>
+      <property name="leftMargin">
+       <number>1</number>
+      </property>
+      <property name="topMargin">
+       <number>1</number>
+      </property>
+      <property name="rightMargin">
+       <number>1</number>
+      </property>
+      <property name="bottomMargin">
+       <number>1</number>
+      </property>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>504</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QStackedWidget" name="main_widget">
+     <property name="currentIndex">
+      <number>-1</number>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../../../PyQt-Fluent-Widgets-PyQt6/qfluentwidgets/_rc/resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>
