@@ -1,6 +1,3 @@
-# 忽略.vscode文件夹
-.vscode/
-.VSCodeCounter
 
 # 忽略工作区文件
 *.code-workspace
@@ -28,5 +25,3 @@ download/
 # 忽略构建文件夹
 build/
 dist/
-PyQt_Fluent_Widgets.egg-info/
-PyQt6_Fluent_Widgets.egg-info/
