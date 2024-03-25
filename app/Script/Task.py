@@ -122,11 +122,11 @@ class BasicTask(object):
             if event.unbind[self.mapp].is_set():
                 break
             if (self.coord('副本挂机', histogram_process=True, threshold=0.7)
-                    and not self.coord('自动寻路中', binary_process=True, threshold=0.3,
+                    and not self.coord('自动寻路中', histogram_process=True, threshold=0.6,
                                        search_scope=(531, 498, 870, 615))):
-                time.sleep(6)
+                time.sleep(3)
                 if (self.coord('副本挂机', histogram_process=True, threshold=0.7)
-                        and not self.coord('自动寻路中', binary_process=True, threshold=0.3,
+                        and not self.coord('自动寻路中', histogram_process=True, threshold=0.6,
                                            search_scope=(531, 498, 879, 615))):
                     break
             time.sleep(2)
@@ -140,9 +140,9 @@ class BasicTask(object):
 
     def world_shouts(self, message):
         self.mouse_down_up(309, 595)
-        self.Visual('世界频道', search_area=(0, 0, 145, 750), histogram_process=True, threshold=0.7)
+        self.Visual('世界频道', search_area=(0, 0, 145, 750), histogram_process=True, threshold=0.8)
 
-        if self.Visual('输入文字', wait_count=1, histogram_process=True, threshold=0.7):
+        if self.Visual('输入文字', wait_count=1, binary_process=True, threshold=0.2):
             self.input(message)
             self.Visual('发送', histogram_process=True, threshold=0.7)
             self.Visual('聊天窗口关闭', histogram_process=True, threshold=0.7)
@@ -212,7 +212,9 @@ class BasicTask(object):
                     # 临时路径
                     template_image_path = os.path.join(tempfile.gettempdir(), f'template_image{self.row}')
                     template_image_path = f'{template_image_path}\\' + template_image_name + '.png'
-
+                    # 检查路径是否存在
+                    if not os.path.exists(template_image_path):
+                        template_image_path = os.getcwd() + '\\app\\images\\Img\\' + template_image_name + '.png'
                     template = basic_functional.cv_imread(template_image_path)
 
                     # 转换为灰度图像
@@ -224,7 +226,7 @@ class BasicTask(object):
                     # 应用直方图均衡化
                     if histogram_process:
                         # 创建自适应直方图均衡化器
-                        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(9, 9))
                         img = clahe.apply(image_gray)
                         tem = clahe.apply(template_gray)
 
@@ -238,12 +240,13 @@ class BasicTask(object):
                         _, img = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
                         _, tem = cv2.threshold(template_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-                    # 图片转换
-                    image_roi = img.astype(numpy.uint8)
-                    template_gray = tem.astype(numpy.uint8)
+                    if binary_process or laplacian_process or histogram_process:
+                        # 图片转换
+                        image_gray = img.astype(numpy.uint8)
+                        template_gray = tem.astype(numpy.uint8)
 
                     # 使用 cv2.matchTemplate 函数找到匹配结果
-                    result = cv2.matchTemplate(image_roi, template_gray, cv2.TM_CCOEFF_NORMED)
+                    result = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCOEFF_NORMED)
 
                     # 使用 numpy.where 找到匹配结果大于阈值的坐标
                     matched_coords = numpy.where(result >= threshold)
@@ -618,7 +621,7 @@ class DailyCopiesTask(BasicTask):
         start_time = 0
         count_stuck = 0
         while not event.unbind[self.mapp].is_set():
-            if time.time() - start_time > 900 and self.coord('副本退出', histogram_process=True, threshold=0.7):
+            if time.time() - start_time > 720:
                 if count_stuck == 0 and event.task_config[self.mapp].get('副本自动匹配'):
                     self.key_down_up('T')
                     self.Visual('自动匹配', laplacian_process=True)
@@ -631,9 +634,12 @@ class DailyCopiesTask(BasicTask):
 
                 self.Visual('主界面任务', histogram_process=True, threshold=0.7)
                 self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
-                self.Visual('副本任务', binary_process=True, threshold=0.6, search_scope=(36, 209, 102, 418), x=68,
-                            y=44)
-                self.journal('激活任务等待副本完成')
+                if self.Visual('副本任务', histogram_process=True, threshold=0.7, search_scope=(36, 209, 102, 418),
+                               x=68, y=44):
+                    self.journal('激活任务等待副本完成')
+                else:
+                    self.journal('激活任务失败 >>> 尝试任务键激活')
+                    self.key_down_up('Y')
 
                 count_stuck += 1
                 start_time = time.time()
@@ -1844,106 +1850,192 @@ class DrinkPunch(BasicTask):
 #                 time.sleep(2)
 
 
-# # 采集任务
-# class AcquisitionTask(BasicTask):
-#
-#     def __init__(self, row, handle):
-#         super().__init__(row, handle)
-#         self.acquisition_1_flag = True
-#         self.acquisition_flag = False
-#
-#     def implement(self):
-#         coll_dict = {'采草': '采集物2', '伐木': '采集物1', '挖矿': '采集物3'}
-#         line_dict = {1: '1线', 2: '2线', 3: '3线', 4: '4线', 5: '5线'}
-#         line_Limit = int(self.LoadTaskConfig.get('line_Limit'))
-#         coll = self.LoadTaskConfig.get('species_collection')
-#         target = coll_dict[coll]
-#         Thread(target=self.acquisition_1).start()
-#         # multiprocessing.Process(target=self.acquisition_1)()
-#         Thread(target=self.acquisition_4).start()
-#         if not self.LoadTaskConfig.get('fixed_point'):
-#             self.acquisition_2()
-#         while not event.unbind[self.mapp].is_set():
-#             # 刷新切换线数
-#             line = 2
-#             # 地图中查找
-#             if not self.LoadTaskConfig.get('fixed_point'):
-#                 self.acquisition_3(target)
-#             # if self.get_tap(coll):
-#             #     self.get_tap(coll, x=-155, y=-74)
-#             # 等待结束
-#             while not event.unbind[self.mapp].is_set():
-#                 if not self.get_coordinates(coll, process=False):
-#                     # 切线
-#                     if line_Limit == 1:
-#                         time.sleep(2)
-#                         break
-#                     else:
-#                         if line <= line_Limit:
-#                             self.tap_x_y(1230, 20)
-#                             self.get_tap(line_dict[line], threshold=0.93, process=False)
-#                             self.tap_x_y(0, 0)
-#                             line += 1
-#                             time.sleep(4)
-#                         else:
-#                             self.tap_x_y(1230, 20)
-#                             self.get_tap(line_dict[1], threshold=0.93, process=False)
-#                             self.tap_x_y(0, 0)
-#                             time.sleep(4)
-#                             break
-#                 else:
-#                     self.get_tap(coll, process=False)
-#                     self.acquisition_flag = True
-#                     self.get_tap(coll, x=-155, y=-74, process=False)
-#                     time.sleep(10)
-#             self.acquisition_flag = False
-#         self.acquisition_1_flag = False
-#
-#     # 采集加速
-#     def acquisition_1(self):
-#         while self.acquisition_1_flag:
-#             if event.unbind[self.mapp].is_set():
-#                 break
-#             if self.acquisition_flag:
-#                 if self.get_coordinates('采集指针', search_scope=(400, 381 - 10, 644, 480), threshold=0.8,
-#                                         process=False):
-#                     time.sleep(0.1)
-#                     self.tap_x_y(666, 475)
-#             else:
-#                 time.sleep(1)
-#             time.sleep(0.01)
-#
-#     # 指定地图
-#     def acquisition_2(self):
-#         map_name = self.LoadTaskConfig.get('species_map')
-#         self.key_down_up('M')
-#         self.get_tap('世界')
-#         self.get_tap(map_name)
-#         self.get_tap('传送点', process=False)
-#         self.get_tap('关闭')
-#         self.arrive()
-#
-#     # 查找目标
-#     def acquisition_3(self, target):
-#         self.key_down_up('M')
-#         self.get_tap(target, process=False, search_scope=(0, 80, 1334, 750))
-#         self.get_tap('关闭')
-#         self.arrive()
-#         self.log('到达采集目标')
-#
-#     # 关闭掉落物品
-#     def acquisition_4(self):
-#         while self.acquisition_1_flag:
-#             if event.unbind[self.mapp].is_set():
-#                 break
-#             if self.get_coordinates('关闭', search_scope=(871, 230, 1209, 631)):
-#                 for _ in range(4):
-#                     if event.unbind[self.mapp].is_set():
-#                         break
-#                     self.get_tap('关闭', search_scope=(871, 230, 1209, 631))
-#             time.sleep(3)
-#
-#
+# 采集任务
+class AcquisitionTask(BasicTask):
+
+    def __init__(self, row, handle, mapp):
+        super().__init__(row, handle, mapp)
+        self.coord_iter = None
+        self.coords = None
+        self.acquisition_1_flag = True
+        self.acquisition_flag = False
+        self.last_coord = None
+        self.time_out = int(event.task_config[self.mapp].get('采集加速延迟')) / 1000
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        line_dict = {1: '1线', 2: '2线', 3: '3线', 4: '4线', 5: '5线'}
+        line_Limit = int(event.task_config[self.mapp].get('采集线数'))
+        method = event.task_config[self.mapp].get('采集方法')
+        self.coords = [sublist for sublist in event.task_config[self.mapp].get('自定义采集坐标') if
+                       any(item != '' for item in sublist)]
+        self.coord_iter = iter(self.coords)
+        if method == '地图搜索':
+            # 指定地图
+            self.acquisition_2()
+            # 设置采集物
+            self.acquisition_7()
+        # 启动采集辅助线程
+        Thread(target=self.acquisition_1).start()
+        Thread(target=self.acquisition_4).start()
+
+        while not event.unbind[self.mapp].is_set():
+            # 刷新切线数 默认当前为一线开始循环
+            line = 2
+            if method == '地图搜索':
+                # 地图就近搜素
+                self.acquisition_3()
+            elif method == '自定义坐标采集':
+                # 地图输入坐标
+                self.acquisition_5()
+            elif method == '定点采集':
+                pass
+                # 定点采集
+            # 开始采集
+            while not event.unbind[self.mapp].is_set():
+                # 判断是否有目标
+                if not self.acquisition_6():
+                    self.acquisition_flag = False
+                    # 执行范围搜素
+
+                    # 没有目标 判断是否执行切线
+                    # 切线
+                    if line_Limit == 1:
+                        time.sleep(2)
+                        break
+                    else:
+                        if line <= line_Limit:
+                            self.mouse_down_up(1235, 20)
+                            self.Visual(line_dict[line], threshold=0.78, search_scope=(910, 107, 1176, 643))
+                            self.mouse_down_up(0, 0)
+                            line += 1
+                            time.sleep(4)
+                        else:
+                            self.mouse_down_up(1235, 20)
+                            self.Visual(line_dict[1], threshold=0.78, search_scope=(910, 107, 1176, 643))
+                            self.mouse_down_up(0, 0)
+                            time.sleep(4)
+                            break
+                else:
+                    self.acquisition_flag = True
+                    # 有目标开始采集
+                    self.Visual('采草', '伐木', '挖矿', histogram_process=True, threshold=0.7,
+                                search_scope=(752, 291, 1153, 565))
+                    # 判断是否有工具
+                    if self.coord('采集工具', binary_process=True, threshold=0.6):
+                        # 没有工具 购买 或者 停止
+                        print(1)
+                    self.Visual('采草', '伐木', '挖矿', histogram_process=True, threshold=0.7, x=-155, y=-74,
+                                search_scope=(752, 291, 1153, 565))
+                    time.sleep(10)
+
+            self.acquisition_flag = False
+        # 结束辅助线程
+        self.acquisition_1_flag = False
+
+    # 采集加速
+    def acquisition_1(self):
+        while self.acquisition_1_flag and not event.unbind[self.mapp].is_set():
+            if self.acquisition_flag:
+                if self.coord('采集指针', threshold=0.7, search_scope=(400, 371, 644, 480)):
+                    time.sleep(self.time_out)
+                    self.mouse_down_up(666, 475)
+            else:
+                time.sleep(2)
+            time.sleep(0.02)
+
+    # 指定地图采集目标
+    def acquisition_2(self):
+        map_name = event.task_config[self.mapp].get('指定地图')
+        self.key_down_up('M')
+        self.Visual('世界', binary_process=True, threshold=0.6)
+        self.Visual(map_name, binary_process=True, threshold=0.6)
+        self.Visual('传送点', histogram_process=True, threshold=0.6)
+        # self.Visual('传送点', histogram_process=True, threshold=0.6)
+        # self.key_down_up('M')
+        self.Visual('关闭', histogram_process=True, threshold=0.65)
+        self.arrive()
+
+    # 地图就近查找目标
+    def acquisition_3(self):
+        search_scope = (0, 80, 1334, 750)
+        count = 0
+        while not event.unbind[self.mapp].is_set():
+            if self.last_coord is not None:
+                search_scope = (self.last_coord[0][0] - 80 * count, self.last_coord[0][1] - 80 * count,
+                                self.last_coord[0][0] + 80 * count, self.last_coord[0][1] + 80 * count)
+
+            self.key_down_up('M')
+            if coord := self.Visual('采集物3', histogram_process=True, search_scope=search_scope,
+                                    threshold=0.55):
+                self.last_coord = coord
+                self.key_down_up('M')
+                self.arrive()
+                self.journal('到达采集目标')
+                break
+            else:
+                count += 1
+
+    # 地图输入坐标
+    def acquisition_5(self):
+        try:
+            coord = next(self.coord_iter)
+        except StopIteration:
+            self.coord_iter = iter(self.coords)
+            coord = next(self.coord_iter)
+
+        self.key_down_up('M')
+        self.Visual('世界搜索坐标展开', binary_process=True, threshold=0.6, wait_count=1)
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96)
+        self.input(coord[0])
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233)
+        self.input(coord[1])
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=310)
+        self.key_down_up('M')
+        self.arrive()
+
+    # 判断是否有目标
+    def acquisition_6(self):
+        method = event.task_config[self.mapp].get('采集方法')
+        if method == '定点采集' or method == '自定义坐标采集':
+            coord = self.coord('采草', '伐木', '挖矿', histogram_process=True, threshold=0.7)
+        else:
+            coord = self.coord(event.task_config[self.mapp].get('采集种类'), histogram_process=True, threshold=0.7)
+        if coord:
+            return True
+        return False
+
+    # 设置采集物
+    def acquisition_7(self):
+        self.key_down_up('M')
+        self.Visual('地图目标设置', binary_process=True, threshold=0.7)
+        self.mouse_move(281, 418, 181, 400)
+        if event.task_config[self.mapp].get('采集种类') == '采草':
+            self.Visual('采草目标', laplacian_process=True, threshold=0.5)
+            self.mouse_move(281, 418, 181, 290)
+        elif event.task_config[self.mapp].get('采集种类') == '伐木':
+            self.Visual('伐木目标', binary_process=True, threshold=0.6)
+            self.mouse_move(281, 418, 181, 270)
+        elif event.task_config[self.mapp].get('采集种类') == '挖矿':
+            self.Visual('挖矿目标', binary_process=True, threshold=0.6)
+            self.mouse_move(281, 418, 181, 230)
+        self.Visual(event.task_config[self.mapp].get('采集目标'), binary_process=True, threshold=0.6)
+        self.Visual('采集目标关闭', binary_process=True, threshold=0.6)
+        self.key_down_up('M')
+
+    # 关闭掉落物品
+    def acquisition_4(self):
+        while self.acquisition_1_flag and not event.unbind[self.mapp].is_set():
+            if self.coord('关闭', histogram_process=True, threshold=0.65, search_scope=(871, 230, 1209, 631)):
+                for _ in range(4):
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.Visual('关闭', histogram_process=True, threshold=0.65, search_scope=(871, 230, 1209, 631))
+            time.sleep(3)
+
+
 # 扫摆摊
 class SweepStalls(BasicTask):
 
@@ -2295,8 +2387,8 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '每日兑换': DailyRedemption, '坐观万象': SittingObserving, '扫摆摊': SweepStalls,
                 '狂饮豪拳': DrinkPunch, '帮派任务': FactionTask, '茶馆说书': TeaStory,
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
-                '江湖急送': UrgentDeliveryTask}
+                '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask}
 
 TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537),
-             '扫摆摊': (0, 1074),
-             '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148), '江湖英雄榜': (0, 2148)}
+             '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148),
+             '江湖英雄榜': (0, 2148), '采集任务': (0, 2685)}
