@@ -191,7 +191,68 @@ class MainWindow(QWidget, Ui_MainWindow):
                 config = configparser.ConfigParser()
 
                 # 添加一些配置项
-                config['日常任务'] = self.return_data()
+                config['日常任务'] = {
+                    "执行列表": [self.script.listWidget.item(i).text() for i in range(self.script.listWidget.count())],
+                    "世界喊话内容": self.script.lineEdit_2.text(),
+                    "世界喊话次数": self.script.spinBox_4.value(),
+                    "江湖英雄榜次数": self.script.spinBox_7.value(),
+                    "副本人数": self.script.comboBox_2.currentIndex(),
+                    "副本自动匹配": self.script.checkBox.isChecked(),
+                    "侠缘昵称": self.script.lineEdit_3.text(),
+                    # "侠缘喊话内容": self.script.textEdit_2.toPlainText(),
+                    "山河器": self.script.checkBox_2.isChecked(),
+                    "帮派铜钱捐献": self.script.checkBox_8.isChecked(),
+                    "帮派银两捐献": self.script.checkBox_7.isChecked(),
+                    "银票礼盒": self.script.checkBox_3.isChecked(),
+                    "商会鸡蛋": self.script.checkBox_5.isChecked(),
+                    "榫头卯眼": self.script.checkBox_6.isChecked(),
+                    "锦芳绣残片": self.script.checkBox_4.isChecked(),
+                    "摇钱树": self.script.checkBox_9.isChecked(),
+                    "摇钱树目标": self.script.comboBox_3.currentIndex(),
+                    "扫摆摊延迟1": self.script.spinBox.value(),
+                    "扫摆摊延迟2": self.script.spinBox_2.value(),
+                    "扫摆摊延迟3": self.script.spinBox_3.value(),
+                    "华山论剑次数": self.script.spinBox_6.value(),
+                    "华山论剑秒退": self.script.checkBox_10.isChecked(),
+                    "背包": self.script.lineEdit_14.text(),
+                    "好友": self.script.lineEdit_15.text(),
+                    "队伍": self.script.lineEdit_16.text(),
+                    "地图": self.script.lineEdit_17.text(),
+                    "设置": self.script.lineEdit_18.text(),
+                    "采集线数": self.script.comboBox_7.currentIndex(),
+                    "指定地图": self.script.comboBox_8.currentText(),
+                    "采集加速延迟": self.script.spinBox_8.value(),
+                    "地图搜索": self.script.radioButton_2.isChecked(),
+                    "定点采集": self.script.radioButton_6.isChecked(),
+                    "自定义坐标采集": self.script.radioButton.isChecked(),
+                    "采草": self.script.radioButton_4.isChecked(),
+                    "采草目标": self.script.comboBox_4.currentIndex(),
+                    "伐木": self.script.radioButton_3.isChecked(),
+                    "伐木目标": self.script.comboBox_5.currentIndex(),
+                    "挖矿": self.script.radioButton_5.isChecked(),
+                    "挖矿目标": self.script.comboBox_6.currentIndex(),
+                    "自定义采集坐标": [
+                        (self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
+                        (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
+                        (self.script.lineEdit_23.text(), self.script.lineEdit_24.text()),
+                        (self.script.lineEdit_25.text(), self.script.lineEdit_26.text()),
+                        (self.script.lineEdit_27.text(), self.script.lineEdit_28.text()),
+                        (self.script.lineEdit_29.text(), self.script.lineEdit_30.text())
+                    ],
+                    "技能列表": [
+                        self.script.lineEdit_4.text(),
+                        self.script.lineEdit_9.text(),
+                        self.script.lineEdit_5.text(),
+                        self.script.lineEdit_6.text(),
+                        self.script.lineEdit_7.text(),
+                        self.script.lineEdit_8.text(),
+                        self.script.lineEdit_10.text(),
+                        self.script.lineEdit_11.text(),
+                        self.script.lineEdit_12.text(),
+                        self.script.lineEdit_13.text(),
+
+                    ]
+                }
 
                 with open(f'{config_path}\\{file_name}.ini', 'w', encoding='utf-8') as configfile:
                     config.write(configfile)
@@ -296,8 +357,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_2.setChecked(config.getboolean('日常任务', '山河器'))
             self.script.checkBox_8.setChecked(config.getboolean('日常任务', '帮派铜钱捐献'))
             self.script.checkBox_7.setChecked(config.getboolean('日常任务', '帮派银两捐献'))
-            self.script.checkBox_5.setChecked(config.getboolean('日常任务', '银票礼盒'))
-            self.script.checkBox_3.setChecked(config.getboolean('日常任务', '商会鸡蛋'))
+            self.script.checkBox_3.setChecked(config.getboolean('日常任务', '银票礼盒'))
+            self.script.checkBox_5.setChecked(config.getboolean('日常任务', '商会鸡蛋'))
             self.script.checkBox_6.setChecked(config.getboolean('日常任务', '榫头卯眼'))
             self.script.checkBox_4.setChecked(config.getboolean('日常任务', '锦芳绣残片'))
             self.script.checkBox_9.setChecked(config.getboolean('日常任务', '摇钱树'))
