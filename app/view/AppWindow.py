@@ -119,6 +119,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "切角色3": self.script.checkBox_16.isChecked(),
             "切角色4": self.script.checkBox_17.isChecked(),
             "切角色5": self.script.checkBox_18.isChecked(),
+            "混队模式": self.script.checkBox_13.isChecked(),
             "采集方法": next(button.text() for button in [self.script.radioButton, self.script.radioButton_2,
                                                           self.script.radioButton_6] if button.isChecked()),
             "采集种类": next(button.text() for button in [self.script.radioButton_3, self.script.radioButton_4,
@@ -241,6 +242,7 @@ class MainWindow(QWidget, Ui_MainWindow):
                     "切角色3": self.script.checkBox_16.isChecked(),
                     "切角色4": self.script.checkBox_17.isChecked(),
                     "切角色5": self.script.checkBox_18.isChecked(),
+                    "混队模式": self.script.checkBox_13.isChecked(),
                     "自定义采集坐标": [
                         (self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
                         (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
@@ -387,6 +389,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_7.setCurrentIndex(config.getint('日常任务', '采集线数'))
             self.script.comboBox_8.setCurrentText(config.get('日常任务', '指定地图'))
             self.script.spinBox_8.setValue(config.getint('日常任务', '采集加速延迟')),
+            self.script.checkBox_13.setChecked(config.getboolean('日常任务', '混队模式'))
             # text = config.get('日常任务', '采集方法')
 
             text = iter(eval(config.get('日常任务', '自定义采集坐标')))

@@ -885,49 +885,82 @@ class BountyMissionsTask(DailyCopiesTask):
 
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
+        self.bounty_mission = False
+        self.bounty_mission_2 = True
 
     def implement(self):
-        self.location_detection()
         finish_flag = False
-        while True:
-            if event.unbind[self.mapp].is_set():
-                break
-            self.key_down_up('B')
-            self.Visual('活动入口', histogram_process=True, threshold=0.7)
-            self.Visual('活动', binary_process=True, threshold=0.5)
-            if not self.Visual('活动界面悬赏', laplacian_process=True):
-                continue
-            if not self.coord('前往', laplacian_process=True):
-                while True:
-                    if event.unbind[self.mapp].is_set():
+        if not event.task_config[self.mapp].get('混队模式'):
+            # 悬赏队长模式
+            self.location_detection()
+            while True:
+                if event.unbind[self.mapp].is_set():
+                    break
+                self.key_down_up('B')
+                self.Visual('活动入口', histogram_process=True, threshold=0.7)
+                self.Visual('活动', binary_process=True, threshold=0.5)
+                if not self.Visual('活动界面悬赏', laplacian_process=True):
+                    continue
+                if not self.coord('前往', laplacian_process=True):
+                    while not event.unbind[self.mapp].is_set():
+                        num = len(self.coord('前往', laplacian_process=True))
+                        if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                            if num == 0 and self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                                finish_flag = True
+                            break
+                        self.Visual('刷新', histogram_process=True, threshold=0.7)
+                        self.Visual('悬赏界面每日悬赏', y=330, search_scope=(267 + 231 * num, 182, 1197, 558),
+                                    histogram_process=True, threshold=0.7)
+                        self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
+
+                self.mouse_down_up(0, 0)
+                self.Visual('关闭', histogram_process=True, threshold=0.65)
+
+                if finish_flag:
+                    self.leave_team()
+                    break
+
+                self.daily_copies_1()
+                self.daily_copies_2()
+
+                count_flag = self.daily_copies_3()
+
+                if count_flag:
+                    self.leave_team()
+                    continue
+
+                self.daily_copies_4()
+        else:
+            while not event.unbind[self.mapp].is_set():
+                if self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4):
+                    if self.Visual('副本退出', histogram_process=True, threshold=0.65, search_scope=(1149, 107, 1334, 329), wait_count=180, tap=False):
+                        while not event.unbind[self.mapp].is_set():
+                            self.key_down_up('B')
+                            self.Visual('活动入口', histogram_process=True, threshold=0.7)
+                            self.Visual('活动', binary_process=True, threshold=0.5)
+                            if self.Visual('活动界面悬赏', laplacian_process=True):
+                                # 判断是否有悬赏
+                                if not self.coord('前往', laplacian_process=True):
+                                    while not event.unbind[self.mapp].is_set():
+                                        num = len(self.coord('前往', laplacian_process=True))
+                                        if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                                            if num == 0 and self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                                                finish_flag = True
+                                                break
+                                        if self.Visual('刷新', histogram_process=True, threshold=0.7):
+                                            self.Visual('悬赏界面每日悬赏', y=330, search_scope=(267 + 231 * num, 182, 1197, 558),
+                                                        histogram_process=True, threshold=0.7)
+                                            self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
+                                        else:
+                                            self.mouse_down_up(0, 0)
+                                            self.Visual('关闭', histogram_process=True, threshold=0.65)
+                                self.mouse_down_up(0, 0)
+                                self.Visual('关闭', histogram_process=True, threshold=0.65)
+                                break
+                    if finish_flag:
+                        self.leave_team()
                         break
-                    num = len(self.coord('前往', laplacian_process=True))
-                    if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-                        if num == 0 and self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-                            finish_flag = True
-                        break
-                    self.Visual('刷新', histogram_process=True, threshold=0.7)
-                    self.Visual('悬赏界面每日悬赏', y=330, search_scope=(267 + 231 * num, 182, 1197, 558),
-                                histogram_process=True, threshold=0.7)
-                    self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
-
-            self.mouse_down_up(0, 0)
-            self.Visual('关闭', histogram_process=True, threshold=0.65)
-
-            if finish_flag:
-                self.leave_team()
-                break
-
-            self.daily_copies_1()
-            self.daily_copies_2()
-
-            count_flag = self.daily_copies_3()
-
-            if count_flag:
-                self.leave_team()
-                continue
-
-            self.daily_copies_4()
+                time.sleep(3)
 
 
 # 侠缘喊话
@@ -2080,7 +2113,7 @@ class AcquisitionTask(BasicTask):
                             time.sleep(4)
                         else:
                             self.mouse_down_up(1235, 20)
-                            self.Visual(line_dict[1], histogram_process=True, threshold=0.75, search_scope=(910, 107, 1176, 643))
+                            self.Visual(line_dict[1], histogram_process=True, threshold=0.65, search_scope=(910, 107, 1176, 643))
                             self.mouse_down_up(0, 0)
                             time.sleep(4)
                             break
@@ -2093,7 +2126,7 @@ class AcquisitionTask(BasicTask):
                     if self.coord('采集工具', binary_process=True, threshold=0.6):
                         # 没有工具 购买 或者 停止
                         print(1)
-                    time.sleep(0.7)
+                    time.sleep(0.2)
                     self.Visual('采草', '伐木', '挖矿', histogram_process=True, process=True, threshold=1, x=-155, y=-74,
                                 search_scope=(752, 291, 1153, 565))
                     time.sleep(10)
@@ -2106,12 +2139,12 @@ class AcquisitionTask(BasicTask):
     def acquisition_1(self):
         while self.acquisition_1_flag and not event.unbind[self.mapp].is_set():
             if self.acquisition_flag:
-                if self.coord('采集指针', histogram_process=True, threshold=0.7, search_scope=(534, 437, 802, 583)):
+                if self.coord('采集指针', binary_process=True, threshold=0.4, search_scope=(534, 437, 802, 583)):
                     time.sleep(0.85)
                     self.mouse_down_up(666, 475)
             else:
-                time.sleep(2)
-            time.sleep(0.02)
+                time.sleep(0.5)
+            time.sleep(0.01)
 
     # 指定地图采集目标
     def acquisition_2(self):
@@ -2154,7 +2187,7 @@ class AcquisitionTask(BasicTask):
             coord = next(self.coord_iter)
 
         self.key_down_up('M')
-        self.Visual('世界搜索坐标展开', binary_process=True, threshold=0.6, wait_count=1)
+        self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1, search_scope=(0, 647, 349, 750))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=310,
                     search_scope=(0, 631, 414, 694))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))

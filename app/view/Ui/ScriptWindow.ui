@@ -433,7 +433,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>-2151</y>
+                     <y>0</y>
                      <width>713</width>
                      <height>5000</height>
                     </rect>
@@ -621,6 +621,18 @@
                              </size>
                             </property>
                            </spacer>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_13">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>混队模式</string>
+                            </property>
+                           </widget>
                           </item>
                           <item>
                            <widget class="QCheckBox" name="checkBox">
