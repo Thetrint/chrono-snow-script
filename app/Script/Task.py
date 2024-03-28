@@ -31,6 +31,7 @@ class StartTask:
         self.initTask()
         self.index = 0
         self.mapping = {}
+        self.execute = True
 
     def start(self, row, handle):
         mapp = self.create_mapping(row)
@@ -39,14 +40,36 @@ class StartTask:
         event.task_config[mapp] = LoadTaskConfig.load_task_config(row)
         # 初始化
         init = Initialize(row, handle, mapp)
-        init.implement()
+        # init.implement()
         Thread(target=init.global_detection).start()
-        for task in event.task_config[mapp].get('执行列表'):
-            if not event.unbind[mapp].is_set():
-                self.set_state(row, task)
-                Task = TASK_MAPPING[task](row, handle, mapp)
-                Task.initialization()
-                Task.implement()
+        switch = SwitchRoles(row, handle, mapp)
+        # if '切换角色' in event.task_config[mapp].get('执行列表'):
+        for i in range(6):
+            if '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色1') and i == 1:
+                if switch.switch_roles(i):
+                    self.execute = True
+            elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色2') and i == 2:
+                if switch.switch_roles(i):
+                    self.execute = True
+            elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色3') and i == 3:
+                if switch.switch_roles(i):
+                    self.execute = True
+            elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色4') and i == 4:
+                if switch.switch_roles(i):
+                    self.execute = True
+            elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色5') and i == 5:
+                if switch.switch_roles(i):
+                    self.execute = True
+            if self.execute:
+                init.implement()
+                publicSingle.set_character.emit(row)
+                for task in event.task_config[mapp].get('执行列表'):
+                    if not event.unbind[mapp].is_set() and task != '切换角色':
+                        self.set_state(row, task)
+                        Task = TASK_MAPPING[task](row, handle, mapp)
+                        Task.initialization()
+                        Task.implement()
+                self.execute = False
         # BasicTask(row, handle, self.mapping[row]).coord('活动入口', laplacian_process=True)
 
     def create_mapping(self, row):
@@ -577,6 +600,7 @@ class Initialize(BasicTask):
         pass
 
     def implement(self):
+        self.close_win(3)
         self.key_down_up('ESC')
         self.Visual('端游模式', histogram_process=True, threshold=0.8)
         self.key_down_up('ESC')
@@ -587,6 +611,26 @@ class Initialize(BasicTask):
                 self.journal('梦仔弹窗')
                 self.Visual('关闭', histogram_process=True, threshold=0.65)
             time.sleep(2)
+
+
+# 切换角色
+class SwitchRoles(BasicTask):
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        pass
+
+    def switch_roles(self, index):
+        self.key_down_up('ESC')
+        self.Visual('切换角色', binary_process=True, threshold=0.4)
+        self.Visual('确定', binary_process=True, threshold=0.4)
+        if self.Visual('进入游戏', binary_process=True, threshold=0.4, wait_count=10, tap=False):
+            self.mouse_down_up(1274, 66 + 108 * (index - 1))
+            self.Visual('进入游戏', binary_process=True, threshold=0.4)
+            return True
+        return False
 
 
 # 世界喊话任务
@@ -2505,8 +2549,8 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '每日兑换': DailyRedemption, '坐观万象': SittingObserving, '扫摆摊': SweepStalls,
                 '狂饮豪拳': DrinkPunch, '帮派任务': FactionTask, '茶馆说书': TeaStory,
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
-                '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask}
+                '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask, '切换角色': None}
 
 TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537),
              '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148),
-             '江湖英雄榜': (0, 2148), '采集任务': (0, 2685)}
+             '江湖英雄榜': (0, 2148), '采集任务': (0, 2685), '切换角色': (0, 2148)}

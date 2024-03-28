@@ -114,6 +114,11 @@ class MainWindow(QWidget, Ui_MainWindow):
             "采集线数": self.script.comboBox_7.currentIndex(),
             "指定地图": self.script.comboBox_8.currentText(),
             "采集加速延迟": self.script.spinBox_8.value(),
+            "切角色1": self.script.checkBox_14.isChecked(),
+            "切角色2": self.script.checkBox_15.isChecked(),
+            "切角色3": self.script.checkBox_16.isChecked(),
+            "切角色4": self.script.checkBox_17.isChecked(),
+            "切角色5": self.script.checkBox_18.isChecked(),
             "采集方法": next(button.text() for button in [self.script.radioButton, self.script.radioButton_2,
                                                           self.script.radioButton_6] if button.isChecked()),
             "采集种类": next(button.text() for button in [self.script.radioButton_3, self.script.radioButton_4,
@@ -231,6 +236,11 @@ class MainWindow(QWidget, Ui_MainWindow):
                     "伐木目标": self.script.comboBox_5.currentIndex(),
                     "挖矿": self.script.radioButton_5.isChecked(),
                     "挖矿目标": self.script.comboBox_6.currentIndex(),
+                    "切角色1": self.script.checkBox_14.isChecked(),
+                    "切角色2": self.script.checkBox_15.isChecked(),
+                    "切角色3": self.script.checkBox_16.isChecked(),
+                    "切角色4": self.script.checkBox_17.isChecked(),
+                    "切角色5": self.script.checkBox_18.isChecked(),
                     "自定义采集坐标": [
                         (self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
                         (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
@@ -251,7 +261,8 @@ class MainWindow(QWidget, Ui_MainWindow):
                         self.script.lineEdit_12.text(),
                         self.script.lineEdit_13.text(),
 
-                    ]
+                    ],
+
                 }
 
                 with open(f'{config_path}\\{file_name}.ini', 'w', encoding='utf-8') as configfile:
@@ -738,6 +749,7 @@ class RunWindow(QWidget, Ui_Run):
         self.UnbindAllButton.clicked.connect(self.unbind_all)
         publicSingle.state.connect(self.set_state)
         publicSingle.journal.connect(self.journal)
+        publicSingle.set_character.connect(self.set_character)
 
     # initialization
     def initWindow(self):
@@ -850,33 +862,40 @@ class RunWindow(QWidget, Ui_Run):
         self.PersonaTableWidget.setItem(message[0], 1, item)
 
     def set_character(self, row):
-        temp_dir = tempfile.gettempdir()
-        temp_img_path = os.path.join(temp_dir, f'template_image{row}')
-        image = basic_functional.screen_shot(self.struct_task_dict[row].handle)
-        # 定义要保留的区域的坐标和尺寸
-        x, y, width, height = 117, 730, 115, 20
+        try:
+            temp_dir = tempfile.gettempdir()
+            temp_img_path = os.path.join(temp_dir, f'template_image{row}')
+            image = basic_functional.screen_shot(self.struct_task_dict[row].handle)
+            cv2.imwrite(f'{temp_img_path}\\1.png', image)
+            # 定义要保留的区域的坐标和尺寸
+            x, y, width, height = 117, 730, 115, 20
 
-        # 从原始截图中复制指定区域
-        img = image[y:y + height, x:x + width]
-        cv2.imwrite(f'{temp_img_path}\\person_{row}.png', img)
-        # 创建 QPixmap 对象，加载图片
-        pixmap = QPixmap(f'{temp_img_path}\\person_{row}.png')
+            # 从原始截图中复制指定区域
+            img = image[y:y + height, x:x + width]
+            cv2.imwrite(f'{temp_img_path}\\person_{row}.png', img)
+            # 创建 QPixmap 对象，加载图片
+            pixmap = QPixmap(f'{temp_img_path}\\person_{row}.png')
 
-        # 将图片添加到表格中
-        item = QTableWidgetItem()
-        item.setData(Qt.ItemDataRole.DecorationRole, pixmap)  # 使用 Qt::DecorationRole 用于图像数据
-        self.PersonaTableWidget.setItem(row, 0, item)
+            # 将图片添加到表格中
+            item = QTableWidgetItem()
+            item.setData(Qt.ItemDataRole.DecorationRole, pixmap)  # 使用 Qt::DecorationRole 用于图像数据
+            self.PersonaTableWidget.setItem(row, 0, item)
+        except KeyError:
+            pass
 
     def remove_character(self):
-        row = self.PersonaTableWidget.currentIndex().row()
-        # 获取 QTableWidgetItem
-        item = self.PersonaTableWidget.item(row, 0)
-        # 移除图像，将图像数据设置为 None 或空 QPixmap
-        item.setData(Qt.ItemDataRole.DecorationRole, None)
+        try:
+            row = self.PersonaTableWidget.currentIndex().row()
+            # 获取 QTableWidgetItem
+            item = self.PersonaTableWidget.item(row, 0)
+            # 移除图像，将图像数据设置为 None 或空 QPixmap
+            item.setData(Qt.ItemDataRole.DecorationRole, None)
 
-        item = self.PersonaTableWidget.item(row, 1)
+            item = self.PersonaTableWidget.item(row, 1)
 
-        item.setText(None)
+            item.setText(None)
+        except AttributeError:
+            pass
 
     def window_inspection(self):
         row = self.PersonaTableWidget.currentIndex().row()
@@ -899,7 +918,7 @@ class RunWindow(QWidget, Ui_Run):
 
     def start_task(self, _):
         if (row := self.window_inspection()) != -1:
-            self.set_character(self.struct_task_dict[row].row)
+            # self.set_character(self.struct_task_dict[row].row)
             Thread(target=self.start.start, args=(row, self.struct_task_dict[row].handle)).start()
 
 

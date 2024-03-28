@@ -14,6 +14,7 @@ class PublicSingle(QObject):
     write_json = pyqtSignal(int)
     journal = pyqtSignal(list)
     state = pyqtSignal(list)
+    set_character = pyqtSignal(int)
 
 
 publicSingle = PublicSingle()
