@@ -31,7 +31,6 @@ class StartTask:
         self.initTask()
         self.index = 0
         self.mapping = {}
-        self.execute = True
 
     def start(self, row, handle):
         mapp = self.create_mapping(row)
@@ -44,23 +43,24 @@ class StartTask:
         Thread(target=init.global_detection).start()
         switch = SwitchRoles(row, handle, mapp)
         # if '切换角色' in event.task_config[mapp].get('执行列表'):
+        execute = True
         for i in range(6):
             if '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色1') and i == 1:
                 if switch.switch_roles(i):
-                    self.execute = True
+                    execute = True
             elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色2') and i == 2:
                 if switch.switch_roles(i):
-                    self.execute = True
+                    execute = True
             elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色3') and i == 3:
                 if switch.switch_roles(i):
-                    self.execute = True
+                    execute = True
             elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色4') and i == 4:
                 if switch.switch_roles(i):
-                    self.execute = True
+                    execute = True
             elif '切换角色' in event.task_config[mapp].get('执行列表') and event.task_config[mapp].get('切角色5') and i == 5:
                 if switch.switch_roles(i):
-                    self.execute = True
-            if self.execute:
+                    execute = True
+            if execute:
                 init.implement()
                 publicSingle.set_character.emit(row)
                 for task in event.task_config[mapp].get('执行列表'):
@@ -69,7 +69,7 @@ class StartTask:
                         Task = TASK_MAPPING[task](row, handle, mapp)
                         Task.initialization()
                         Task.implement()
-                self.execute = False
+                execute = False
         # BasicTask(row, handle, self.mapping[row]).coord('活动入口', laplacian_process=True)
 
     def create_mapping(self, row):
@@ -303,6 +303,7 @@ class BasicTask(object):
               binary_process=False, process=False, threshold=0.23):
         """
         获取坐标
+        :param process:
         :param binary_process: 图片处理 二值化处理
         :param threshold: 图片置信度阈值
         :param laplacian_process: 图片处理 拉普拉斯算子处理
@@ -1500,15 +1501,23 @@ class TheSword(BasicTask):
                 self.Visual('华山论剑', histogram_process=True, process=True, threshold=1, y=45)
             flag = True
 
-            for _ in range(300):
+            for _ in range(600):
                 if event.unbind[self.mapp].is_set():
                     break
                 if event.task_config[self.mapp].get('华山论剑秒退'):
                     if self.coord('准备1', histogram_process=True, threshold=0.7):
-                        self.Visual('退出论剑', laplacian_process=True)
-                        self.Visual('确定', laplacian_process=True)
-                        time.sleep(5)
-                        break
+                        self.Visual('退出论剑', binary_process=True, threshold=0.5)
+                        if self.Visual('确定', binary_process=True, threshold=0.4):
+                            time.sleep(5)
+                            break
+                        else:
+                            self.journal('秒退失败 >>> 准备战斗')
+                            if self.Visual('准备1', histogram_process=True, threshold=0.7, wait_count=1):
+                                self.fight.start()
+                                self.Visual('离开', histogram_process=True, threshold=0.7, wait_count=180)
+                                self.fight.stop()
+                                time.sleep(5)
+                                break
                 else:
                     if self.Visual('准备1', histogram_process=True, threshold=0.7, wait_count=1):
                         self.fight.start()
