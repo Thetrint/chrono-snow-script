@@ -127,12 +127,23 @@ class MainWindow(QWidget, Ui_MainWindow):
             "采集目标": next(combo.currentText() for button, combo in
                              zip([self.script.radioButton_3, self.script.radioButton_4, self.script.radioButton_5],
                                  [self.script.comboBox_5, self.script.comboBox_4, self.script.comboBox_6]) if button.isChecked()),
-            "自定义采集坐标": [(self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
-                         (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
-                         (self.script.lineEdit_23.text(), self.script.lineEdit_24.text()),
-                         (self.script.lineEdit_25.text(), self.script.lineEdit_26.text()),
-                         (self.script.lineEdit_27.text(), self.script.lineEdit_28.text()),
-                         (self.script.lineEdit_29.text(), self.script.lineEdit_30.text())],
+            "自定义采集坐标": [
+                (self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
+                (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
+                (self.script.lineEdit_23.text(), self.script.lineEdit_24.text()),
+                (self.script.lineEdit_25.text(), self.script.lineEdit_26.text()),
+                (self.script.lineEdit_27.text(), self.script.lineEdit_28.text()),
+                (self.script.lineEdit_29.text(), self.script.lineEdit_30.text()),
+                (self.script.lineEdit_31.text(), self.script.lineEdit_32.text()),
+                (self.script.lineEdit_33.text(), self.script.lineEdit_34.text()),
+                (self.script.lineEdit_35.text(), self.script.lineEdit_36.text()),
+                (self.script.lineEdit_37.text(), self.script.lineEdit_38.text()),
+                (self.script.lineEdit_39.text(), self.script.lineEdit_40.text()),
+                (self.script.lineEdit_41.text(), self.script.lineEdit_42.text()),
+                (self.script.lineEdit_43.text(), self.script.lineEdit_44.text()),
+                (self.script.lineEdit_44.text(), self.script.lineEdit_46.text()),
+                (self.script.lineEdit_47.text(), self.script.lineEdit_48.text()),
+            ],
             "技能列表": [
                 self.script.lineEdit_4.text(),
                 self.script.lineEdit_9.text(),
@@ -249,7 +260,16 @@ class MainWindow(QWidget, Ui_MainWindow):
                         (self.script.lineEdit_23.text(), self.script.lineEdit_24.text()),
                         (self.script.lineEdit_25.text(), self.script.lineEdit_26.text()),
                         (self.script.lineEdit_27.text(), self.script.lineEdit_28.text()),
-                        (self.script.lineEdit_29.text(), self.script.lineEdit_30.text())
+                        (self.script.lineEdit_29.text(), self.script.lineEdit_30.text()),
+                        (self.script.lineEdit_31.text(), self.script.lineEdit_32.text()),
+                        (self.script.lineEdit_33.text(), self.script.lineEdit_34.text()),
+                        (self.script.lineEdit_35.text(), self.script.lineEdit_36.text()),
+                        (self.script.lineEdit_37.text(), self.script.lineEdit_38.text()),
+                        (self.script.lineEdit_39.text(), self.script.lineEdit_40.text()),
+                        (self.script.lineEdit_41.text(), self.script.lineEdit_42.text()),
+                        (self.script.lineEdit_43.text(), self.script.lineEdit_44.text()),
+                        (self.script.lineEdit_44.text(), self.script.lineEdit_46.text()),
+                        (self.script.lineEdit_47.text(), self.script.lineEdit_48.text()),
                     ],
                     "技能列表": [
                         self.script.lineEdit_4.text(),
@@ -389,10 +409,21 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_7.setCurrentIndex(config.getint('日常任务', '采集线数'))
             self.script.comboBox_8.setCurrentText(config.get('日常任务', '指定地图'))
             self.script.spinBox_8.setValue(config.getint('日常任务', '采集加速延迟')),
-            self.script.checkBox_13.setChecked(config.getboolean('日常任务', '混队模式'))
-            # text = config.get('日常任务', '采集方法')
+
+            kill_list = eval(config.get('日常任务', '技能列表'))
+            self.script.lineEdit_4.setText(kill_list[0]),
+            self.script.lineEdit_9.setText(kill_list[1]),
+            self.script.lineEdit_5.setText(kill_list[2]),
+            self.script.lineEdit_6.setText(kill_list[3]),
+            self.script.lineEdit_7.setText(kill_list[4]),
+            self.script.lineEdit_8.setText(kill_list[5]),
+            self.script.lineEdit_10.setText(kill_list[6]),
+            self.script.lineEdit_11.setText(kill_list[7]),
+            self.script.lineEdit_12.setText(kill_list[8]),
+            self.script.lineEdit_13.setText(kill_list[9]),
 
             text = iter(eval(config.get('日常任务', '自定义采集坐标')))
+
             coord = next(text)
             self.script.lineEdit_19.setText(coord[0])
             self.script.lineEdit_20.setText(coord[1])
@@ -411,18 +442,42 @@ class MainWindow(QWidget, Ui_MainWindow):
             coord = next(text)
             self.script.lineEdit_29.setText(coord[0])
             self.script.lineEdit_30.setText(coord[1])
+            coord = next(text)
+            self.script.lineEdit_31.setText(coord[0])
+            self.script.lineEdit_32.setText(coord[1])
+            coord = next(text)
+            self.script.lineEdit_33.setText(coord[0])
+            self.script.lineEdit_34.setText(coord[1])
 
-            kill_list = eval(config.get('日常任务', '技能列表'))
-            self.script.lineEdit_4.setText(kill_list[0]),
-            self.script.lineEdit_9.setText(kill_list[1]),
-            self.script.lineEdit_5.setText(kill_list[2]),
-            self.script.lineEdit_6.setText(kill_list[3]),
-            self.script.lineEdit_7.setText(kill_list[4]),
-            self.script.lineEdit_8.setText(kill_list[5]),
-            self.script.lineEdit_10.setText(kill_list[6]),
-            self.script.lineEdit_11.setText(kill_list[7]),
-            self.script.lineEdit_12.setText(kill_list[8]),
-            self.script.lineEdit_13.setText(kill_list[9]),
+            coord = next(text)
+            self.script.lineEdit_35.setText(coord[0])
+            self.script.lineEdit_36.setText(coord[1])
+
+            coord = next(text)
+            self.script.lineEdit_37.setText(coord[0])
+            self.script.lineEdit_38.setText(coord[1])
+
+            coord = next(text)
+            self.script.lineEdit_39.setText(coord[0])
+            self.script.lineEdit_40.setText(coord[1])
+
+            coord = next(text)
+            self.script.lineEdit_41.setText(coord[0])
+            self.script.lineEdit_42.setText(coord[1])
+
+            coord = next(text)
+            self.script.lineEdit_43.setText(coord[0])
+            self.script.lineEdit_44.setText(coord[1])
+
+            coord = next(text)
+            self.script.lineEdit_45.setText(coord[0])
+            self.script.lineEdit_46.setText(coord[1])
+
+            coord = next(text)
+            self.script.lineEdit_47.setText(coord[0])
+            self.script.lineEdit_48.setText(coord[1])
+
+            self.script.checkBox_13.setChecked(config.getboolean('日常任务', '混队模式'))
 
         except configparser.NoOptionError:
             pass
@@ -431,6 +486,8 @@ class MainWindow(QWidget, Ui_MainWindow):
         except ValueError:
             pass
         except TypeError:
+            pass
+        except StopIteration:
             pass
 
     # 删除配置文件

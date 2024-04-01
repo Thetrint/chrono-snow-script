@@ -433,7 +433,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>0</y>
+                     <y>-2733</y>
                      <width>713</width>
                      <height>5000</height>
                     </rect>
@@ -2922,7 +2922,7 @@
                            <widget class="QLabel" name="label_36">
                             <property name="minimumSize">
                              <size>
-                              <width>43</width>
+                              <width>50</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -2964,7 +2964,7 @@
                            <widget class="QLabel" name="label_38">
                             <property name="minimumSize">
                              <size>
-                              <width>43</width>
+                              <width>50</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -3006,7 +3006,7 @@
                            <widget class="QLabel" name="label_40">
                             <property name="minimumSize">
                              <size>
-                              <width>43</width>
+                              <width>50</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -3075,7 +3075,7 @@
                            <widget class="QLabel" name="label_37">
                             <property name="minimumSize">
                              <size>
-                              <width>43</width>
+                              <width>50</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -3117,7 +3117,7 @@
                            <widget class="QLabel" name="label_39">
                             <property name="minimumSize">
                              <size>
-                              <width>43</width>
+                              <width>50</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -3159,7 +3159,7 @@
                            <widget class="QLabel" name="label_41">
                             <property name="minimumSize">
                              <size>
-                              <width>43</width>
+                              <width>50</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -3190,6 +3190,465 @@
                           </item>
                           <item>
                            <widget class="QLineEdit" name="lineEdit_30">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QWidget" name="widget_33" native="true">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_22">
+                          <property name="spacing">
+                           <number>11</number>
+                          </property>
+                          <property name="leftMargin">
+                           <number>15</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>7</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QLabel" name="label_44">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标7:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_31">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_32">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_45">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标8:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_33">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_34">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_46">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标9:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_35">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_36">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QWidget" name="widget_34" native="true">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_23">
+                          <property name="spacing">
+                           <number>11</number>
+                          </property>
+                          <property name="leftMargin">
+                           <number>15</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>7</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QLabel" name="label_47">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标10:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_37">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_38">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_48">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标11:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_39">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_40">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_49">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标12:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_41">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_42">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QWidget" name="widget_35" native="true">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_24">
+                          <property name="spacing">
+                           <number>11</number>
+                          </property>
+                          <property name="leftMargin">
+                           <number>15</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>7</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QLabel" name="label_50">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标13:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_43">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_44">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_51">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标14:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_45">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_46">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_52">
+                            <property name="minimumSize">
+                             <size>
+                              <width>50</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="maximumSize">
+                             <size>
+                              <width>43</width>
+                              <height>16777215</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>坐标15:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_47">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_48">
                             <property name="font">
                              <font>
                               <pointsize>11</pointsize>
