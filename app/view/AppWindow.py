@@ -113,12 +113,14 @@ class MainWindow(QWidget, Ui_MainWindow):
             "设置": self.script.lineEdit_18.text(),
             "采集线数": self.script.comboBox_7.currentIndex(),
             "指定地图": self.script.comboBox_8.currentText(),
-            "采集加速延迟": self.script.spinBox_8.value(),
+            "自动吃鸡蛋": self.script.checkBox_19.isChecked(),
+            "吃鸡蛋数量": self.script.spinBox_8.value(),
             "切角色1": self.script.checkBox_14.isChecked(),
             "切角色2": self.script.checkBox_15.isChecked(),
             "切角色3": self.script.checkBox_16.isChecked(),
             "切角色4": self.script.checkBox_17.isChecked(),
             "切角色5": self.script.checkBox_18.isChecked(),
+            "江湖行商次数": self.script.spinBox_9.value(),
             "混队模式": self.script.checkBox_13.isChecked(),
             "采集方法": next(button.text() for button in [self.script.radioButton, self.script.radioButton_2,
                                                           self.script.radioButton_6] if button.isChecked()),
@@ -180,7 +182,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         publicSingle.write_json.connect(self.write_task_json)
         self.resize(1000, 610)
         self.setMinimumWidth(1000)
-        # self.setWindowIcon(QIcon(':/gallery/images/logo.png'))
+        self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
         self.setWindowTitle('时雪')
 
         desktop = QApplication.screens()[0].availableGeometry()
@@ -238,7 +240,8 @@ class MainWindow(QWidget, Ui_MainWindow):
                     "设置": self.script.lineEdit_18.text(),
                     "采集线数": self.script.comboBox_7.currentIndex(),
                     "指定地图": self.script.comboBox_8.currentText(),
-                    "采集加速延迟": self.script.spinBox_8.value(),
+                    "自动吃鸡蛋": self.script.checkBox_19.isChecked(),
+                    "吃鸡蛋数量": self.script.spinBox_8.value(),
                     "地图搜索": self.script.radioButton_2.isChecked(),
                     "定点采集": self.script.radioButton_6.isChecked(),
                     "自定义坐标采集": self.script.radioButton.isChecked(),
@@ -284,6 +287,7 @@ class MainWindow(QWidget, Ui_MainWindow):
                         self.script.lineEdit_13.text(),
 
                     ],
+                    "江湖行商次数": self.script.spinBox_9.value(),
 
                 }
 
@@ -349,9 +353,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_18.setText('ESC')
             self.script.comboBox_7.setCurrentIndex(0)
             self.script.comboBox_8.setCurrentText('江南')
-            self.script.spinBox_8.setValue(250),
+            self.script.spinBox_8.setValue(1),
             # text = config.get('日常任务', '采集方法')
-
             self.script.lineEdit_19.setText('')
             self.script.lineEdit_20.setText('')
             self.script.lineEdit_21.setText('')
@@ -408,7 +411,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_18.setText(config.get('日常任务', '设置'))
             self.script.comboBox_7.setCurrentIndex(config.getint('日常任务', '采集线数'))
             self.script.comboBox_8.setCurrentText(config.get('日常任务', '指定地图'))
-            self.script.spinBox_8.setValue(config.getint('日常任务', '采集加速延迟')),
 
             kill_list = eval(config.get('日常任务', '技能列表'))
             self.script.lineEdit_4.setText(kill_list[0]),
@@ -423,7 +425,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_13.setText(kill_list[9]),
 
             text = iter(eval(config.get('日常任务', '自定义采集坐标')))
-
             coord = next(text)
             self.script.lineEdit_19.setText(coord[0])
             self.script.lineEdit_20.setText(coord[1])
@@ -478,6 +479,9 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_48.setText(coord[1])
 
             self.script.checkBox_13.setChecked(config.getboolean('日常任务', '混队模式'))
+            self.script.spinBox_9.setValue(config.getint('日常任务', '江湖行商次数'))
+            self.script.checkBox_19.setChecked(config.getboolean('日常任务', '自动吃鸡蛋'))
+            self.script.spinBox_8.setValue(config.getint('日常任务', '吃鸡蛋数量'))
 
         except configparser.NoOptionError:
             pass
@@ -761,8 +765,12 @@ class ScriptWindow(QWidget, Ui_Script):
         self.spinBox_2.setValue(50)
         self.spinBox_3.setValue(100)
 
-        self.spinBox_8.setMaximum(500)
-        self.spinBox_8.setValue(250)
+        self.spinBox_8.setMaximum(20)
+        self.spinBox_8.setMinimum(1)
+        self.spinBox_8.setValue(1)
+
+        self.spinBox_9.setMinimum(1)
+        self.spinBox_9.setMaximum(5)
         # self.checkBox.stateChanged.connect(lambda: self.task_append('课业任务'))
         # self.checkBox_2.stateChanged.connect(lambda: self.task_append('帮派任务'))
         # self.checkBox_3.stateChanged.connect(lambda: self.task_append('世界喊话'))

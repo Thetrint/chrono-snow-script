@@ -433,7 +433,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>-2733</y>
+                     <y>-2723</y>
                      <width>713</width>
                      <height>5000</height>
                     </rect>
@@ -1668,6 +1668,67 @@
                         </widget>
                        </item>
                        <item>
+                        <widget class="QWidget" name="widget_36" native="true">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_25">
+                          <property name="spacing">
+                           <number>11</number>
+                          </property>
+                          <property name="leftMargin">
+                           <number>15</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QLabel" name="label_53">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>江湖行商次数:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QSpinBox" name="spinBox_9">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <spacer name="horizontalSpacer_21">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
                         <widget class="QWidget" name="widget_20" native="true">
                          <property name="minimumSize">
                           <size>
@@ -2858,14 +2919,14 @@
                            </spacer>
                           </item>
                           <item>
-                           <widget class="QLabel" name="label_43">
+                           <widget class="QCheckBox" name="checkBox_19">
                             <property name="font">
                              <font>
                               <pointsize>11</pointsize>
                              </font>
                             </property>
                             <property name="text">
-                             <string>加速延迟:</string>
+                             <string>自动吃鸡蛋:</string>
                             </property>
                            </widget>
                           </item>

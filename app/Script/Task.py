@@ -75,6 +75,7 @@ class StartTask:
                         Task.initialization()
                         Task.implement()
                 execute = False
+        self.set_state(row, '任务结束')
         # BasicTask(row, handle, self.mapping[row]).coord('活动入口', laplacian_process=True)
 
     def create_mapping(self, row):
@@ -170,7 +171,7 @@ class BasicTask(object):
 
     def world_shouts(self, message):
         self.mouse_down_up(309, 595)
-        self.Visual('世界频道', search_area=(0, 0, 145, 750), histogram_process=True, threshold=0.8)
+        self.Visual('世界频道', search_area=(0, 0, 145, 750), binary_process=True, threshold=0.6)
 
         if self.Visual('输入文字', wait_count=1, histogram_process=True, threshold=0.7):
             self.input(message)
@@ -387,7 +388,7 @@ class BasicTask(object):
 
                     # 将匹配结果和坐标一起存储在 result_coord 中
                     result_coord.append(matched_coords)
-                    logging.info((template_image_name, result[matched_coords], threshold))
+                    # logging.info((template_image_name, result[matched_coords], threshold))
 
                 for coord in result_coord:
                     coord_list.append(numpy.array(list(zip(coord[1], coord[0]))))
@@ -427,6 +428,7 @@ class BasicTask(object):
                             # 更新上一个坐标
                             prev_loc = cluster_center
                 print(args, coordinates, threshold)
+                logging.info((args, coordinates, threshold))
                 return coordinates or []
 
     def Visual(self, *args, **kwargs):
@@ -829,7 +831,7 @@ class DailyCopiesTask(BasicTask):
         count = 0
         start_time = time.time()
         while not event.unbind[self.mapp].is_set():
-            self.Visual('进入副本', wait_count=2, laplacian_process=True, threshold=0.25)
+            self.Visual('进入副本', wait_count=2, binary_process=True, threshold=0.4)
             self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
             while not event.unbind[self.mapp].is_set():
                 if (self.coord('副本退出', histogram_process=True, threshold=0.65,
@@ -1617,7 +1619,7 @@ class HexagramDay(BasicTask):
             self.close_win(1)
             if self.Visual('算命占卜', laplacian_process=True, wait_count=400):
                 self.Visual('落笔', laplacian_process=True)
-                self.Visual('接受', laplacian_process=True)
+                self.Visual('接受', binary_process=True, threshold=0.4)
                 self.Visual('确定', binary_process=True, threshold=0.4)
                 self.mouse_down_up(0, 0)
 
@@ -1830,8 +1832,161 @@ class DrinkPunch(BasicTask):
 #                 time_1 = time.time()
 #
 #
-# # 江湖行商
-# class MerchantLake(BasicTask):
+# 江湖行商
+class MerchantLake(BasicTask):
+
+    def __init__(self, row, handle, mapp):
+        super().__init__(row, handle, mapp)
+        # 任务标志
+        self.create_team = True  # 创建队伍
+        self.target_location = False  # 目标地点
+        self.team_satisfied = False  # 队伍条件满足
+        self.task_execution = False  # 执行任务
+        self.current_location = 0  # 当前位置
+        self.count = 0  # 完成计数
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        while not event.unbind[self.mapp].is_set():
+            switch = self.detect()
+
+            if switch == 0 and self.create_team:  # 判断队伍是否被创建 没有则队伍检测, 创建行商目标队伍
+                self.leave_team()
+                self.merchants_lakes_1()
+                self.create_team = False  # 创建完成队伍 设置创建队伍标志
+            elif switch == 0 and not self.create_team and not self.task_execution:  # 队伍创建完成
+                if not self.task_execution:
+                    if not self.target_location:  # 判断是否在行商目标地点 不在则前往
+                        if self.merchants_lakes_2():
+                            self.Visual('关闭', histogram_process=True, threshold=0.7)
+                            self.target_location = True
+                    elif self.target_location:  # 在行商目标地点 判断队伍人数
+                        if not self.team_satisfied:
+                            self.merchants_lakes_3()
+                        elif self.team_satisfied:
+                            if self.merchants_lakes_2():
+                                self.Visual('参与行商', binary_process=True, threshold=0.4)
+                                self.Visual('确认发起', binary_process=True, threshold=0.4, wait_count=1)
+                                self.Visual('铜钱购买', threshold=0.75)
+                                if self.coord('行商等待队员', binary_process=False, threshold=0.5):
+                                    if self.Visual('行商交易', y=84, binary_process=True, threshold=0.5, wait_count=30):
+                                        self.task_execution = True
+            elif switch == 0 and self.task_execution:
+                if self.Visual('一键上缴', binary_process=True, threshold=0.5, wait_count=1):
+                    self.current_location = 0
+                    self.close_win(3)
+                    self.task_execution = False
+                    self.count += 1
+                    if self.count == int(event.task_config[self.mapp].get('江湖行商次数')):
+                        break
+            elif switch == 1 and self.task_execution:
+                self.merchants_lakes_4()
+            elif switch == 5 and self.task_execution:
+                self.Visual('行商交易', y=84, binary_process=True, threshold=0.5, wait_count=1)
+            elif switch == 3 and self.task_execution:
+                self.Visual('江南', binary_process=True, threshold=0.6)
+                if self.current_location == 0:
+                    self.Visual('商人', histogram_process=True, search_scope=(1000, 137, 1187, 262), threshold=0.6, wait_count=1)
+                    self.Visual('确定', binary_process=True, threshold=0.5)
+                    self.current_location += 1
+                elif self.current_location == 1 or self.current_location == 3:
+                    self.Visual('本体位置', '本体位置1', histogram_process=True, threshold=0.6)
+                    self.Visual('确定', binary_process=True, threshold=0.5)
+                    self.current_location += 1
+                elif self.current_location == 2:
+                    self.Visual('商人', histogram_process=True, search_scope=(914, 34, 1147, 132), threshold=0.6, wait_count=1)
+                    self.Visual('确定', binary_process=True, threshold=0.5)
+                    self.current_location += 1
+                elif self.current_location == 4:
+                    self.current_location = 0
+
+    def detect(self):
+        if self.coord('副本挂机', histogram_process=True, threshold=0.7):
+            return 0  # 主界面
+        elif self.coord('江湖行商交易界面', histogram_process=True, threshold=0.4):
+            return 1  # 江湖行商交易界面
+        elif self.coord('区域', '世界', binary_process=True, threshold=0.6):
+            return 3  # 地图界面
+        elif self.coord('行商交易', binary_process=True, threshold=0.5):
+            return 5  # 任务交付界面
+
+    # 创建江湖行商目标队伍
+    def merchants_lakes_1(self):
+        self.key_down_up('T')
+        self.Visual('创建队伍', binary_process=False, threshold=0.6)
+        self.Visual('下拉', binary_process=True, threshold=0.7)
+        self.Visual('队伍界面行当玩法', histogram_process=True, threshold=0.6)
+        self.Visual('江湖行商目标', histogram_process=True, threshold=0.6)
+        # self.Visual()('队伍界面自动匹配')
+        self.Visual('确定', binary_process=True, threshold=0.4)
+        # self.get_tap('关闭', process=False, threshold=0.7)
+        self.key_down_up('T')
+
+    # 前往目标地点
+    def merchants_lakes_2(self):
+        self.key_down_up('B')
+        self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        self.Visual('活动', binary_process=True, threshold=0.5)
+        self.Visual('活动界面行当', binary_process=True, threshold=0.5)
+        self.Visual('江湖行商', '江湖行商1', histogram_process=True, threshold=0.65)
+        self.Visual('前往', binary_process=True, threshold=0.4, search_scope=(716, 525, 1334, 750))
+        if self.Visual('参与行商', binary_process=True, threshold=0.4, wait_count=100, tap=False):
+            return True
+        return False
+
+    # 判断队伍人数
+    def merchants_lakes_3(self):
+        time_start = 0
+        self.key_down_up('T')
+        while not event.unbind[self.mapp].is_set():
+            num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
+            if 5 - num >= 3:
+                time.sleep(1)
+                num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
+                if 5 - num >= 3:
+                    if self.Visual('一键召回', binary_process=True, threshold=0.45):
+                        time.sleep(20)
+                        while not event.unbind[self.mapp].is_set():
+                            if self.Visual('暂离', histogram_process=True, threshold=0.7):
+                                self.Visual('请离队伍', binary_process=True, threshold=0.4)
+                            else:
+                                break
+                    self.key_down_up('T')
+                    self.team_satisfied = True
+                    break
+            self.Visual('普通喊话', binary_process=True, threshold=0.4)
+            if time.time() - time_start > 30:
+                self.key_down_up('T')
+                self.world_shouts('51来不跳车')
+                self.key_down_up('T')
+                time_start = time.time()
+
+    # 交易处理
+    def merchants_lakes_4(self):
+        if self.coord('购买', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631)):
+            if coord := self.coord('值', binary_process=True, threshold=0.6):
+                for c in coord:
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.mouse_down_up(c[0], c[1])
+                    self.mouse_down(1029, 485)
+                    time.sleep(3)
+                    self.mouse_up(1029, 485)
+                    self.Visual('购买', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631))
+            if len(coord) <= 2:
+                for _ in range(3):
+                    self.mouse_down(1029, 485)
+                    time.sleep(3)
+                    self.mouse_up(1029, 485)
+                    self.Visual('购买', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631))
+            self.Visual('关闭', histogram_process=True, threshold=0.7)
+        elif self.coord('出售', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631)):
+            for _ in range(5):
+                self.Visual('出售', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631))
+            self.Visual('关闭', histogram_process=True, threshold=0.7)
+
 #
 #     def __init__(self, row, handle):
 #         super().__init__(row, handle)
@@ -2026,17 +2181,7 @@ class DrinkPunch(BasicTask):
 #
 #         self.merchants_lakes_3_1_flag = True
 #
-#     # 创建江湖行商目标队伍
-#     def merchants_lakes_1(self):
-#         self.key_down_up(self.ranks)
-#         self.get_tap('创建队伍', process=False, threshold=0.8)
-#         self.get_tap('下拉', process=False, threshold=0.8)
-#         self.get_tap('队伍界面行当玩法', process=False, threshold=0.8)
-#         self.get_tap('江湖行商目标', process=False, threshold=0.8)
-#         # self.get_tap('队伍界面自动匹配')
-#         self.get_tap('确定', process=False, threshold=0.8)
-#         # self.get_tap('关闭', process=False, threshold=0.7)
-#         self.key_down_up(self.ranks)
+
 #
 #     # 等待队伍人数
 #     def merchants_lakes_2(self):
@@ -2091,7 +2236,6 @@ class AcquisitionTask(BasicTask):
         self.acquisition_1_flag = True
         self.acquisition_flag = False
         self.last_coord = None
-        self.time_out = int(event.task_config[self.mapp].get('采集加速延迟')) / 1000
 
     def initialization(self):
         pass
@@ -2126,8 +2270,13 @@ class AcquisitionTask(BasicTask):
                 # 定点采集
             # 开始采集
             while not event.unbind[self.mapp].is_set():
+                target = self.acquisition_6()
+                if target == 3:
+                    # 结束辅助线程
+                    self.acquisition_1_flag = False
+                    return 0
                 # 判断是否有目标
-                if not self.acquisition_6():
+                if not target:
                     self.acquisition_flag = False
                     # 执行范围搜素
 
@@ -2223,14 +2372,14 @@ class AcquisitionTask(BasicTask):
         self.key_down_up('M')
         self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
                     search_scope=(0, 647, 349, 750))
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=310,
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
                     search_scope=(0, 631, 414, 694))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
         self.input(coord[0])
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233,
                     search_scope=(0, 631, 414, 694))
         self.input(coord[1])
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=310,
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
                     search_scope=(0, 631, 414, 694))
         self.key_down_up('M')
         self.arrive()
@@ -2238,15 +2387,29 @@ class AcquisitionTask(BasicTask):
     # 判断是否有目标
     def acquisition_6(self):
         method = event.task_config[self.mapp].get('采集方法')
-        if method == '定点采集' or method == '自定义坐标采集':
-            coord = self.Visual('采草', '伐木', '挖矿', histogram_process=True, process=True, threshold=1,
-                                search_scope=(752, 291, 1153, 565), x=-20, tap=False)
+        if not self.coord('体力耗尽', binary_process=True, threshold=0.7, search_scope=(752, 291, 1153, 565)):
+            if method == '定点采集' or method == '自定义坐标采集':
+                coord = self.Visual('采草', '伐木', '挖矿', histogram_process=True, process=True, threshold=1,
+                                    search_scope=(752, 291, 1153, 565), x=-20, tap=False)
+            else:
+                coord = self.Visual('采草', '伐木', '挖矿', histogram_process=True, process=True, threshold=1,
+                                    search_scope=(752, 291, 1153, 565), x=-20, tap=False)
+            if coord:
+                return True
+            return False
         else:
-            coord = self.Visual('采草', '伐木', '挖矿', histogram_process=True, process=True, threshold=1,
-                                search_scope=(752, 291, 1153, 565), x=-20, tap=False)
-        if coord:
-            return True
-        return False
+            if event.task_config[self.mapp].get('自动吃鸡蛋'):
+                self.key_down_up('B')
+                self.Visual('搜索图标', binary_process=True, threshold=0.7)
+                self.Visual('输入道具名称', binary_process=True, threshold=0.6)
+                for _ in range(int(event.task_config[self.mapp].get('吃鸡蛋数量'))):
+                    self.input('一筐鸡蛋')
+                    self.Visual('搜索图标', binary_process=True, threshold=0.7)
+                    self.Visual('一筐鸡蛋', binary_process=True, threshold=0.7)
+                    self.Visual('使用', binary_process=True, threshold=0.7)
+                self.Visual('关闭', histogram_process=True, threshold=0.7)
+            else:
+                return 3
 
     # 设置采集物
     def acquisition_7(self):
@@ -2628,8 +2791,9 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '每日兑换': DailyRedemption, '坐观万象': SittingObserving, '扫摆摊': SweepStalls,
                 '狂饮豪拳': DrinkPunch, '帮派任务': FactionTask, '茶馆说书': TeaStory,
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
-                '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask, '切换角色': None}
+                '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask, '切换角色': None,
+                '江湖行商': MerchantLake}
 
 TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537),
              '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148),
-             '江湖英雄榜': (0, 2148), '采集任务': (0, 2685), '切换角色': (0, 2148)}
+             '江湖英雄榜': (0, 2148), '采集任务': (0, 2685), '切换角色': (0, 2148), '江湖行商': (0, 2148)}
