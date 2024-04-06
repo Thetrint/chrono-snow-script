@@ -433,7 +433,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>-2723</y>
+                     <y>-375</y>
                      <width>713</width>
                      <height>5000</height>
                     </rect>
@@ -957,6 +957,18 @@
                               <string>全力摇</string>
                              </property>
                             </item>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_20">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>商票上缴</string>
+                            </property>
                            </widget>
                           </item>
                           <item>
@@ -1705,6 +1717,27 @@
                           </item>
                           <item>
                            <widget class="QSpinBox" name="spinBox_9">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_43">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>喊话内容:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_49">
                             <property name="font">
                              <font>
                               <pointsize>11</pointsize>

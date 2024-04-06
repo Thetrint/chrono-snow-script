@@ -42,7 +42,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.script.pushButton_12.clicked.connect(self.delete_config)
 
         self.script.comboBox.currentTextChanged.connect(self.load_config)
-        self.load_config('')
+        self.load_config('默认配置')
         self.load_system_config()
         self.main_widget.setCurrentIndex(0)
 
@@ -121,31 +121,33 @@ class MainWindow(QWidget, Ui_MainWindow):
             "切角色4": self.script.checkBox_17.isChecked(),
             "切角色5": self.script.checkBox_18.isChecked(),
             "江湖行商次数": self.script.spinBox_9.value(),
+            "江湖行商喊话内容": self.script.lineEdit_49.text(),
+            "商票上缴": self.script.checkBox_20.isChecked(),
             "混队模式": self.script.checkBox_13.isChecked(),
-            "采集方法": next(button.text() for button in [self.script.radioButton, self.script.radioButton_2,
-                                                          self.script.radioButton_6] if button.isChecked()),
-            "采集种类": next(button.text() for button in [self.script.radioButton_3, self.script.radioButton_4,
-                                                          self.script.radioButton_5] if button.isChecked()),
-            "采集目标": next(combo.currentText() for button, combo in
-                             zip([self.script.radioButton_3, self.script.radioButton_4, self.script.radioButton_5],
-                                 [self.script.comboBox_5, self.script.comboBox_4, self.script.comboBox_6]) if button.isChecked()),
-            "自定义采集坐标": [
-                (self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
-                (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
-                (self.script.lineEdit_23.text(), self.script.lineEdit_24.text()),
-                (self.script.lineEdit_25.text(), self.script.lineEdit_26.text()),
-                (self.script.lineEdit_27.text(), self.script.lineEdit_28.text()),
-                (self.script.lineEdit_29.text(), self.script.lineEdit_30.text()),
-                (self.script.lineEdit_31.text(), self.script.lineEdit_32.text()),
-                (self.script.lineEdit_33.text(), self.script.lineEdit_34.text()),
-                (self.script.lineEdit_35.text(), self.script.lineEdit_36.text()),
-                (self.script.lineEdit_37.text(), self.script.lineEdit_38.text()),
-                (self.script.lineEdit_39.text(), self.script.lineEdit_40.text()),
-                (self.script.lineEdit_41.text(), self.script.lineEdit_42.text()),
-                (self.script.lineEdit_43.text(), self.script.lineEdit_44.text()),
-                (self.script.lineEdit_44.text(), self.script.lineEdit_46.text()),
-                (self.script.lineEdit_47.text(), self.script.lineEdit_48.text()),
-            ],
+            "地图搜索": self.script.radioButton_2.isChecked(),
+            "定点采集": self.script.radioButton_6.isChecked(),
+            "自定义坐标采集": self.script.radioButton.isChecked(),
+            "采草": self.script.radioButton_4.isChecked(),
+            "伐木": self.script.radioButton_3.isChecked(),
+            "挖矿": self.script.radioButton_5.isChecked(),
+            "采草目标": self.script.comboBox_4.currentText(),
+            "伐木目标": self.script.comboBox_5.currentText(),
+            "挖矿目标": self.script.comboBox_6.currentText(),
+            "坐标1": [self.script.lineEdit_19.text(), self.script.lineEdit_20.text()],
+            "坐标2": [self.script.lineEdit_21.text(), self.script.lineEdit_22.text()],
+            "坐标3": [self.script.lineEdit_23.text(), self.script.lineEdit_24.text()],
+            "坐标4": [self.script.lineEdit_25.text(), self.script.lineEdit_26.text()],
+            "坐标5": [self.script.lineEdit_27.text(), self.script.lineEdit_28.text()],
+            "坐标6": [self.script.lineEdit_29.text(), self.script.lineEdit_30.text()],
+            "坐标7": [self.script.lineEdit_31.text(), self.script.lineEdit_32.text()],
+            "坐标8": [self.script.lineEdit_33.text(), self.script.lineEdit_34.text()],
+            "坐标9": [self.script.lineEdit_35.text(), self.script.lineEdit_36.text()],
+            "坐标10": [self.script.lineEdit_37.text(), self.script.lineEdit_38.text()],
+            "坐标11": [self.script.lineEdit_39.text(), self.script.lineEdit_40.text()],
+            "坐标12": [self.script.lineEdit_41.text(), self.script.lineEdit_42.text()],
+            "坐标13": [self.script.lineEdit_43.text(), self.script.lineEdit_44.text()],
+            "坐标14": [self.script.lineEdit_45.text(), self.script.lineEdit_46.text()],
+            "坐标15": [self.script.lineEdit_47.text(), self.script.lineEdit_48.text()],
             "技能列表": [
                 self.script.lineEdit_4.text(),
                 self.script.lineEdit_9.text(),
@@ -210,86 +212,7 @@ class MainWindow(QWidget, Ui_MainWindow):
                 config = configparser.ConfigParser()
 
                 # 添加一些配置项
-                config['日常任务'] = {
-                    "执行列表": [self.script.listWidget.item(i).text() for i in range(self.script.listWidget.count())],
-                    "世界喊话内容": self.script.lineEdit_2.text(),
-                    "世界喊话次数": self.script.spinBox_4.value(),
-                    "江湖英雄榜次数": self.script.spinBox_7.value(),
-                    "副本人数": self.script.comboBox_2.currentIndex(),
-                    "副本自动匹配": self.script.checkBox.isChecked(),
-                    "侠缘昵称": self.script.lineEdit_3.text(),
-                    # "侠缘喊话内容": self.script.textEdit_2.toPlainText(),
-                    "山河器": self.script.checkBox_2.isChecked(),
-                    "帮派铜钱捐献": self.script.checkBox_8.isChecked(),
-                    "帮派银两捐献": self.script.checkBox_7.isChecked(),
-                    "银票礼盒": self.script.checkBox_3.isChecked(),
-                    "商会鸡蛋": self.script.checkBox_5.isChecked(),
-                    "榫头卯眼": self.script.checkBox_6.isChecked(),
-                    "锦芳绣残片": self.script.checkBox_4.isChecked(),
-                    "摇钱树": self.script.checkBox_9.isChecked(),
-                    "摇钱树目标": self.script.comboBox_3.currentIndex(),
-                    "扫摆摊延迟1": self.script.spinBox.value(),
-                    "扫摆摊延迟2": self.script.spinBox_2.value(),
-                    "扫摆摊延迟3": self.script.spinBox_3.value(),
-                    "华山论剑次数": self.script.spinBox_6.value(),
-                    "华山论剑秒退": self.script.checkBox_10.isChecked(),
-                    "背包": self.script.lineEdit_14.text(),
-                    "好友": self.script.lineEdit_15.text(),
-                    "队伍": self.script.lineEdit_16.text(),
-                    "地图": self.script.lineEdit_17.text(),
-                    "设置": self.script.lineEdit_18.text(),
-                    "采集线数": self.script.comboBox_7.currentIndex(),
-                    "指定地图": self.script.comboBox_8.currentText(),
-                    "自动吃鸡蛋": self.script.checkBox_19.isChecked(),
-                    "吃鸡蛋数量": self.script.spinBox_8.value(),
-                    "地图搜索": self.script.radioButton_2.isChecked(),
-                    "定点采集": self.script.radioButton_6.isChecked(),
-                    "自定义坐标采集": self.script.radioButton.isChecked(),
-                    "采草": self.script.radioButton_4.isChecked(),
-                    "采草目标": self.script.comboBox_4.currentIndex(),
-                    "伐木": self.script.radioButton_3.isChecked(),
-                    "伐木目标": self.script.comboBox_5.currentIndex(),
-                    "挖矿": self.script.radioButton_5.isChecked(),
-                    "挖矿目标": self.script.comboBox_6.currentIndex(),
-                    "切角色1": self.script.checkBox_14.isChecked(),
-                    "切角色2": self.script.checkBox_15.isChecked(),
-                    "切角色3": self.script.checkBox_16.isChecked(),
-                    "切角色4": self.script.checkBox_17.isChecked(),
-                    "切角色5": self.script.checkBox_18.isChecked(),
-                    "混队模式": self.script.checkBox_13.isChecked(),
-                    "自定义采集坐标": [
-                        (self.script.lineEdit_19.text(), self.script.lineEdit_20.text()),
-                        (self.script.lineEdit_21.text(), self.script.lineEdit_22.text()),
-                        (self.script.lineEdit_23.text(), self.script.lineEdit_24.text()),
-                        (self.script.lineEdit_25.text(), self.script.lineEdit_26.text()),
-                        (self.script.lineEdit_27.text(), self.script.lineEdit_28.text()),
-                        (self.script.lineEdit_29.text(), self.script.lineEdit_30.text()),
-                        (self.script.lineEdit_31.text(), self.script.lineEdit_32.text()),
-                        (self.script.lineEdit_33.text(), self.script.lineEdit_34.text()),
-                        (self.script.lineEdit_35.text(), self.script.lineEdit_36.text()),
-                        (self.script.lineEdit_37.text(), self.script.lineEdit_38.text()),
-                        (self.script.lineEdit_39.text(), self.script.lineEdit_40.text()),
-                        (self.script.lineEdit_41.text(), self.script.lineEdit_42.text()),
-                        (self.script.lineEdit_43.text(), self.script.lineEdit_44.text()),
-                        (self.script.lineEdit_44.text(), self.script.lineEdit_46.text()),
-                        (self.script.lineEdit_47.text(), self.script.lineEdit_48.text()),
-                    ],
-                    "技能列表": [
-                        self.script.lineEdit_4.text(),
-                        self.script.lineEdit_9.text(),
-                        self.script.lineEdit_5.text(),
-                        self.script.lineEdit_6.text(),
-                        self.script.lineEdit_7.text(),
-                        self.script.lineEdit_8.text(),
-                        self.script.lineEdit_10.text(),
-                        self.script.lineEdit_11.text(),
-                        self.script.lineEdit_12.text(),
-                        self.script.lineEdit_13.text(),
-
-                    ],
-                    "江湖行商次数": self.script.spinBox_9.value(),
-
-                }
+                config['日常任务'] = self.return_data()
 
                 with open(f'{config_path}\\{file_name}.ini', 'w', encoding='utf-8') as configfile:
                     config.write(configfile)
@@ -323,7 +246,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         config = configparser.ConfigParser()
         # 读取配置文件
         config.read(config_path, encoding='utf-8')
-        if file_name == '':
+        if file_name == '默认配置':
             self.script.listWidget.clear()
             self.script.lineEdit_2.setText('')
             self.script.spinBox_4.setValue(1)
@@ -379,6 +302,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_12.setText('9')
             self.script.lineEdit_13.setText('R')
 
+            self.script.lineEdit_49.setText('江湖行商来人!!!')
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -412,6 +337,18 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_7.setCurrentIndex(config.getint('日常任务', '采集线数'))
             self.script.comboBox_8.setCurrentText(config.get('日常任务', '指定地图'))
 
+            self.script.radioButton_2.setChecked(config.getboolean('日常任务', '地图搜索'))
+            self.script.radioButton_6.setChecked(config.getboolean('日常任务', '定点采集'))
+            self.script.radioButton.setChecked(config.getboolean('日常任务', '自定义坐标采集'))
+
+            self.script.radioButton_4.setChecked(config.getboolean('日常任务', '采草'))
+            self.script.radioButton_3.setChecked(config.getboolean('日常任务', '伐木'))
+            self.script.radioButton_5.setChecked(config.getboolean('日常任务', '挖矿'))
+
+            self.script.comboBox_4.setCurrentText(config.get('日常任务', '采草目标'))
+            self.script.comboBox_5.setCurrentText(config.get('日常任务', '伐木目标'))
+            self.script.comboBox_6.setCurrentText(config.get('日常任务', '挖矿目标'))
+
             kill_list = eval(config.get('日常任务', '技能列表'))
             self.script.lineEdit_4.setText(kill_list[0]),
             self.script.lineEdit_9.setText(kill_list[1]),
@@ -424,57 +361,49 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_12.setText(kill_list[8]),
             self.script.lineEdit_13.setText(kill_list[9]),
 
-            text = iter(eval(config.get('日常任务', '自定义采集坐标')))
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标1'))
             self.script.lineEdit_19.setText(coord[0])
             self.script.lineEdit_20.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标2'))
             self.script.lineEdit_21.setText(coord[0])
             self.script.lineEdit_22.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标3'))
             self.script.lineEdit_23.setText(coord[0])
             self.script.lineEdit_24.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标4'))
             self.script.lineEdit_25.setText(coord[0])
             self.script.lineEdit_26.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标5'))
             self.script.lineEdit_27.setText(coord[0])
             self.script.lineEdit_28.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标6'))
             self.script.lineEdit_29.setText(coord[0])
             self.script.lineEdit_30.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标7'))
             self.script.lineEdit_31.setText(coord[0])
             self.script.lineEdit_32.setText(coord[1])
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标8'))
             self.script.lineEdit_33.setText(coord[0])
             self.script.lineEdit_34.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标9'))
             self.script.lineEdit_35.setText(coord[0])
             self.script.lineEdit_36.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标10'))
             self.script.lineEdit_37.setText(coord[0])
             self.script.lineEdit_38.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标11'))
             self.script.lineEdit_39.setText(coord[0])
             self.script.lineEdit_40.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标12'))
             self.script.lineEdit_41.setText(coord[0])
             self.script.lineEdit_42.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标13'))
             self.script.lineEdit_43.setText(coord[0])
             self.script.lineEdit_44.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标14'))
             self.script.lineEdit_45.setText(coord[0])
             self.script.lineEdit_46.setText(coord[1])
-
-            coord = next(text)
+            coord = eval(config.get('日常任务', '坐标15'))
             self.script.lineEdit_47.setText(coord[0])
             self.script.lineEdit_48.setText(coord[1])
 
@@ -482,6 +411,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.spinBox_9.setValue(config.getint('日常任务', '江湖行商次数'))
             self.script.checkBox_19.setChecked(config.getboolean('日常任务', '自动吃鸡蛋'))
             self.script.spinBox_8.setValue(config.getint('日常任务', '吃鸡蛋数量'))
+            self.script.lineEdit_49.setText(config.get('日常任务', '江湖行商喊话内容'))
+            self.script.checkBox_20.setChecked(config.getboolean('日常任务', '商票上缴'))
 
         except configparser.NoOptionError:
             pass
@@ -554,6 +485,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         # 获取config文件下文件名字
         ini_files = [os.path.splitext(f)[0] for f in os.listdir(task_config_path) if f.endswith('.ini')]
 
+        self.script.comboBox.addItem('默认配置')
         # 加载配置文件
         for text in ini_files:
             self.script.comboBox.addItem(text)

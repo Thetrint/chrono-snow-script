@@ -37,13 +37,30 @@ class BasicFunctional:
 
     @staticmethod
     def set_window(handle, win):
+
         widget, height = win
-        try:
-            rect = win32gui.GetWindowRect(handle)
-            win32gui.MoveWindow(handle, rect[0], rect[1], widget, height, True)
-            time.sleep(0.8)
-        except Exception as e:
-            logging.error(f'设置游戏窗口大小: {e}')
+
+        for _ in range(300):
+            image = basic_functional.screen_shot(handle)
+            image_height, image_width, _ = image.shape
+            if image_width == 1334 and image_height == 750:
+                time.sleep(0.8)
+                break
+
+            if image_height < 750:
+                height += 1
+            elif image_height > 750:
+                height -= 1
+            if image_width < 1334:
+                widget += 1
+            elif image_width > 1334:
+                widget -= 1
+
+            try:
+                rect = win32gui.GetWindowRect(handle)
+                win32gui.MoveWindow(handle, rect[0], rect[1], widget, height, True)
+            except Exception as e:
+                logging.error(f'设置游戏窗口大小: {e}')
 
     @staticmethod
     def DisableTheWindow(handle):
