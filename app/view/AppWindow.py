@@ -866,15 +866,15 @@ class RunWindow(QWidget, Ui_Run):
             temp_dir = tempfile.gettempdir()
             temp_img_path = os.path.join(temp_dir, f'template_image{row}')
             image = basic_functional.screen_shot(self.struct_task_dict[row].handle)
-            cv2.imwrite(f'{temp_img_path}\\1.png', image)
+            cv2.imwrite(f'{temp_img_path}\\1.bmp', image)
             # 定义要保留的区域的坐标和尺寸
             x, y, width, height = 117, 730, 115, 20
 
             # 从原始截图中复制指定区域
             img = image[y:y + height, x:x + width]
-            cv2.imwrite(f'{temp_img_path}\\person_{row}.png', img)
+            cv2.imwrite(f'{temp_img_path}\\person_{row}.bmp', img)
             # 创建 QPixmap 对象，加载图片
-            pixmap = QPixmap(f'{temp_img_path}\\person_{row}.png')
+            pixmap = QPixmap(f'{temp_img_path}\\person_{row}.bmp')
 
             # 将图片添加到表格中
             item = QTableWidgetItem()

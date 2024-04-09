@@ -1928,46 +1928,50 @@ class MerchantLake(BasicTask):
         while not event.unbind[self.mapp].is_set():
             switch = self.detect()
 
-            if switch == 0 and self.create_team:  # 判断队伍是否被创建 没有则队伍检测, 创建行商目标队伍
-                self.leave_team()
-                self.merchants_lakes_1()
-                self.create_team = False  # 创建完成队伍 设置创建队伍标志
-            elif switch == 0 and not self.create_team and not self.task_execution:  # 队伍创建完成
-                if not self.task_execution:
-                    if not self.target_location:  # 判断是否在行商目标地点 不在则前往
-                        if self.merchants_lakes_2():
-                            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            if switch == 0:  # 判断队伍是否被创建 没有则队伍检测, 创建行商目标队伍
+                if self.create_team:
+                    self.journal('创建队伍')
+                    self.merchants_lakes_1()
+                    self.create_team = False  # 创建完成队伍 设置创建队伍标志
+                elif not self.create_team:
+                    if not self.task_execution:
+                        if not self.target_location:  # 判断是否在行商目标地点 不在则前往
+                            self.merchants_lakes_2()
                             self.target_location = True
-                    elif self.target_location:  # 在行商目标地点 判断队伍人数
-                        if not self.team_satisfied:
-                            self.merchants_lakes_3()
-                        elif self.team_satisfied:
-                            if self.merchants_lakes_2():
-                                self.Visual('参与行商', binary_process=True, threshold=0.4)
-                                self.Visual('确认发起', binary_process=True, threshold=0.4, wait_count=1)
-                                self.Visual('铜钱购买', threshold=0.75)
-                                if self.Visual('行商等待队员', binary_process=False, threshold=0.4,
-                                               search_scope=(328, 0, 992, 107), tap=False):
-                                    if self.Visual('行商交易', y=84, binary_process=True, threshold=0.5, wait_count=30):
-                                        self.task_execution = True
-                                else:
-                                    self.team_satisfied = False
-                                    self.close_win(3)
-            elif switch == 0 and self.task_execution:
-                if self.Visual('一键上缴', binary_process=True, threshold=0.5, wait_count=1):
-                    self.current_location = 0
-                    self.close_win(3)
-                    self.task_execution = False
-                    self.target_location = False
-                    self.team_satisfied = False
-                    self.count += 1
-                    if self.count == int(event.task_config[self.mapp].get('江湖行商次数')):
-                        self.leave_team()
-                        break
+                        elif self.target_location:  # 在行商目标地点 判断队伍人数
+                            if not self.team_satisfied:
+                                self.merchants_lakes_3()
+                                self.merchants_lakes_2()
+                    elif self.task_execution:
+                        if self.Visual('一键上缴', binary_process=True, threshold=0.5, wait_count=1):
+                            self.current_location = 0
+                            self.close_win(3)
+                            self.task_execution = False
+                            self.target_location = False
+                            self.team_satisfied = False
+                            self.count += 1
+                            if self.count == int(event.task_config[self.mapp].get('江湖行商次数')):
+                                self.leave_team()
+                                break
+            elif switch == 6:
+                if self.team_satisfied:
+                    self.Visual('参与行商', binary_process=True, threshold=0.4)
+                    self.Visual('确认发起', binary_process=True, threshold=0.4, wait_count=1)
+                    self.Visual('铜钱购买', threshold=0.75)
+                    if self.Visual('行商等待队员', binary_process=False, threshold=0.4,
+                                   search_scope=(328, 0, 992, 107), tap=False):
+                        if self.Visual('行商交易', y=84, histogram_process=True, threshold=0.7, wait_count=20):
+                            self.task_execution = True
+                    else:
+                        self.team_satisfied = False
+                        self.close_win(3)
+                elif not self.team_satisfied:
+                    self.close_win(2)
             elif switch == 1 and self.task_execution:
                 self.merchants_lakes_4()
-            elif switch == 5 and self.task_execution:
-                self.Visual('行商交易', y=84, binary_process=True, threshold=0.5, wait_count=1)
+            elif switch == 5:
+                self.Visual('行商交易', y=84, histogram_process=True, threshold=0.7, wait_count=1)
+                self.task_execution = True
             elif switch == 3 and self.task_execution:
                 self.Visual('江南', binary_process=True, threshold=0.6)
                 if self.current_location == 0:
@@ -1994,13 +1998,24 @@ class MerchantLake(BasicTask):
             return 1  # 江湖行商交易界面
         elif self.coord('区域', '世界', binary_process=True, threshold=0.6):
             return 3  # 地图界面
-        elif self.coord('行商交易', binary_process=True, threshold=0.5):
-            return 5  # 任务交付界面
+        elif self.coord('行商交易', histogram_process=True, threshold=0.7):
+            return 5  # 任务交易界面
+        elif self.coord('参与行商', binary_process=True, threshold=0.4):
+            return 6  # 任务接取界面
+        time.sleep(1)
 
     # 创建江湖行商目标队伍
     def merchants_lakes_1(self):
         self.key_down_up('T')
-        self.Visual('创建队伍', binary_process=False, threshold=0.6)
+        if self.coord('江湖行商任务目标', binary_process=True, threshold=0.6):
+            self.journal('当前已有队伍')
+            self.Visual('自动匹配', histogram_process=True, threshold=0.7, wait_count=1)
+            self.key_down_up('T')
+            return 0
+        self.key_down_up('T')
+        self.leave_team()
+        self.key_down_up('T')
+        self.Visual('创建队伍', histogram_process=True, threshold=0.6)
         self.Visual('下拉', binary_process=True, threshold=0.7)
         self.Visual('队伍界面行当玩法', histogram_process=True, threshold=0.6)
         self.Visual('江湖行商目标', histogram_process=True, threshold=0.6)
@@ -2014,7 +2029,7 @@ class MerchantLake(BasicTask):
         self.key_down_up('B')
         self.Visual('活动入口', histogram_process=True, threshold=0.7)
         self.Visual('活动', binary_process=True, threshold=0.5)
-        self.Visual('活动界面行当', binary_process=True, threshold=0.5)
+        self.Visual('活动界面行当', binary_process=True, threshold=0.5, wait_count=1)
         self.Visual('江湖行商', '江湖行商1', histogram_process=True, threshold=0.65)
         self.Visual('前往', binary_process=True, threshold=0.4, search_scope=(716, 525, 1334, 750))
         if self.Visual('参与行商', binary_process=True, threshold=0.4, wait_count=100, tap=False):
@@ -2067,9 +2082,9 @@ class MerchantLake(BasicTask):
                     self.mouse_up(1029, 485)
                     self.Visual('购买', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631))
             self.Visual('关闭', histogram_process=True, threshold=0.7)
-        elif self.coord('出售', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631)):
+        elif self.coord('出售', binary_process=True, threshold=0.4, search_scope=(871, 377, 1209, 631)):
             for _ in range(5):
-                self.Visual('出售', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631))
+                self.Visual('出售', binary_process=True, threshold=0.4, search_scope=(871, 377, 1209, 631))
             self.Visual('关闭', histogram_process=True, threshold=0.7)
 
 
