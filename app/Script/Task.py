@@ -1409,6 +1409,8 @@ class LessonTask(BasicTask):
                 self.Visual('确定', binary_process=True, threshold=0.4)
             elif switch == 9:
                 self.Visual('铜钱购买', histogram_process=True, threshold=0.7, search_scope=(820, 517, 1242, 673))
+            elif switch == 10:
+                self.Visual('关闭', histogram_process=True, threshold=0.7)
             elif switch == 8:
                 self.Visual('一键提交', laplacian_process=True, wait_count=1)
                 self.mouse_down_up(0, 0)
@@ -1434,8 +1436,13 @@ class LessonTask(BasicTask):
             return 5  # 任务接取界面
         elif self.coord('交易界面', '购买', histogram_process=True, threshold=0.7):
             return 7  # 交易界面
+        elif self.coord('倒计时', binary_process=True, threshold=0.4):
+            return 6  # 华山课业排序界面
         elif self.coord('杂货商人', histogram_process=True, threshold=0.7):
             return 9  # 杂货商人界面
+        elif self.coord('课业任务答题', histogram_process=True, threshold=0.65):
+            return 10  # 答题界面
+
     #     self.key_down_up('B')
     #     self.Visual('活动入口', histogram_process=True, threshold=0.7)
     #     self.Visual('活动', binary_process=True, threshold=0.5)
@@ -1640,7 +1647,7 @@ class TheSword(BasicTask):
                 self.Visual('活动入口', histogram_process=True, threshold=0.7)
                 self.Visual('活动', laplacian_process=True)
                 self.Visual('活动界面纷争', laplacian_process=True)
-                self.Visual('华山论剑', histogram_process=True, process=True, threshold=1, y=45)
+                self.Visual('华山论剑', binary_process=True, threshold=0.4, y=45)
             flag = True
 
             for _ in range(600):
@@ -2622,7 +2629,7 @@ class DailyRedemption(BasicTask):
         # 锦芳秀
         if event.task_config[self.mapp].get('锦芳绣残片'):
             self.key_down_up('B')
-            self.Visual('积分', laplacian_process=True)
+            self.Visual('积分', binary_process=True, threshold=0.5)
             self.Visual('积分社交', histogram_process=True, threshold=0.7)
             self.Visual('积分社交桃李值', x=350, histogram_process=True, threshold=0.7)
             if self.Visual('积分兑换搜索', laplacian_process=True):

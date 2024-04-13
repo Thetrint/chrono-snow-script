@@ -23,6 +23,9 @@ name = ".cp311-win_amd64"
 shutil.copy(f"{path}AppWindow{name}.pyd", "D:/Desktop/app/view/AppWindow.pyd")
 shutil.move(f"{path}AppWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/AppWindow.pyd")
 
+shutil.copy(f"{path}ClientServices{name}.pyd", "D:/Desktop/app/view/ClientServices.pyd")
+shutil.move(f"{path}ClientServices{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/ClientServices.pyd")
+
 # os.remove("D:/Desktop/app/view/Public.pyd")
 # os.remove("D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/Public.pyd")
 shutil.copy(f"{path}Public{name}.pyd", "D:/Desktop/app/view/Public.pyd")
@@ -57,5 +60,8 @@ shutil.move(f"{path}RunWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-
 # os.remove("D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/Ui/ScriptWindow.pyd")
 shutil.copy(f"{path}ScriptWindow{name}.pyd", "D:/Desktop/app/view/Ui/ScriptWindow.pyd")
 shutil.move(f"{path}ScriptWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/Ui/ScriptWindow.pyd")
+
+shutil.copy(f"{path}LoginWindow{name}.pyd", "D:/Desktop/app/view/Ui/LoginWindow.pyd")
+shutil.move(f"{path}LoginWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/Ui/LoginWindow.pyd")
 
 

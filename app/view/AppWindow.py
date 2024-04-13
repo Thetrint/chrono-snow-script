@@ -2,15 +2,20 @@ import json
 import os
 import shutil
 import tempfile
-import time
+import threading
 import configparser
+import time
+
 import cv2
 import logging
+
+import win32con
+import win32gui
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import QSize, QObject, Qt, QRect, QTimer, pyqtSignal, QSettings, QDateTime
-from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QStandardItem
-from PyQt6.QtWidgets import QWidget, QScrollArea, QPushButton, QVBoxLayout, QApplication, QDialog, QTableWidget, \
-    QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit, QDialogButtonBox
+from PyQt6.QtCore import Qt, QDateTime, QRegularExpression
+from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage
+from PyQt6.QtWidgets import QWidget, QPushButton, QApplication, QDialog, QTableWidget, \
+    QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit
 from win32gui import GetWindowRect
 from threading import Thread
 
@@ -18,16 +23,23 @@ from app.view.Ui.MainWindow import Ui_MainWindow
 from app.view.Ui.HomeWindow import Ui_Home
 from app.view.Ui.ScriptWindow import Ui_Script
 from app.view.Ui.RunWindow import Ui_Run
+from app.view.Ui.LoginWindow import Ui_Login
 from app.Script.BasicFunctional import basic_functional
 from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
-from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP
+from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit,\
+    TimingQMessageBox
+from app.view.ClientServices import services
 
 
 class MainWindow(QWidget, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        self.username = None
+        self.user_quit = True
         self.setupUi(self)
-        self.initWindow()
+        self.login = LoginWindow()
+        publicSingle.login.connect(self.initWindow)
+
         self.index = 0
         # self.menu_layout = QVBoxLayout(self.menu_widget)
 
@@ -180,8 +192,11 @@ class MainWindow(QWidget, Ui_MainWindow):
                 json.dump(data, file, ensure_ascii=False)
 
     # initialization
-    def initWindow(self):
+    def initWindow(self, username):
+        self.login.close()
+        self.username = username
         publicSingle.write_json.connect(self.write_task_json)
+        publicSingle.offline.connect(self.offline)
         self.resize(1000, 610)
         self.setMinimumWidth(1000)
         self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
@@ -192,6 +207,11 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
         QApplication.processEvents()
+
+    def offline(self):
+        self.user_quit = False
+        self.close()
+        self.login.show()
 
     def save_config(self, _):
         # 获取当前用户的路径
@@ -208,9 +228,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             file_name = dialog.file_name_input.text() if dialog.file_name_input.text() else dialog.get_selected_items()[
                 1] if dialog.get_selected_items() else False
             if file_name:
-                # 创建配置对象
                 config = configparser.ConfigParser()
-
                 # 添加一些配置项
                 config['日常任务'] = self.return_data()
 
@@ -241,8 +259,6 @@ class MainWindow(QWidget, Ui_MainWindow):
         # self.update_log(f'加载{file_name}配置')
         # 拼接完整的文件路径和文件名
         config_path = f'{config_path}\\{file_name}.ini'
-
-        # 创建配置对象
         config = configparser.ConfigParser()
         # 读取配置文件
         config.read(config_path, encoding='utf-8')
@@ -455,10 +471,7 @@ class MainWindow(QWidget, Ui_MainWindow):
 
         # 递归创建目录和文件
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
-
-        # 创建配置对象
         config = configparser.ConfigParser()
-
         # 添加一些配置项
         config['界面设置'] = {
             '当前配置': self.script.comboBox.currentText(),
@@ -489,8 +502,6 @@ class MainWindow(QWidget, Ui_MainWindow):
         # 加载配置文件
         for text in ini_files:
             self.script.comboBox.addItem(text)
-
-        # 创建配置对象
         config = configparser.ConfigParser()
         # 读取配置文件
         config.read(f'{config_path}\\System.ini', encoding='utf-8')
@@ -504,104 +515,139 @@ class MainWindow(QWidget, Ui_MainWindow):
 
     # 重写关闭事件
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, '确认退出',
-                                     "你确定要退出吗?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if self.user_quit:
+            reply = QMessageBox.question(self, '确认退出',
+                                         "你确定要退出吗?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-        if reply == QMessageBox.StandardButton.Yes:
-            self.save_system_config()
-            self.run.unbind_all(None)
-            event.accept()
+            if reply == QMessageBox.StandardButton.No:
+                event.ignore()
+                return 0
+
+        self.save_system_config()
+        self.run.unbind_all(None)
+        self.user_quit = True
+        services.stop.set()
+        event.accept()
+
+
+class LoginWindow(QWidget, Ui_Login):
+
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.lineEdit.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9]{16}"), self.lineEdit))
+        self.lineEdit_3.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9]{16}"), self.lineEdit_3))
+        self.lineEdit_2.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_2))
+        self.lineEdit_4.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_4))
+        self.lineEdit_6.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_6))
+
+        self.lineEdit_2.setEchoMode(QLineEdit.EchoMode.Password)
+        self.lineEdit_4.setEchoMode(QLineEdit.EchoMode.Password)
+        self.lineEdit_6.setEchoMode(QLineEdit.EchoMode.Password)
+        self.initWindow()
+        self.load_user_config()
+
+    def initWindow(self):
+        self.login_button.clicked.connect(self.start_login)
+        self.signup_button.clicked.connect(self.start_signup)
+        self.button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
+        self.button_2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+        self.show()
+
+    def start_login(self, _):
+        self.login_button.setText('登录中')
+        threading.Thread(target=self.login).start()
+
+    def start_signup(self, _):
+        self.signup_button.setText('注册中')
+        threading.Thread(target=self.signup).start()
+
+    def signup(self):
+        username = self.lineEdit_3.text()
+        password = self.lineEdit_4.text()
+        again_password = self.lineEdit_6.text()
+        if len(username) < 4:
+            self.label_2.setText('账号长度不能小于4位')
+            self.signup_button.setText('注册')
+            return 0
+        elif len(password) < 8:
+            self.label_2.setText('密码长度不能小于8位')
+            self.signup_button.setText('注册')
+            return 0
+        elif password != again_password:
+            self.label_2.setText('两次密码不一致')
+            self.signup_button.setText('注册')
+            return 0
+        success, message = services.signup(username, password)
+        if not success:
+            print('注册失败')
+            self.label_2.setText(message)
+        elif success:
+            print('注册成功')
+            self.stackedWidget.setCurrentIndex(0)
+            self.lineEdit.setText(username)
+            self.lineEdit_2.setText(password)
+        self.signup_button.setText('注册')
+
+    def login(self):
+        username = self.lineEdit.text()
+        password = self.lineEdit_2.text()
+        success, message = services.login(username, password)
+        if success:
+            publicSingle.login.emit(username)
+            threading.Thread(target=services.heartbeat, args=(username,)).start()
         else:
-            event.ignore()
+            print(message)
+        self.login_button.setText('登录')
 
-
-class ConfigDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("保存配置文件")
-
-        layout = QVBoxLayout()
-
-        self.file_name_input = QLineEdit(self)
-        self.file_name_input.setPlaceholderText("配置文件名称")
-        layout.addWidget(self.file_name_input)
-
-        self.list_widget = QListWidget(self)
-
+    def save_user_config(self):
         # 获取当前用户的路径
         user_path = os.path.expanduser('~')
 
         # 拼接文件路径
-        config_path = os.path.join(user_path, 'ChronoSnow', 'TaskConfig')
+        config_path = os.path.join(user_path, 'ChronoSnow', 'SystemConfig', 'User.ini')
 
         # 递归创建目录和文件
-        os.makedirs(config_path, exist_ok=True)
-        for file_name in os.listdir(config_path):
-            if file_name.endswith(".ini"):
-                # 去除文件名的后缀部分
-                file_name_without_extension = os.path.splitext(file_name)[0]
-                # 添加不带后缀的文件名到 QListWidget 中
-                self.list_widget.addItem(file_name_without_extension)
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        config = configparser.ConfigParser()
+        # 添加一些配置项
+        config['User'] = {
+            'username': self.lineEdit.text(),
+            'password': self.lineEdit_2.text(),
+            '记住密码': self.checkBox.isChecked(),
+            '自动登录': self.checkBox_2.isChecked()
+        }
 
-        layout.addWidget(self.list_widget)
+        with open(config_path, 'w', encoding='utf-8') as configfile:
+            config.write(configfile)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
+    def load_user_config(self):
+        # 获取当前用户的路径
+        user_path = os.path.expanduser('~')
 
-        self.setLayout(layout)
+        # 拼接文件路径
+        user_config_path = os.path.join(user_path, 'ChronoSnow', 'SystemConfig')
 
-    def get_selected_items(self):
+        os.makedirs(user_config_path, exist_ok=True)
+        config = configparser.ConfigParser()
+        # 读取配置文件
+        config.read(f'{user_config_path}\\User.ini', encoding='utf-8')
         try:
-            selected_item_text = self.list_widget.selectedItems()[0].text()
+            # 加载当前配置信息
+            username = config.get('User', 'username')
+            password = config.get('User', 'password')
+            if config.getboolean('User', '记住密码'):
+                self.checkBox.setChecked(config.getboolean('User', '记住密码'))
+                self.lineEdit.setText(username)
+                self.lineEdit_2.setText(password)
+            if config.getboolean('User', '自动登录'):
+                self.checkBox_2.setChecked(config.getboolean('User', '自动登录'))
+                self.login_button.click()
+        except configparser.NoSectionError as e:
+            print(e)
 
-            all_items = [self.list_widget.item(index).text() for index in range(self.list_widget.count())]
-            return all_items, selected_item_text
-        except IndexError:
-            pass
-
-
-class DelConfigDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("删除配置文件")
-
-        layout = QVBoxLayout()
-
-        self.list_widget = QListWidget(self)
-
-        # 获取当前用户的路径
-        user_path = os.path.expanduser('~')
-
-        # 拼接文件路径
-        config_path = os.path.join(user_path, 'ChronoSnow', 'TaskConfig')
-
-        # 递归创建目录和文件
-        os.makedirs(config_path, exist_ok=True)
-        for file_name in os.listdir(config_path):
-            if file_name.endswith(".ini"):
-                # 去除文件名的后缀部分
-                file_name_without_extension = os.path.splitext(file_name)[0]
-                # 添加不带后缀的文件名到 QListWidget 中
-                self.list_widget.addItem(file_name_without_extension)
-
-        layout.addWidget(self.list_widget)
-
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-        self.setLayout(layout)
-
-    def get_selected_items(self):
-        selected_item_text = self.list_widget.selectedItems()[0].text()
-
-        all_items = [self.list_widget.item(index).text() for index in range(self.list_widget.count())]
-        return all_items, selected_item_text
+    def closeEvent(self, event):
+        self.save_user_config()
 
 
 class HomeWindow(QWidget):
@@ -747,6 +793,7 @@ class RunWindow(QWidget, Ui_Run):
         self.StopAllButton.clicked.connect(self.stop_all)
         self.ResumeAllButton.clicked.connect(self.resume_all)
         self.UnbindAllButton.clicked.connect(self.unbind_all)
+        self.PersonaTableWidget.doubleClicked.connect(self.win_up)
         publicSingle.state.connect(self.set_state)
         publicSingle.journal.connect(self.journal)
         publicSingle.set_character.connect(self.set_character)
@@ -783,6 +830,22 @@ class RunWindow(QWidget, Ui_Run):
 
         # 设置表格部件所有行自动拉伸
         self.PersonaTableWidget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+
+    # 窗口调度
+    def win_up(self, _):
+
+        row = self.PersonaTableWidget.currentIndex().row()
+        col = self.PersonaTableWidget.currentIndex().column()
+        if row in self.struct_task_dict and col == 0:
+            user = self.struct_task_dict[row]
+            # 将窗口显示在前台
+            win32gui.PostMessage(user.handle, win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
+            # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
+            win32gui.SetForegroundWindow(user.handle)
+            time.sleep(0.05)
+            # # win32gui.PostMessage(user.mask_window.winId(), win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
+            # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
+            win32gui.SetForegroundWindow(user.mask_window.winId())
 
     def journal(self, message):
         # 获取当前时间
@@ -873,12 +936,18 @@ class RunWindow(QWidget, Ui_Run):
             # 从原始截图中复制指定区域
             img = image[y:y + height, x:x + width]
             cv2.imwrite(f'{temp_img_path}\\person_{row}.bmp', img)
-            # 创建 QPixmap 对象，加载图片
-            pixmap = QPixmap(f'{temp_img_path}\\person_{row}.bmp')
+
+            img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+            # # 创建 QPixmap 对象，加载图片
+            # pixmap = QPixmap(f'{temp_img_path}\\person_{row}.bmp')
+            # 将OpenCV图像转换为Qt可用的格式
+            height, width, channel = img.shape
+            bytesPerLine = 3 * width
+            qImg = QPixmap.fromImage(QImage(img.data, width, height, bytesPerLine, QImage.Format.Format_RGB888))
 
             # 将图片添加到表格中
             item = QTableWidgetItem()
-            item.setData(Qt.ItemDataRole.DecorationRole, pixmap)  # 使用 Qt::DecorationRole 用于图像数据
+            item.setData(Qt.ItemDataRole.DecorationRole, qImg)  # 使用 Qt::DecorationRole 用于图像数据
             self.PersonaTableWidget.setItem(row, 0, item)
         except KeyError:
             pass
@@ -928,13 +997,13 @@ class StructureTask:
         self.row = row
         self.handle = handle
         self.flag = False
-        self.set_window(row)
+        self.set_window()
         self.mask_window = MaskWindow(self.handle)
         self.create_temp_file()
         self.block_window()
         publicSingle.write_json.emit(self.row)
 
-    def set_window(self, row):
+    def set_window(self):
         scale_factor = QApplication.primaryScreen().devicePixelRatio()
         basic_functional.set_window(self.handle, DPI_MAPP[scale_factor])
 
@@ -943,7 +1012,7 @@ class StructureTask:
         temp_img_path = os.path.join(temp_dir, f'template_image{self.row}')
 
         shutil.rmtree(temp_img_path, ignore_errors=True)  # 删除目标文件夹及其内容，如果存在的话
-        shutil.copytree('app/images/Img', temp_img_path)
+        shutil.copytree(f'app/images/Img', temp_img_path)
 
     def block_window(self):
         basic_functional.DisableTheWindow(self.handle)
@@ -997,88 +1066,3 @@ class MaskWindow(QWidget):
 
     def mask_close(self):
         self.close()
-
-
-class TimingQMessageBox:
-    def __init__(self):
-        ...
-
-    @staticmethod
-    def information(self, title, message):
-        message_box = QMessageBox()
-        message_box.setWindowTitle(title)
-        message_box.setText(message)
-        message_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-        message_box.setDefaultButton(QMessageBox.StandardButton.Ok)
-        QTimer.singleShot(700, lambda: message_box.button(QMessageBox.StandardButton.Ok).animateClick())
-        message_box.exec()
-
-
-class CustomLineEdit(QLineEdit):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-    def keyPressEvent(self, event):
-        self.clear()
-        try:
-            key = KEY_DICT[event.key()]
-        except KeyError:
-            key = ''
-        modifiers = str(event.modifiers())
-        if modifiers == 'KeyboardModifier.KeypadModifier':
-            key = 'Num' + key
-        # 在这里添加你自定义的按键处理逻辑
-        print("CustomLineEdit - Key pressed:", event.key(), key, modifiers)
-
-        self.setText(key)
-
-KEY_DICT = {
-    48: '0',
-    49: '1',
-    50: '2',
-    51: '3',
-    52: '4',
-    53: '5',
-    54: '6',
-    55: '7',
-    56: '8',
-    57: '9',
-    65: 'A',
-    66: 'B',
-    67: 'C',
-    68: 'D',
-    69: 'E',
-    70: 'F',
-    71: 'G',
-    72: 'H',
-    73: 'I',
-    74: 'J',
-    75: 'K',
-    76: 'L',
-    77: 'M',
-    78: 'N',
-    79: 'O',
-    80: 'P',
-    81: 'Q',
-    82: 'R',
-    83: 'S',
-    84: 'T',
-    85: 'U',
-    86: 'V',
-    87: 'W',
-    88: 'X',
-    89: 'Y',
-    90: 'Z',
-    # 16777233: 'Num1',
-    # 16777237: 'Num2',
-    # 16777239: 'Num3',
-    # 16777234: 'Num4',
-    # 16777227: 'Num5',
-    # 16777236: 'Num6',
-    # 16777232: 'Num7',
-    # 16777235: 'Num8',
-    # 16777238: 'Num9',
-    # 16777222: 'Num0',
-    16777249: 'ctrl',
-    16777216: 'ESC'
-}

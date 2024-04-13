@@ -19,6 +19,5 @@ logging.basicConfig(
 
 # create main window
 w = MainWindow()
-w.show()
 
 app.exec()
