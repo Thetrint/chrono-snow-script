@@ -23,51 +23,74 @@ class ClientServices:
         except KeyError as e:
             print(e)
             return False
+        except requests.exceptions.ProxyError:
+            pass
+        except requests.exceptions.ConnectionError:
+            pass
+        except requests.exceptions.Timeout:
+            pass
+        except requests.exceptions.RequestException:
+            pass
 
     @staticmethod
     def login(username, password):
-        url = 'https://75561x0s00.vicp.fun/login'
-        data = {
-            'username': username,
-            'password': password,
-            'token': TOKEN
-        }
-        if response := ClientServices.POST(url, data):
-            # 从字典中获取成功信息
-            success = response.get('success')
-            message = response.get('message')
-            return success, message
-        return True, ''
+        try:
+            url = 'https://75561x0s00.vicp.fun/login'
+            data = {
+                'username': username,
+                'password': password,
+                'token': TOKEN
+            }
+            if response := ClientServices.POST(url, data):
+                # 从字典中获取成功信息
+                success = response.get('success')
+                message = response.get('message')
+                return success, message
+            return True, ''
+        except requests.exceptions.ProxyError:
+            pass
+        except requests.exceptions.ConnectionError:
+            pass
 
     @staticmethod
     def signup(username, password):
-        url = 'https://75561x0s00.vicp.fun/signup'
-        data = {
-            'username': username,
-            'password': password
-        }
-        if response := ClientServices.POST(url, data):
-            success = response.get('success')
-            message = response.get('message')
-            return success, message
-        return False, '服务器请求失败'
-
-    def heartbeat(self, username):
-        while not self.stop.is_set():
-            url = 'https://75561x0s00.vicp.fun/heartbeat'
+        try:
+            url = 'https://75561x0s00.vicp.fun/signup'
             data = {
                 'username': username,
-                'token': TOKEN
+                'password': password
             }
             if response := ClientServices.POST(url, data):
                 success = response.get('success')
                 message = response.get('message')
-                if message == '登录凭证验证失败':
-                    publicSingle.offline.emit()
-            for _ in range(60):
-                if self.stop.is_set():
-                    return 0
-                time.sleep(1)
+                return success, message
+            return False, '服务器请求失败'
+        except requests.exceptions.ProxyError:
+            pass
+        except requests.exceptions.ConnectionError:
+            pass
+
+    def heartbeat(self, username):
+        while not self.stop.is_set():
+            try:
+                url = 'https://75561x0s00.vicp.fun/heartbeat'
+                data = {
+                    'username': username,
+                    'token': TOKEN
+                }
+                if response := ClientServices.POST(url, data):
+                    success = response.get('success')
+                    message = response.get('message')
+                    if message == '登录凭证验证失败':
+                        publicSingle.offline.emit()
+                for _ in range(60):
+                    if self.stop.is_set():
+                        return 0
+                    time.sleep(1)
+            except requests.exceptions.ProxyError:
+                pass
+            except requests.exceptions.ConnectionError:
+                pass
 
     @staticmethod
     def get_public_ip():
@@ -80,7 +103,7 @@ class ClientServices:
 
 services = ClientServices()
 
-TOKEN = f'{services.get_public_ip()} {datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d")}'
+TOKEN = f'{services.get_public_ip()} {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
 
 
 if __name__ == '__main__':

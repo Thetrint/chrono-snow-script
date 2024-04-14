@@ -1371,19 +1371,21 @@ class LessonTask(BasicTask):
                 if not self.target_location:
                     self.key_down_up('B')
                 elif self.target and time.time() - self.start > 30:
+                    self.start = time.time()
                     if self.count:
                         self.Visual('主界面任务', histogram_process=True, threshold=0.7, wait_count=1)
                         self.Visual('主界面江湖', histogram_process=True, threshold=0.7, wait_count=1)
                         self.mouse_move(158, 239, 198, 639, 2)
                         self.count = False
-                    self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务', '锻心任务',
-                                histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
+                    self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
+                                '锻心任务',
+                                '归义任务', histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
             elif switch == 1:
                 self.Visual('活动入口', histogram_process=True, threshold=0.7)
                 self.Visual('活动', binary_process=True, threshold=0.5)
             elif switch == 2:
                 self.Visual('活动界面江湖', binary_process=True, threshold=0.6)
-                self.Visual('濯剑', '观梦', '漱尘', '止杀', '锻心', '吟风', '含灵', '寻道', '悟禅',
+                self.Visual('濯剑', '观梦', '漱尘', '止杀', '锻心', '吟风', '含灵', '寻道', '悟禅', '归义',
                             histogram_process=True, threshold=0.7, y=45)
             elif switch == 3:
                 if self.Visual('课业', binary_process=True, threshold=0.4, y=210):
@@ -1402,11 +1404,19 @@ class LessonTask(BasicTask):
                     self.target = True
             elif switch == 6:
                 for _ in range(10):
-                    target = random.sample(self.coord('排序', binary_process=True, threshold=0.6, search_scope=(412, 364, 1233, 576)), 2)
+                    target = random.sample(
+                        self.coord('排序', binary_process=True, threshold=0.6, search_scope=(412, 364, 1233, 576)), 2)
                     self.mouse_move(target[0][0], target[0][1], target[1][0], target[1][1], move_timeout=0)
             elif switch == 7:
                 self.Visual('购买', histogram_process=True, threshold=0.7)
                 self.Visual('确定', binary_process=True, threshold=0.4)
+            elif switch == 11:
+                self.Visual('商城购买', binary_process=True, threshold=0.4, y=-71)
+                for _ in range(14):
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.mouse_down_up(970, 680, tap_after_timeout=0.2)
+                self.close_win(1)
             elif switch == 9:
                 self.Visual('铜钱购买', histogram_process=True, threshold=0.7, search_scope=(820, 517, 1242, 673))
             elif switch == 10:
@@ -1422,6 +1432,8 @@ class LessonTask(BasicTask):
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
             if self.coord('一键提交', binary_process=True, threshold=0.4):
                 return 8  # 提交界面
+            elif self.coord('商城购买', binary_process=True, threshold=0.4):
+                return 11  # 商城购买弹窗
             return 0  # 大世界主界面
         elif self.coord('物品界面', histogram_process=True, threshold=0.7):
             return 1  # 大世界主界面
@@ -1442,120 +1454,6 @@ class LessonTask(BasicTask):
             return 9  # 杂货商人界面
         elif self.coord('课业任务答题', histogram_process=True, threshold=0.65):
             return 10  # 答题界面
-
-    #     self.key_down_up('B')
-    #     self.Visual('活动入口', histogram_process=True, threshold=0.7)
-    #     self.Visual('活动', binary_process=True, threshold=0.5)
-    #     self.Visual('活动界面江湖', laplacian_process=True)
-    #     if self.Visual('濯剑', '观梦', '漱尘', '止杀', '锻心', '吟风', '含灵', '寻道', '悟禅', histogram_process=True,
-    #                    threshold=0.7, y=45):
-    #         self.Visual('课业', laplacian_process=True, y=210)
-    #         self.Visual('课业1', '悟禅1', binary_process=True, threshold=0.4, wait_count=360)
-    #         self.Visual('确定1', binary_process=True, threshold=0.4)
-    #         for _ in range(8):
-    #             if event.unbind[self.mapp].is_set():
-    #                 break
-    #             if not self.Visual('困难课业', histogram_process=True, threshold=0.7):
-    #                 self.Visual('刷新1', laplacian_process=True, x=-55)
-    #                 self.Visual('确定', binary_process=True, threshold=0.4)
-    #
-    #             else:
-    #                 self.Visual('关闭', histogram_process=True, threshold=0.7, wait_count=1)
-    #                 break
-    #
-    #         # 启动任务处理线程
-    #         Thread(target=self.lesson_2).start()
-    #         start_time = 0
-    #         for _ in range(600):
-    #             if time.time() - start_time >= 60 and self.coord('自动寻路中', histogram_process=True, threshold=0.7):
-    #                 self.Visual('主界面任务', histogram_process=True, threshold=0.7, wait_count=1)
-    #                 self.Visual('主界面江湖', histogram_process=True, threshold=0.7, wait_count=1)
-    #                 self.mouse_move(158, 239, 198, 639, 2)
-    #                 self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
-    #                             histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
-    #                 self.journal('课业任务检测中')
-    #                 start_time = time.time()
-    #             if event.unbind[self.mapp].is_set():
-    #                 break
-    #             if self.coord('交易界面', '购买', histogram_process=True, threshold=0.7):
-    #                 self.journal('摆摊购买')
-    #                 lg = self.lesson_1()
-    #                 if lg == 0:
-    #                     self.journal('课业任务购买失败')
-    #                     if self.Visual('一键提交', laplacian_process=True):
-    #                         self.mouse_down_up(0, 0)
-    #                         if self.Visual('确定', laplacian_process=True):
-    #                             break
-    #                     break
-    #             if self.coord('商城购买', histogram_process=True, threshold=0.7):
-    #                 self.journal('商城购买')
-    #                 self.mouse_down_up(1334, 750)
-    #                 self.lesson_3()
-    #             if self.Visual('一键提交', laplacian_process=True, wait_count=1):
-    #                 self.mouse_down_up(0, 0)
-    #                 if self.Visual('确定', laplacian_process=True):
-    #                     break
-    #             time.sleep(1)
-    #
-    #     # 退出任务处理线程
-    #     self.lesson_2_flag = False
-    #     # 任务完成关闭多余弹窗
-    #     for _ in range(5):
-    #         if event.unbind[self.mapp].is_set():
-    #             break
-    #         self.Visual('关闭', histogram_process=True, threshold=0.7)
-    #
-    # # 课业分支1
-    # def lesson_1(self):
-    #     """
-    #     课业任务购买逻辑
-    #     :return: 0 购买失败 1 购买成功
-    #     """
-    #     for _ in range(10):
-    #         if self.Visual('购买', laplacian_process=True):
-    #             self.Visual('确定', laplacian_process=True)
-    #         if self.coord('一键提交', '自动寻路中', histogram_process=True, threshold=0.7):
-    #             return 1
-    #         for _ in range(3):
-    #             if event.unbind[self.mapp].is_set():
-    #                 break
-    #             self.Visual('关闭', histogram_process=True, threshold=0.65, wait_count=1)
-    #         self.Visual('主界面任务', histogram_process=True, threshold=0.7)
-    #         self.Visual('主界面江湖', histogram_process=True, threshold=0.7)
-    #         self.mouse_move(158, 239, 198, 639, 2)
-    #         self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
-    #                     histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
-    #
-    #     return 0
-    #
-    # # 课业分支3
-    # def lesson_3(self):
-    #     for _ in range(10):
-    #         self.Visual('主界面任务', histogram_process=True, threshold=0.7)
-    #         self.Visual('主界面江湖', histogram_process=True, threshold=0.7)
-    #         self.mouse_move(158, 239, 198, 639, 2)
-    #         self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
-    #                     histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
-    #         self.Visual('商城购买', histogram_process=True, threshold=0.7, y=-45)
-    #         for _ in range(6):
-    #             if event.unbind[self.mapp].is_set():
-    #                 break
-    #             self.mouse_down_up(970, 680, tap_after_timeout=0.2)
-    #         self.Visual('关闭', histogram_process=True, threshold=0.7)
-    #         if self.coord('一键提交', '自动寻路中', histogram_process=True, threshold=0.7):
-    #             break
-    #
-    # # 课业分支2
-    # def lesson_2(self):
-    #     while self.lesson_2_flag:
-    #         # 分支1 止杀任务 漱尘任务
-    #         if self.coord('课业任务答题', histogram_process=True, threshold=0.65):
-    #             self.journal('课业答题任务')
-    #             self.Visual('关闭', histogram_process=True, threshold=0.7)
-    #         # 分支2 含灵任务 观梦任务 漱尘任务
-    #         if self.coord('杂货商人', laplacian_process=True):
-    #             self.Visual('铜钱购买', histogram_process=True, threshold=0.7, search_scope=(820, 517, 1242, 673))
-    #         time.sleep(3)
 
 
 # 发布悬赏
@@ -1784,13 +1682,15 @@ class UrgentDeliveryTask(BasicTask):
                 self.Visual('选择菜品', histogram_process=True, threshold=0.7)
                 self.Visual('确定', laplacian_process=True)
             elif (self.coord('自动寻路中', histogram_process=True, threshold=0.7) or
-                  self.coord('菜品送达', binary_process=True, threshold=0.4, search_scope=(731, 200, 1234, 604))):
+                  self.coord('菜品送达', histogram_process=True, threshold=0.7, search_scope=(731, 200, 1234, 604))):
                 for _ in range(20):
                     if event.unbind[self.mapp].is_set():
                         break
-                    if self.Visual('菜品送达', binary_process=True, threshold=0.4, search_scope=(731, 200, 1234, 604),
+                    if self.Visual('菜品送达', histogram_process=True, threshold=0.7,
+                                   search_scope=(731, 200, 1234, 604),
                                    wait_count=10):
-                        self.Visual('菜品送达', binary_process=True, threshold=0.4, search_scope=(731, 200, 1234, 604),
+                        self.Visual('菜品送达', histogram_process=True, threshold=0.7,
+                                    search_scope=(731, 200, 1234, 604),
                                     wait_count=1)
                         if self.Visual('确认1', histogram_process=True, threshold=0.7, wait_count=20):
                             implement = True
@@ -1967,7 +1867,7 @@ class MerchantLake(BasicTask):
                     self.Visual('铜钱购买', threshold=0.75)
                     if self.Visual('行商等待队员', binary_process=False, threshold=0.4,
                                    search_scope=(328, 0, 992, 107), tap=False):
-                        if self.Visual('行商交易', y=84, histogram_process=True, threshold=0.7, wait_count=20):
+                        if self.Visual('行商交易', y=84, histogram_process=True, threshold=0.7, wait_count=30):
                             self.task_execution = True
                     else:
                         self.team_satisfied = False
@@ -2352,31 +2252,82 @@ class SweepStalls(BasicTask):
         timeout_1 = int(event.task_config[self.mapp].get('扫摆摊延迟1')) / 1000
         timeout_2 = int(event.task_config[self.mapp].get('扫摆摊延迟2')) / 1000
         timeout_3 = int(event.task_config[self.mapp].get('扫摆摊延迟3')) / 1000
+
+        data = [(547, 219), (961, 219), (547, 327), (961, 327), (547, 435), (961, 435), (547, 543), (961, 543)]
+
+        exclude = []
+        if not event.task_config[self.mapp].get('关注1'):
+            exclude.append((547, 219))
+        if not event.task_config[self.mapp].get('关注2'):
+            exclude.append((961, 219))
+        if not event.task_config[self.mapp].get('关注3'):
+            exclude.append((547, 327))
+        if not event.task_config[self.mapp].get('关注4'):
+            exclude.append((961, 327))
+        if not event.task_config[self.mapp].get('关注5'):
+            exclude.append((547, 435))
+        if not event.task_config[self.mapp].get('关注6'):
+            exclude.append((961, 435))
+        if not event.task_config[self.mapp].get('关注7'):
+            exclude.append((547, 543))
+        if not event.task_config[self.mapp].get('关注8'):
+            exclude.append((961, 543))
+
+        data_set = set(data)
+
         Thread(target=self.sweep_stalls_1).start()
         while not event.unbind[self.mapp].is_set():
-            time.sleep(0.01)
-            if not self.coord('商品数量', histogram_process=True, threshold=0.7, search_scope=(468, 205, 563, 243)):
+            coords = self.coord('商品数量', histogram_process=True, threshold=0.7, search_scope=(365, 175, 1153, 592))
+            if not (exclude_data := list(data_set - set(coords + exclude))):
+                continue
+            if coord := random.choice(exclude_data):
                 self.sweep_stalls_1_flag = False
-                self.mouse_down_up(533, 227, tap_after_timeout=0)
-
+                self.mouse_down_up(coord[0], coord[1], tap_after_timeout=0.1)
                 while not event.unbind[self.mapp].is_set():
                     if self.Visual('银两购买', histogram_process=True, threshold=0.6,
                                    search_scope=(468, 205, 563, 243), tap_ago_timeout=0, tap_after_timeout=timeout_1,
-                                   continuous_search_timeout=0, wait_count=50):
-                        self.Visual('购买', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
-                                    tap_after_timeout=timeout_2, continuous_search_timeout=0, wait_count=10)
-                        self.Visual('确定', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
-                                    tap_after_timeout=timeout_3, continuous_search_timeout=0, wait_count=10)
+                                   continuous_search_timeout=0, wait_count=30):
+                        if self.Visual('购买', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
+                                       tap_after_timeout=timeout_2, continuous_search_timeout=0, wait_count=10):
+                            self.Visual('确定', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
+                                        tap_after_timeout=timeout_3, continuous_search_timeout=0, wait_count=10)
                     else:
                         self.sweep_stalls_1_flag = True
-                        self.mouse_down_up(189, 285, tap_after_timeout=1)
+                        self.mouse_down_up(189, 285, tap_after_timeout=1.5)
                         break
+        # self.key_down_up('B')
+        # self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        # self.Visual('交易', histogram_process=True, threshold=0.7)
+        # self.Visual('摆摊', laplacian_process=True, threshold=0.3)
+        # self.Visual('关注', histogram_process=True, threshold=0.7)
+        # timeout_1 = int(event.task_config[self.mapp].get('扫摆摊延迟1')) / 1000
+        # timeout_2 = int(event.task_config[self.mapp].get('扫摆摊延迟2')) / 1000
+        # timeout_3 = int(event.task_config[self.mapp].get('扫摆摊延迟3')) / 1000
+        # Thread(target=self.sweep_stalls_1).start()
+        # while not event.unbind[self.mapp].is_set():
+        #     time.sleep(0.01)
+        #     if not self.coord('商品数量', histogram_process=True, threshold=0.7, search_scope=(468, 205, 563, 243)):
+        #         self.sweep_stalls_1_flag = False
+        #         self.mouse_down_up(533, 227, tap_after_timeout=0)
+        #
+        #         while not event.unbind[self.mapp].is_set():
+        #             if self.Visual('银两购买', histogram_process=True, threshold=0.6,
+        #                            search_scope=(468, 205, 563, 243), tap_ago_timeout=0, tap_after_timeout=timeout_1,
+        #                            continuous_search_timeout=0, wait_count=50):
+        #                 self.Visual('购买', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
+        #                             tap_after_timeout=timeout_2, continuous_search_timeout=0, wait_count=10)
+        #                 self.Visual('确定', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
+        #                             tap_after_timeout=timeout_3, continuous_search_timeout=0, wait_count=10)
+        #             else:
+        #                 self.sweep_stalls_1_flag = True
+        #                 self.mouse_down_up(189, 285, tap_after_timeout=1)
+        #                 break
 
     def sweep_stalls_1(self):
         while not event.unbind[self.mapp].is_set():
             if self.sweep_stalls_1_flag:
                 self.mouse_down_up(189, 285, tap_after_timeout=0)
-            time.sleep(0.22)
+            time.sleep(0.65)
 
 
 # # 扫集市

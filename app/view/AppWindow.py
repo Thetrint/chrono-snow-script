@@ -116,6 +116,14 @@ class MainWindow(QWidget, Ui_MainWindow):
             "扫摆摊延迟1": self.script.spinBox.value(),
             "扫摆摊延迟2": self.script.spinBox_2.value(),
             "扫摆摊延迟3": self.script.spinBox_3.value(),
+            "关注1": self.script.checkBox_21.isChecked(),
+            "关注2": self.script.checkBox_25.isChecked(),
+            "关注3": self.script.checkBox_22.isChecked(),
+            "关注4": self.script.checkBox_26.isChecked(),
+            "关注5": self.script.checkBox_24.isChecked(),
+            "关注6": self.script.checkBox_27.isChecked(),
+            "关注7": self.script.checkBox_28.isChecked(),
+            "关注8": self.script.checkBox_29.isChecked(),
             "华山论剑次数": self.script.spinBox_6.value(),
             "华山论剑秒退": self.script.checkBox_10.isChecked(),
             "背包": self.script.lineEdit_14.text(),
@@ -430,6 +438,15 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_49.setText(config.get('日常任务', '江湖行商喊话内容'))
             self.script.checkBox_20.setChecked(config.getboolean('日常任务', '商票上缴'))
 
+            self.script.checkBox_21.setChecked(config.getboolean('日常任务', '关注1'))
+            self.script.checkBox_25.setChecked(config.getboolean('日常任务', '关注2'))
+            self.script.checkBox_22.setChecked(config.getboolean('日常任务', '关注3'))
+            self.script.checkBox_26.setChecked(config.getboolean('日常任务', '关注4'))
+            self.script.checkBox_24.setChecked(config.getboolean('日常任务', '关注5'))
+            self.script.checkBox_27.setChecked(config.getboolean('日常任务', '关注6'))
+            self.script.checkBox_28.setChecked(config.getboolean('日常任务', '关注7'))
+            self.script.checkBox_29.setChecked(config.getboolean('日常任务', '关注8'))
+
         except configparser.NoOptionError:
             pass
         except configparser.NoSectionError:
@@ -597,7 +614,7 @@ class LoginWindow(QWidget, Ui_Login):
             publicSingle.login.emit(username)
             threading.Thread(target=services.heartbeat, args=(username,)).start()
         else:
-            print(message)
+            self.label.setText(message)
         self.login_button.setText('登录')
 
     def save_user_config(self):
@@ -842,10 +859,11 @@ class RunWindow(QWidget, Ui_Run):
             win32gui.PostMessage(user.handle, win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
             win32gui.SetForegroundWindow(user.handle)
-            time.sleep(0.05)
-            # # win32gui.PostMessage(user.mask_window.winId(), win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
-            # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
-            win32gui.SetForegroundWindow(user.mask_window.winId())
+            # time.sleep(0.05)
+            user.mask_window.activateWindow()
+            # # # win32gui.PostMessage(user.mask_window.winId(), win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
+            # # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
+            # win32gui.SetForegroundWindow(user.mask_window.winId())
 
     def journal(self, message):
         # 获取当前时间
