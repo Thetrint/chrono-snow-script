@@ -72,6 +72,7 @@ class ClientServices:
 
     def heartbeat(self, username):
         while not self.stop.is_set():
+            print('更新状态')
             try:
                 url = 'https://75561x0s00.vicp.fun/heartbeat'
                 data = {
@@ -83,10 +84,12 @@ class ClientServices:
                     message = response.get('message')
                     if message == '登录凭证验证失败':
                         publicSingle.offline.emit()
-                for _ in range(60):
-                    if self.stop.is_set():
-                        return 0
-                    time.sleep(1)
+                    if success:
+                        for _ in range(55):
+                            if self.stop.is_set():
+                                return 0
+                            time.sleep(1)
+                    time.sleep(5)
             except requests.exceptions.ProxyError:
                 pass
             except requests.exceptions.ConnectionError:
@@ -95,8 +98,17 @@ class ClientServices:
     @staticmethod
     def get_public_ip():
         try:
-            response = requests.get('https://api.ipify.org?format=json')
-            return response.json()['ip']
+            # 定义头文件
+            headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                              ' Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0'
+            }
+
+            # 发送GET请求并添加头文件
+            response = requests.get('https://searchplugin.csdn.net/api/v1/ip/get?ip=', headers=headers)
+
+            return response.json()['data']['ip']
         except Exception as e:
             return str(e)
 

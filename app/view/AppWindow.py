@@ -859,7 +859,7 @@ class RunWindow(QWidget, Ui_Run):
             win32gui.PostMessage(user.handle, win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
             win32gui.SetForegroundWindow(user.handle)
-            # time.sleep(0.05)
+            time.sleep(0.1)
             user.mask_window.activateWindow()
             # # # win32gui.PostMessage(user.mask_window.winId(), win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台

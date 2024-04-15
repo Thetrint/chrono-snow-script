@@ -611,7 +611,7 @@ class Initialize(BasicTask):
         pass
 
     def implement(self):
-        self.close_win(3)
+        self.close_win(5)
         self.key_down_up('ESC')
         self.Visual('端游模式', histogram_process=True, threshold=0.8)
         self.key_down_up('ESC')
@@ -1378,8 +1378,8 @@ class LessonTask(BasicTask):
                         self.mouse_move(158, 239, 198, 639, 2)
                         self.count = False
                     self.Visual('止杀任务', '吟风任务', '漱尘任务', '濯剑任务', '含灵任务', '寻道任务', '观梦任务',
-                                '锻心任务',
-                                '归义任务', histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
+                                '锻心任务', '课业任务', '归义任务',
+                                histogram_process=True, threshold=0.65, search_scope=(41, 211, 268, 422))
             elif switch == 1:
                 self.Visual('活动入口', histogram_process=True, threshold=0.7)
                 self.Visual('活动', binary_process=True, threshold=0.5)
@@ -1410,6 +1410,7 @@ class LessonTask(BasicTask):
             elif switch == 7:
                 self.Visual('购买', histogram_process=True, threshold=0.7)
                 self.Visual('确定', binary_process=True, threshold=0.4)
+                self.close_win(2)
             elif switch == 11:
                 self.Visual('商城购买', binary_process=True, threshold=0.4, y=-71)
                 for _ in range(14):
@@ -1429,6 +1430,7 @@ class LessonTask(BasicTask):
                     break
 
     def detect(self):
+        time.sleep(1)
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
             if self.coord('一键提交', binary_process=True, threshold=0.4):
                 return 8  # 提交界面
@@ -1855,7 +1857,7 @@ class MerchantLake(BasicTask):
                             self.close_win(3)
                             self.task_execution = False
                             self.target_location = False
-                            self.team_satisfied = False
+                            # self.team_satisfied = False
                             self.count += 1
                             if self.count == int(event.task_config[self.mapp].get('江湖行商次数')):
                                 self.leave_team()
@@ -1864,7 +1866,7 @@ class MerchantLake(BasicTask):
                 if self.team_satisfied:
                     self.Visual('参与行商', binary_process=True, threshold=0.4)
                     self.Visual('确认发起', binary_process=True, threshold=0.4, wait_count=1)
-                    self.Visual('铜钱购买', threshold=0.75)
+                    self.Visual('铜钱购买', threshold=0.75, wait_count=1)
                     if self.Visual('行商等待队员', binary_process=False, threshold=0.4,
                                    search_scope=(328, 0, 992, 107), tap=False):
                         if self.Visual('行商交易', y=84, histogram_process=True, threshold=0.7, wait_count=30):
@@ -1878,7 +1880,6 @@ class MerchantLake(BasicTask):
                 self.merchants_lakes_4()
             elif switch == 5:
                 self.Visual('行商交易', y=84, histogram_process=True, threshold=0.7, wait_count=1)
-                self.task_execution = True
             elif switch == 3 and self.task_execution:
                 self.Visual('江南', binary_process=True, threshold=0.6)
                 if self.current_location == 0:
@@ -1951,6 +1952,11 @@ class MerchantLake(BasicTask):
             num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
             if 5 - num >= 3:
                 time.sleep(1)
+                while not event.unbind[self.mapp].is_set():
+                    if self.Visual('离线', histogram_process=True, threshold=0.7):
+                        self.Visual('请离队伍', binary_process=True, threshold=0.4)
+                    else:
+                        break
                 num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
                 if 5 - num >= 3:
                     if self.Visual('一键召回', binary_process=True, threshold=0.45):
@@ -2390,11 +2396,12 @@ class GangPoints(BasicTask):
                 self.Visual('全服', histogram_process=True, threshold=0.7)
                 self.mouse_down_up(585, 189)
                 self.Visual('参观', binary_process=True, threshold=0.4)
+                time.sleep(5)
             elif switch == 3:
                 self.key_down_up('M')
                 self.mouse_down_up(768, 530)
                 self.key_down_up('M')
-                self.Visual('清扫', binary_process=True, threshold=0.4, wait_count=20)
+                self.Visual('清扫', binary_process=True, threshold=0.6, wait_count=20)
                 return 0
 
     def detect(self):
@@ -2477,6 +2484,112 @@ class SittingObserving(BasicTask):
                 break
             if not self.Visual('关闭', histogram_process=True, threshold=0.7):
                 break
+
+
+# 主线任务
+class MasterStrokeTask(BasicTask):
+
+    def __init__(self, row, handle, mapp):
+        super().__init__(row, handle, mapp)
+        self.flag_1 = True
+        self.start = time.time()
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        while not event.unbind[self.mapp].is_set():
+            switch = self.detect()
+            if switch == 0:
+                if time.time() - self.start > 300:
+                    self.key_down_up('space')
+                    self.escape_stuck()
+                    self.start = time.time()
+                self.key_down_up('Y')
+
+            elif switch == 1:
+                self.Visual('对话回答', binary_process=True, threshold=0.65)
+            elif switch == -1:
+                self.mouse_down_up(0, 0)
+            elif switch == 2:
+                self.Visual('装备', binary_process=True, threshold=0.4)
+            elif switch == 3:
+                self.Visual('交互', '交互1', '交互2', '交互3', '交互4', histogram_process=True, threshold=0.7)
+                time.sleep(7)
+                self.key_down_up('Y')
+            elif switch == 4:
+                self.Visual('点击关闭', binary_process=True, threshold=0.5)
+            elif switch == 7:
+                self.Visual('绝世妖姬', binary_process=True, threshold=0.5)
+                self.Visual('设为目标', binary_process=True, threshold=0.5)
+            elif switch == 8:
+                self.Visual('脸谱商店', binary_process=True, threshold=0.5)
+                self.Visual('购买', binary_process=True, threshold=0.5)
+                self.close_win(2)
+            elif switch == 9:
+                self.Visual('天灵', binary_process=True, threshold=0.5, y=45)
+                self.Visual('装备', binary_process=True, threshold=0.4)
+                self.close_win(2)
+            elif switch == 10:
+                self.Visual('江湖目标吧', binary_process=True, threshold=0.5, x=186, y=-26)
+                self.mouse_down_up(1253, 460)
+                self.close_win(2)
+            elif switch == 11:
+                self.close_win(4)
+            elif switch == 12:
+                self.Visual('跑', histogram_process=True, threshold=0.7)
+                self.flag_1 = False
+            elif switch == 13:
+                self.close_win(2)
+                self.Visual('马儿', histogram_process=True, threshold=0.7)
+            elif switch == 14:
+                self.Visual('马儿', histogram_process=True, threshold=0.7, x=80)
+                self.Visual('马儿', histogram_process=True, threshold=0.7, x=80)
+            elif switch == 5:
+                self.key_down_up('1')
+                self.key_down_up('2')
+                self.key_down_up('3')
+                self.key_down_up('4')
+                self.key_down_up('5')
+                self.key_down_up('R')
+                self.key_down_up('Y')
+            elif switch == 6:
+                self.Visual('随机选择', binary_process=True, threshold=0.7)
+
+    def detect(self):
+        time.sleep(2)
+        if self.coord('挂机', histogram_process=True, threshold=0.65):
+            if self.coord('装备', binary_process=True, threshold=0.4):
+                return 2  # 装备
+            elif self.coord('交互', '交互1', '交互2', '交互3','交互4', histogram_process=True, threshold=0.7):
+                return 3  # 交互
+            elif self.coord('战', histogram_process=True, threshold=0.65, search_scope=(49, 147, 316, 359)):
+                return 5  # 战斗
+            elif self.coord('江湖目标吧', binary_process=True, threshold=0.5):
+                return 10  # 江湖目标
+            elif self.coord('跑', histogram_process=True, threshold=0.7) and self.flag_1:
+                return 12  # 跑
+            elif self.coord('经验', binary_process=True, threshold=0.5):
+                return 13  # 经验
+            elif self.coord('牵引', histogram_process=True, threshold=0.7):
+                return 14  # B牵引
+            return 0  # 主界面
+        elif self.coord('对话回答', binary_process=True, threshold=0.65):
+            return 1  # 对话界面
+        elif self.coord('脸谱商店', binary_process=True, threshold=0.5):
+            return 8  # 脸谱商店
+        elif self.coord('点击关闭', binary_process=True, threshold=0.5):
+            return 4  # 点击关闭
+        elif self.coord('绝世妖姬', binary_process=True, threshold=0.5):
+            return 7  # 奇遇百态人生
+        elif self.coord('天灵', binary_process=True, threshold=0.5):
+            return 9  # 脸谱界面
+        elif self.coord('随机选择', binary_process=True, threshold=0.7):
+            return 6  # 随机选择
+        elif self.coord('点香阁', binary_process=True, threshold=0.5):
+            return 11  # 点香阁
+        else:
+            return -1
 
 
 # 每日兑换
@@ -2672,7 +2785,7 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '狂饮豪拳': DrinkPunch, '帮派任务': FactionTask, '茶馆说书': TeaStory,
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
                 '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask, '切换角色': None,
-                '江湖行商': MerchantLake}
+                '江湖行商': MerchantLake, '主线任务': MasterStrokeTask}
 
 TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537),
              '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148),

@@ -75,7 +75,8 @@ class Ui_Script(object):
         self.verticalLayout.setSpacing(12)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_4 = QtWidgets.QLabel(parent=self.widget)
-        self.label_4.setMinimumSize(QtCore.QSize(0, 40))
+        self.label_4.setMinimumSize(QtCore.QSize(106, 40))
+        self.label_4.setMaximumSize(QtCore.QSize(106, 40))
         self.label_4.setStyleSheet("QLabel {\n"
 "    background-color: #f0f0f0; /* 设置背景颜色 */\n"
 "    color: #333; /* 设置文本颜色 */\n"
@@ -89,7 +90,7 @@ class Ui_Script(object):
         self.verticalLayout.addWidget(self.label_4)
         self.listWidget_2 = QtWidgets.QListWidget(parent=self.widget)
         self.listWidget_2.setMinimumSize(QtCore.QSize(106, 486))
-        self.listWidget_2.setMaximumSize(QtCore.QSize(106, 486))
+        self.listWidget_2.setMaximumSize(QtCore.QSize(106, 16777215))
         self.listWidget_2.setStyleSheet("\n"
 "    \n"
 "    QListWidget::item {\n"
@@ -126,7 +127,8 @@ class Ui_Script(object):
         self.verticalLayout_6.setSpacing(12)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.label_2 = QtWidgets.QLabel(parent=self.widget_6)
-        self.label_2.setMinimumSize(QtCore.QSize(0, 40))
+        self.label_2.setMinimumSize(QtCore.QSize(106, 40))
+        self.label_2.setMaximumSize(QtCore.QSize(106, 40))
         self.label_2.setStyleSheet("QLabel {\n"
 "    background-color: #f0f0f0; /* 设置背景颜色 */\n"
 "    color: #333; /* 设置文本颜色 */\n"
@@ -140,7 +142,7 @@ class Ui_Script(object):
         self.verticalLayout_6.addWidget(self.label_2)
         self.listWidget = QtWidgets.QListWidget(parent=self.widget_6)
         self.listWidget.setMinimumSize(QtCore.QSize(106, 486))
-        self.listWidget.setMaximumSize(QtCore.QSize(106, 486))
+        self.listWidget.setMaximumSize(QtCore.QSize(106, 16777215))
         self.listWidget.setStyleSheet("\n"
 "    \n"
 "    QListWidget::item {\n"
@@ -183,7 +185,7 @@ class Ui_Script(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -1095, 713, 5000))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 713, 5000))
         self.scrollAreaWidgetContents.setMinimumSize(QtCore.QSize(0, 5000))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
