@@ -124,6 +124,14 @@ class MainWindow(QWidget, Ui_MainWindow):
             "关注6": self.script.checkBox_27.isChecked(),
             "关注7": self.script.checkBox_28.isChecked(),
             "关注8": self.script.checkBox_29.isChecked(),
+            "优先级1": self.script.comboBox_9.currentIndex(),
+            "优先级2": self.script.comboBox_10.currentIndex(),
+            "优先级3": self.script.comboBox_11.currentIndex(),
+            "优先级4": self.script.comboBox_12.currentIndex(),
+            "优先级5": self.script.comboBox_13.currentIndex(),
+            "优先级6": self.script.comboBox_14.currentIndex(),
+            "优先级7": self.script.comboBox_15.currentIndex(),
+            "优先级8": self.script.comboBox_16.currentIndex(),
             "华山论剑次数": self.script.spinBox_6.value(),
             "华山论剑秒退": self.script.checkBox_10.isChecked(),
             "背包": self.script.lineEdit_14.text(),
@@ -273,7 +281,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         if file_name == '默认配置':
             self.script.listWidget.clear()
             self.script.lineEdit_2.setText('')
-            self.script.spinBox_4.setValue(1)
+            self.script.spinBox_4.setValue(30)
             self.script.spinBox_7.setValue(1)
             self.script.comboBox_2.setCurrentIndex(0)
             self.script.checkBox.setChecked(False)
@@ -281,18 +289,17 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_2.setChecked(False)
             self.script.checkBox_8.setChecked(False)
             self.script.checkBox_7.setChecked(False)
-            self.script.checkBox_5.setChecked(False)
             self.script.checkBox_3.setChecked(False)
+            self.script.checkBox_5.setChecked(False)
             self.script.checkBox_6.setChecked(False)
             self.script.checkBox_4.setChecked(False)
             self.script.checkBox_9.setChecked(False)
             self.script.comboBox_3.setCurrentIndex(0)
             self.script.spinBox.setValue(100)
-            self.script.spinBox_2.setValue(50)
-            self.script.spinBox_3.setValue(100)
+            self.script.spinBox_2.setValue(0)
+            self.script.spinBox_3.setValue(0)
             self.script.spinBox_6.setValue(1)
             self.script.checkBox_10.setChecked(False)
-
             self.script.lineEdit_14.setText('B')
             self.script.lineEdit_15.setText('H')
             self.script.lineEdit_16.setText('T')
@@ -300,33 +307,101 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_18.setText('ESC')
             self.script.comboBox_7.setCurrentIndex(0)
             self.script.comboBox_8.setCurrentText('江南')
-            self.script.spinBox_8.setValue(1),
-            # text = config.get('日常任务', '采集方法')
-            self.script.lineEdit_19.setText('')
-            self.script.lineEdit_20.setText('')
-            self.script.lineEdit_21.setText('')
-            self.script.lineEdit_22.setText('')
-            self.script.lineEdit_23.setText('')
-            self.script.lineEdit_24.setText('')
-            self.script.lineEdit_25.setText('')
-            self.script.lineEdit_26.setText('')
-            self.script.lineEdit_27.setText('')
-            self.script.lineEdit_28.setText('')
-            self.script.lineEdit_29.setText('')
-            self.script.lineEdit_30.setText('')
 
-            self.script.lineEdit_4.setText('1')
-            self.script.lineEdit_9.setText('2')
-            self.script.lineEdit_5.setText('3')
-            self.script.lineEdit_6.setText('4')
-            self.script.lineEdit_7.setText('5')
-            self.script.lineEdit_8.setText('6')
-            self.script.lineEdit_10.setText('7')
-            self.script.lineEdit_11.setText('8')
-            self.script.lineEdit_12.setText('9')
-            self.script.lineEdit_13.setText('R')
+            self.script.radioButton_2.setChecked(True)
+            self.script.radioButton_6.setChecked(False)
+            self.script.radioButton.setChecked(False)
 
-            self.script.lineEdit_49.setText('江湖行商来人!!!')
+            self.script.radioButton_4.setChecked(True)
+            self.script.radioButton_3.setChecked(False)
+            self.script.radioButton_5.setChecked(False)
+
+            self.script.comboBox_4.setCurrentText('野草')
+            self.script.comboBox_5.setCurrentText('枯木')
+            self.script.comboBox_6.setCurrentText('碎石')
+
+            kill_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'R']
+            self.script.lineEdit_4.setText(kill_list[0]),
+            self.script.lineEdit_9.setText(kill_list[1]),
+            self.script.lineEdit_5.setText(kill_list[2]),
+            self.script.lineEdit_6.setText(kill_list[3]),
+            self.script.lineEdit_7.setText(kill_list[4]),
+            self.script.lineEdit_8.setText(kill_list[5]),
+            self.script.lineEdit_10.setText(kill_list[6]),
+            self.script.lineEdit_11.setText(kill_list[7]),
+            self.script.lineEdit_12.setText(kill_list[8]),
+            self.script.lineEdit_13.setText(kill_list[9]),
+
+            coord = ['', '']
+            self.script.lineEdit_19.setText(coord[0])
+            self.script.lineEdit_20.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_21.setText(coord[0])
+            self.script.lineEdit_22.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_23.setText(coord[0])
+            self.script.lineEdit_24.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_25.setText(coord[0])
+            self.script.lineEdit_26.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_27.setText(coord[0])
+            self.script.lineEdit_28.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_29.setText(coord[0])
+            self.script.lineEdit_30.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_31.setText(coord[0])
+            self.script.lineEdit_32.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_33.setText(coord[0])
+            self.script.lineEdit_34.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_35.setText(coord[0])
+            self.script.lineEdit_36.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_37.setText(coord[0])
+            self.script.lineEdit_38.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_39.setText(coord[0])
+            self.script.lineEdit_40.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_41.setText(coord[0])
+            self.script.lineEdit_42.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_43.setText(coord[0])
+            self.script.lineEdit_44.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_45.setText(coord[0])
+            self.script.lineEdit_46.setText(coord[1])
+            coord = ['', '']
+            self.script.lineEdit_47.setText(coord[0])
+            self.script.lineEdit_48.setText(coord[1])
+
+            self.script.checkBox_13.setChecked(False)
+            self.script.spinBox_9.setValue(5)
+            self.script.checkBox_19.setChecked(False)
+            self.script.spinBox_8.setValue(1)
+            self.script.lineEdit_49.setText('')
+            self.script.checkBox_20.setChecked(False)
+
+            self.script.checkBox_21.setChecked(False)
+            self.script.checkBox_25.setChecked(False)
+            self.script.checkBox_22.setChecked(False)
+            self.script.checkBox_26.setChecked(False)
+            self.script.checkBox_24.setChecked(False)
+            self.script.checkBox_27.setChecked(False)
+            self.script.checkBox_28.setChecked(False)
+            self.script.checkBox_29.setChecked(False)
+
+            self.script.comboBox_9.setCurrentIndex(0)
+            self.script.comboBox_10.setCurrentIndex(1)
+            self.script.comboBox_11.setCurrentIndex(2)
+            self.script.comboBox_12.setCurrentIndex(3)
+            self.script.comboBox_13.setCurrentIndex(4)
+            self.script.comboBox_14.setCurrentIndex(5)
+            self.script.comboBox_15.setCurrentIndex(6)
+            self.script.comboBox_16.setCurrentIndex(7)
 
         try:
             self.script.listWidget.clear()
@@ -446,6 +521,15 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_27.setChecked(config.getboolean('日常任务', '关注6'))
             self.script.checkBox_28.setChecked(config.getboolean('日常任务', '关注7'))
             self.script.checkBox_29.setChecked(config.getboolean('日常任务', '关注8'))
+
+            self.script.comboBox_9.setCurrentIndex(config.getint('日常任务', '优先级1'))
+            self.script.comboBox_10.setCurrentIndex(config.getint('日常任务', '优先级2'))
+            self.script.comboBox_11.setCurrentIndex(config.getint('日常任务', '优先级3'))
+            self.script.comboBox_12.setCurrentIndex(config.getint('日常任务', '优先级4'))
+            self.script.comboBox_13.setCurrentIndex(config.getint('日常任务', '优先级5'))
+            self.script.comboBox_14.setCurrentIndex(config.getint('日常任务', '优先级6'))
+            self.script.comboBox_15.setCurrentIndex(config.getint('日常任务', '优先级7'))
+            self.script.comboBox_16.setCurrentIndex(config.getint('日常任务', '优先级8'))
 
         except configparser.NoOptionError:
             pass
@@ -766,6 +850,15 @@ class ScriptWindow(QWidget, Ui_Script):
 
         self.spinBox_9.setMinimum(1)
         self.spinBox_9.setMaximum(5)
+
+        self.comboBox_9.setCurrentIndex(0)
+        self.comboBox_10.setCurrentIndex(1)
+        self.comboBox_11.setCurrentIndex(2)
+        self.comboBox_12.setCurrentIndex(3)
+        self.comboBox_13.setCurrentIndex(4)
+        self.comboBox_14.setCurrentIndex(5)
+        self.comboBox_15.setCurrentIndex(6)
+        self.comboBox_16.setCurrentIndex(7)
         # self.checkBox.stateChanged.connect(lambda: self.task_append('课业任务'))
         # self.checkBox_2.stateChanged.connect(lambda: self.task_append('帮派任务'))
         # self.checkBox_3.stateChanged.connect(lambda: self.task_append('世界喊话'))
@@ -810,7 +903,7 @@ class RunWindow(QWidget, Ui_Run):
         self.StopAllButton.clicked.connect(self.stop_all)
         self.ResumeAllButton.clicked.connect(self.resume_all)
         self.UnbindAllButton.clicked.connect(self.unbind_all)
-        self.PersonaTableWidget.doubleClicked.connect(self.win_up)
+        self.PersonaTableWidget.cellDoubleClicked.connect(self.win_up)
         publicSingle.state.connect(self.set_state)
         publicSingle.journal.connect(self.journal)
         publicSingle.set_character.connect(self.set_character)
@@ -850,7 +943,7 @@ class RunWindow(QWidget, Ui_Run):
 
     # 窗口调度
     def win_up(self, _):
-
+        time.sleep(0.25)
         row = self.PersonaTableWidget.currentIndex().row()
         col = self.PersonaTableWidget.currentIndex().column()
         if row in self.struct_task_dict and col == 0:
@@ -859,7 +952,7 @@ class RunWindow(QWidget, Ui_Run):
             win32gui.PostMessage(user.handle, win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
             win32gui.SetForegroundWindow(user.handle)
-            time.sleep(0.1)
+            time.sleep(0.05)
             user.mask_window.activateWindow()
             # # # win32gui.PostMessage(user.mask_window.winId(), win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台

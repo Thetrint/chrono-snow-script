@@ -1,3 +1,4 @@
+import heapq
 import logging
 import os
 import random
@@ -308,9 +309,10 @@ class BasicTask(object):
                 return coordinates or []
 
     def coord(self, *args, search_scope=(0, 0, 1334, 750), histogram_process=False, laplacian_process=False,
-              binary_process=False, process=False, threshold=0.23):
+              binary_process=False, canny_process=False, process=False, threshold=0.23):
         """
         获取坐标
+        :param canny_process:
         :param process:
         :param binary_process: 图片处理 二值化处理
         :param threshold: 图片置信度阈值
@@ -367,6 +369,11 @@ class BasicTask(object):
                     if binary_process:
                         _, img = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
                         _, tem = cv2.threshold(template_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+                    # Canny边缘检测
+                    if canny_process:
+                        img = cv2.Canny(image_gray, 50, 200)
+                        tem = cv2.Canny(template_gray, 50, 200)
 
                     if binary_process or laplacian_process or histogram_process:
                         # 图片转换
@@ -448,6 +455,7 @@ class BasicTask(object):
         histogram_process = kwargs.get('histogram_process', False)
         laplacian_process = kwargs.get('laplacian_process', False)
         binary_process = kwargs.get('binary_process', False)
+        canny_process= kwargs.get('canny_process', False)
         process = kwargs.get('process', False)
         SIFT = kwargs.get('SIFT', False)
         threshold = kwargs.get('threshold', 0.23)
@@ -470,7 +478,7 @@ class BasicTask(object):
             else:
                 coordinates = self.coord(*args, search_scope=search_scope, histogram_process=histogram_process,
                                          laplacian_process=laplacian_process, binary_process=binary_process,
-                                         process=process, threshold=threshold)
+                                         canny_process=canny_process, process=process, threshold=threshold)
             if coordinates:
                 if random_tap:
                     coord = random.choice(coordinates)
@@ -613,7 +621,7 @@ class Initialize(BasicTask):
     def implement(self):
         self.close_win(5)
         self.key_down_up('ESC')
-        self.Visual('端游模式', histogram_process=True, threshold=0.8)
+        self.Visual('端游模式', canny_process=True, threshold=0.8)
         self.key_down_up('ESC')
 
     def global_detection(self):
@@ -793,7 +801,8 @@ class DailyCopiesTask(BasicTask):
                 if count_stuck == 0 and event.task_config[self.mapp].get('副本自动匹配'):
                     self.key_down_up('T')
                     self.Visual('自动匹配', laplacian_process=True)
-                    self.Visual('关闭', laplacian_process=True)
+                    self.key_down_up('T')
+                    self.Visual('关闭', threshold=0.7, histogram_process=True)
 
                 # 脱离卡死
                 if count_stuck != 0:
@@ -1101,7 +1110,7 @@ class FactionTask(BasicTask):
         self.Visual('主界面任务', histogram_process=True, threshold=0.7, wait_count=1)
         self.Visual('主界面江湖', histogram_process=True, threshold=0.7, wait_count=1)
         self.mouse_move(158, 239, 198, 639)
-        self.Visual('主界面帮派任务', '主界面帮派任务1', binary_process=True, threshold=0.4,
+        self.Visual('主界面帮派任务', '主界面帮派任务1', canny_process=True, threshold=0.8,
                     wait_count=1, search_scope=(41, 211, 268, 422))
 
     # 帮派任务处理逻辑
@@ -1213,7 +1222,8 @@ class GangBanquet(BasicTask):
                                     break
                             else:
                                 break
-            self.Visual('开始设宴', laplacian_process=True)
+            self.journal('提交完成, 开始设宴')
+            self.Visual('开始设宴', binary_process=True, threshold=0.4)
             self.Visual('确定', laplacian_process=True)
 
         for _ in range(4):
@@ -1315,7 +1325,8 @@ class BreakingBanquet(GangBanquet):
                                     break
                             else:
                                 break
-            self.Visual('开始设宴', laplacian_process=True)
+            self.journal('提交完成, 开始设宴')
+            self.Visual('开始设宴', binary_process=True, threshold=0.4)
             self.Visual('确定', laplacian_process=True)
 
         for _ in range(4):
@@ -1395,7 +1406,7 @@ class LessonTask(BasicTask):
                 self.Visual('确定1', binary_process=True, threshold=0.4)
             elif switch == 5:
                 if not self.Visual('困难课业', histogram_process=True, threshold=0.7):
-                    self.Visual('刷新1', binary_process=True, threshold=0.4, x=-55)
+                    self.Visual('刷新1', binary_process=True, threshold=0.5, x=-55)
                     self.Visual('确定', binary_process=True, threshold=0.4)
                 elif self.coord('已接取', binary_process=True, threshold=0.4):
                     self.target = True
@@ -1404,9 +1415,12 @@ class LessonTask(BasicTask):
                     self.target = True
             elif switch == 6:
                 for _ in range(10):
-                    target = random.sample(
-                        self.coord('排序', binary_process=True, threshold=0.6, search_scope=(412, 364, 1233, 576)), 2)
-                    self.mouse_move(target[0][0], target[0][1], target[1][0], target[1][1], move_timeout=0)
+                    try:
+                        if target := random.sample(self.coord('排序', binary_process=True, threshold=0.6,
+                                                              search_scope=(412, 364, 1233, 576)), 2):
+                            self.mouse_move(target[0][0], target[0][1], target[1][0], target[1][1], move_timeout=0)
+                    except ValueError:
+                        pass
             elif switch == 7:
                 self.Visual('购买', histogram_process=True, threshold=0.7)
                 self.Visual('确定', binary_process=True, threshold=0.4)
@@ -1422,6 +1436,10 @@ class LessonTask(BasicTask):
                 self.Visual('铜钱购买', histogram_process=True, threshold=0.7, search_scope=(820, 517, 1242, 673))
             elif switch == 10:
                 self.Visual('关闭', histogram_process=True, threshold=0.7)
+            elif switch == 12:
+                self.Visual('一大桶水', binary_process=True, threshold=0.7, y=80)
+            elif switch == 13:
+                self.Visual('对话回答', canny_process=True, threshold=0.5)
             elif switch == 8:
                 self.Visual('一键提交', laplacian_process=True, wait_count=1)
                 self.mouse_down_up(0, 0)
@@ -1430,12 +1448,14 @@ class LessonTask(BasicTask):
                     break
 
     def detect(self):
-        time.sleep(1)
+        time.sleep(2)
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
             if self.coord('一键提交', binary_process=True, threshold=0.4):
                 return 8  # 提交界面
             elif self.coord('商城购买', binary_process=True, threshold=0.4):
                 return 11  # 商城购买弹窗
+            elif self.coord('一大桶水', binary_process=True, threshold=0.7):
+                return 12  # 和尚课业
             return 0  # 大世界主界面
         elif self.coord('物品界面', histogram_process=True, threshold=0.7):
             return 1  # 大世界主界面
@@ -1446,7 +1466,7 @@ class LessonTask(BasicTask):
         elif (self.coord('课业1', '悟禅1', binary_process=True, threshold=0.4) or
               self.coord('确定1', binary_process=True, threshold=0.4)):
             return 4  # npc接取任务界面
-        elif self.coord('刷新1', binary_process=True, threshold=0.4):
+        elif self.coord('刷新1', binary_process=True, threshold=0.5):
             return 5  # 任务接取界面
         elif self.coord('交易界面', '购买', histogram_process=True, threshold=0.7):
             return 7  # 交易界面
@@ -1456,6 +1476,8 @@ class LessonTask(BasicTask):
             return 9  # 杂货商人界面
         elif self.coord('课业任务答题', histogram_process=True, threshold=0.65):
             return 10  # 答题界面
+        elif self.coord('对话回答', canny_process=True, threshold=0.5):
+            return 13  # 对话任务
 
 
 # 发布悬赏
@@ -1578,7 +1600,7 @@ class TheSword(BasicTask):
                     self.Visual('匹配1', laplacian_process=True, wait_count=1)
                 self.Visual('确认', laplacian_process=True, wait_count=1)
 
-            if self.coord('论剑界面', laplacian_process=True):
+            if self.coord('论剑界面', canny_process=True, threshold=0.7):
                 flag = False
         for _ in range(4):
             if event.unbind[self.mapp].is_set():
@@ -2011,6 +2033,10 @@ class AcquisitionTask(BasicTask):
         self.acquisition_1_flag = True
         self.acquisition_flag = False
         self.last_coord = None
+        self.line_dict = {1: (1068, 81), 2: (1068, 161), 3: (1068, 241), 4: (1068, 321), 5: (1068, 401), 6: (1068, 481),
+                          7: (1068, 561), 8: '8线', 9: '9线', 10: '10线', 11: '11线', 12: '12线', 13: '13线',
+                          14: '14线',
+                          15: '15线', 16: '16线', 17: '17线', 18: '18线', 19: '19线', 20: '20线', 21: '21线'}
         self.coords = [
             event.task_config[self.mapp].get('坐标1'),
             event.task_config[self.mapp].get('坐标2'),
@@ -2033,7 +2059,7 @@ class AcquisitionTask(BasicTask):
         pass
 
     def implement(self):
-        line_dict = {1: '1线', 2: '2线', 3: '3线', 4: '4线', 5: '5线'}
+        self.Visual('1线', binary_process=True, threshold=0.4, search_scope=(910, 40, 1176, 643))
         line_Limit = int(event.task_config[self.mapp].get('采集线数'))
         if event.task_config[self.mapp].get('地图搜索'):
             method = '地图搜索'
@@ -2083,16 +2109,18 @@ class AcquisitionTask(BasicTask):
                         break
                     else:
                         if line <= line_Limit:
-                            self.mouse_down_up(1235, 20)
-                            self.Visual(line_dict[line], SIFT=True, threshold=0.3, search_scope=(910, 107, 1176, 643))
-                            self.mouse_down_up(0, 0)
+                            self.acquisition_8(line)
+                            # self.mouse_down_up(1235, 20)
+                            # self.Visual(line_dict[line], SIFT=True, threshold=0.3, search_scope=(910, 107, 1176, 643))
+                            # self.mouse_down_up(0, 0)
                             line += 1
                             time.sleep(4)
                         else:
-                            self.mouse_down_up(1235, 20)
-                            self.Visual(line_dict[1], histogram_process=True, threshold=0.6,
-                                        search_scope=(910, 107, 1176, 643))
-                            self.mouse_down_up(0, 0)
+                            self.acquisition_8(1)
+                            # self.mouse_down_up(1235, 20)
+                            # self.Visual(line_dict[1], histogram_process=True, threshold=0.6,
+                            #             search_scope=(910, 107, 1176, 643))
+                            # self.mouse_down_up(0, 0)
                             time.sleep(4)
                             break
                 else:
@@ -2124,6 +2152,26 @@ class AcquisitionTask(BasicTask):
             else:
                 time.sleep(0.5)
             time.sleep(0.01)
+
+    # 换线
+    def acquisition_8(self, index):
+
+        self.mouse_down_up(0, 0)
+        self.mouse_down_up(1235, 20)
+        if 0 < index <= 7:
+            self.mouse_down_up(self.line_dict[index][0], self.line_dict[index][1])
+        if 7 < index <= 14:
+            self.mouse_move(1068, 561, 1068, 331)
+            self.Visual(self.line_dict[index], histogram_process=True, threshold=0.75,
+                        search_scope=(910, 40, 1176, 643))
+        elif 14 < index <= 21:
+            self.mouse_move(1068, 561, 1068, 331)
+            self.mouse_move(1068, 561, 1068, 331)
+            self.Visual(self.line_dict[index], histogram_process=True, threshold=0.85,
+                        search_scope=(910, 40, 1176, 643))
+
+        self.mouse_down_up(0, 0)
+        time.sleep(4)
 
     # 指定地图采集目标
     def acquisition_2(self):
@@ -2254,10 +2302,22 @@ class SweepStalls(BasicTask):
         self.Visual('活动入口', histogram_process=True, threshold=0.7)
         self.Visual('交易', histogram_process=True, threshold=0.7)
         self.Visual('摆摊', laplacian_process=True, threshold=0.3)
-        self.Visual('关注', histogram_process=True, threshold=0.7)
+        self.Visual('关注', histogram_process=True, threshold=0.7, wait_count=1)
         timeout_1 = int(event.task_config[self.mapp].get('扫摆摊延迟1')) / 1000
         timeout_2 = int(event.task_config[self.mapp].get('扫摆摊延迟2')) / 1000
         timeout_3 = int(event.task_config[self.mapp].get('扫摆摊延迟3')) / 1000
+
+        # 定义数据和对应的优先级
+        data_priorities = {
+            (547, 219): event.task_config[self.mapp].get('优先级1'),
+            (961, 219): event.task_config[self.mapp].get('优先级2'),
+            (547, 327): event.task_config[self.mapp].get('优先级3'),
+            (961, 327): event.task_config[self.mapp].get('优先级4'),
+            (547, 435): event.task_config[self.mapp].get('优先级5'),
+            (961, 435): event.task_config[self.mapp].get('优先级6'),
+            (547, 543): event.task_config[self.mapp].get('优先级7'),
+            (961, 543): event.task_config[self.mapp].get('优先级8')
+        }
 
         data = [(547, 219), (961, 219), (547, 327), (961, 327), (547, 435), (961, 435), (547, 543), (961, 543)]
 
@@ -2283,10 +2343,14 @@ class SweepStalls(BasicTask):
 
         Thread(target=self.sweep_stalls_1).start()
         while not event.unbind[self.mapp].is_set():
+            # 初始化优先级队列 清空队列
+            priority_queue = []
             coords = self.coord('商品数量', histogram_process=True, threshold=0.7, search_scope=(365, 175, 1153, 592))
             if not (exclude_data := list(data_set - set(coords + exclude))):
                 continue
-            if coord := random.choice(exclude_data):
+            for coord in exclude_data:
+                heapq.heappush(priority_queue, (-data_priorities[coord], coord))  # 使用负值实现最大堆
+            if coord := heapq.heappop(priority_queue)[1]:
                 self.sweep_stalls_1_flag = False
                 self.mouse_down_up(coord[0], coord[1], tap_after_timeout=0.1)
                 while not event.unbind[self.mapp].is_set():
@@ -2561,7 +2625,7 @@ class MasterStrokeTask(BasicTask):
         if self.coord('挂机', histogram_process=True, threshold=0.65):
             if self.coord('装备', binary_process=True, threshold=0.4):
                 return 2  # 装备
-            elif self.coord('交互', '交互1', '交互2', '交互3','交互4', histogram_process=True, threshold=0.7):
+            elif self.coord('交互', '交互1', '交互2', '交互3', '交互4', histogram_process=True, threshold=0.7):
                 return 3  # 交互
             elif self.coord('战', histogram_process=True, threshold=0.65, search_scope=(49, 147, 316, 359)):
                 return 5  # 战斗
