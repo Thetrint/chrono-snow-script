@@ -24,51 +24,41 @@ class ClientServices:
             print(e)
             return False
         except requests.exceptions.ProxyError:
-            pass
+            return False
         except requests.exceptions.ConnectionError:
-            pass
+            return False
         except requests.exceptions.Timeout:
-            pass
+            return False
         except requests.exceptions.RequestException:
-            pass
+            return False
 
     @staticmethod
     def login(username, password):
-        try:
-            url = 'https://75561x0s00.vicp.fun/login'
-            data = {
-                'username': username,
-                'password': password,
-                'token': TOKEN
-            }
-            if response := ClientServices.POST(url, data):
-                # 从字典中获取成功信息
-                success = response.get('success')
-                message = response.get('message')
-                return success, message
-            return True, ''
-        except requests.exceptions.ProxyError:
-            pass
-        except requests.exceptions.ConnectionError:
-            pass
+        url = 'https://75561x0s00.vicp.fun/login'
+        data = {
+            'username': username,
+            'password': password,
+            'token': TOKEN
+        }
+        if response := ClientServices.POST(url, data):
+            # 从字典中获取成功信息
+            success = response.get('success')
+            message = response.get('message')
+            return success, message
+        return True, ''
 
     @staticmethod
     def signup(username, password):
-        try:
-            url = 'https://75561x0s00.vicp.fun/signup'
-            data = {
-                'username': username,
-                'password': password
-            }
-            if response := ClientServices.POST(url, data):
-                success = response.get('success')
-                message = response.get('message')
-                return success, message
-            return False, '服务器请求失败'
-        except requests.exceptions.ProxyError:
-            pass
-        except requests.exceptions.ConnectionError:
-            pass
+        url = 'https://75561x0s00.vicp.fun/signup'
+        data = {
+            'username': username,
+            'password': password
+        }
+        if response := ClientServices.POST(url, data):
+            success = response.get('success')
+            message = response.get('message')
+            return success, message
+        return False, '服务器请求失败'
 
     def heartbeat(self, username):
         while not self.stop.is_set():
@@ -89,7 +79,7 @@ class ClientServices:
                             if self.stop.is_set():
                                 return 0
                             time.sleep(1)
-                    time.sleep(5)
+                time.sleep(5)
             except requests.exceptions.ProxyError:
                 pass
             except requests.exceptions.ConnectionError:

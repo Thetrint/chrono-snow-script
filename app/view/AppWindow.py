@@ -113,6 +113,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             "锦芳绣残片": self.script.checkBox_4.isChecked(),
             "摇钱树": self.script.checkBox_9.isChecked(),
             "摇钱树目标": self.script.comboBox_3.currentIndex(),
+            "生活技能艾草": self.script.checkBox_30.isChecked(),
+            "生活技能莲子": self.script.checkBox_31.isChecked(),
             "扫摆摊延迟1": self.script.spinBox.value(),
             "扫摆摊延迟2": self.script.spinBox_2.value(),
             "扫摆摊延迟3": self.script.spinBox_3.value(),
@@ -403,6 +405,9 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_15.setCurrentIndex(6)
             self.script.comboBox_16.setCurrentIndex(7)
 
+            self.script.checkBox_30.setChecked(False)
+            self.script.checkBox_31.setChecked(False)
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -530,6 +535,9 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_14.setCurrentIndex(config.getint('日常任务', '优先级6'))
             self.script.comboBox_15.setCurrentIndex(config.getint('日常任务', '优先级7'))
             self.script.comboBox_16.setCurrentIndex(config.getint('日常任务', '优先级8'))
+
+            self.script.checkBox_30.setChecked(config.getboolean('日常任务', '生活技能-艾草'))
+            self.script.checkBox_31.setChecked(config.getboolean('日常任务', '生活技能-莲子'))
 
         except configparser.NoOptionError:
             pass
@@ -903,7 +911,7 @@ class RunWindow(QWidget, Ui_Run):
         self.StopAllButton.clicked.connect(self.stop_all)
         self.ResumeAllButton.clicked.connect(self.resume_all)
         self.UnbindAllButton.clicked.connect(self.unbind_all)
-        self.PersonaTableWidget.cellDoubleClicked.connect(self.win_up)
+        self.PersonaTableWidget.doubleClicked.connect(self.win_up)
         publicSingle.state.connect(self.set_state)
         publicSingle.journal.connect(self.journal)
         publicSingle.set_character.connect(self.set_character)
@@ -943,7 +951,7 @@ class RunWindow(QWidget, Ui_Run):
 
     # 窗口调度
     def win_up(self, _):
-        time.sleep(0.25)
+        time.sleep(1)
         row = self.PersonaTableWidget.currentIndex().row()
         col = self.PersonaTableWidget.currentIndex().column()
         if row in self.struct_task_dict and col == 0:
@@ -952,7 +960,7 @@ class RunWindow(QWidget, Ui_Run):
             win32gui.PostMessage(user.handle, win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台
             win32gui.SetForegroundWindow(user.handle)
-            time.sleep(0.05)
+            time.sleep(0.1)
             user.mask_window.activateWindow()
             # # # win32gui.PostMessage(user.mask_window.winId(), win32con.WM_ACTIVATE, win32con.WA_ACTIVE, 0)
             # # # 如果需要，可以使用SetForegroundWindow来将窗口置于前台

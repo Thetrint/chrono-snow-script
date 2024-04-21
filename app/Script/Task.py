@@ -15,6 +15,9 @@ from app.Script.BasicFunctional import basic_functional
 from app.view.Public import publicSingle
 from app.view.Public import LoadTaskConfig
 
+DEBUG = False
+PATH = ''
+
 
 class EventStruct:
     def __init__(self):
@@ -135,7 +138,7 @@ class BasicTask(object):
         self.Visual('退出队伍', histogram_process=True, threshold=0.65)
         self.Visual('确定', laplacian_process=True)
         self.key_down_up('T')
-        self.Visual('关闭', threshold=0.7, histogram_process=True)
+        self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
 
     # 位置检测
     def location_detection(self):
@@ -146,7 +149,7 @@ class BasicTask(object):
         self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
         time.sleep(2)
         self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
-        self.Visual('关闭', threshold=0.7, histogram_process=True)
+        self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
         self.arrive()
 
     # 到达检测
@@ -188,7 +191,7 @@ class BasicTask(object):
                 self.mouse_down_up(0, 0)
             if right_tap:
                 self.mouse_down_up(1334, 750)
-            if not self.Visual('关闭', histogram_process=True, threshold=0.7, random_tap=random_tap):
+            if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7, random_tap=random_tap):
                 break
 
     def open_entrance(self, tem_name, laplacian_process, binary_process, threshold):
@@ -309,7 +312,7 @@ class BasicTask(object):
                 return coordinates or []
 
     def coord(self, *args, search_scope=(0, 0, 1334, 750), histogram_process=False, laplacian_process=False,
-              binary_process=False, canny_process=False, process=False, threshold=0.23):
+              binary_process=False, canny_process=False, process=False, threshold=0.23, show=False):
         """
         获取坐标
         :param canny_process:
@@ -326,8 +329,11 @@ class BasicTask(object):
             with event.stop[self.mapp]:
 
                 x1, y1, x2, y2 = search_scope
-                # 调用方法获取图片 Numpy 数组
-                image = basic_functional.screen_shot(self.handle)
+                if DEBUG:
+                    image = cv2.imread(PATH)
+                else:
+                    # 调用方法获取图片 Numpy 数组
+                    image = basic_functional.screen_shot(self.handle)
                 # 切割图片
                 image = image[y1:y2, x1:x2]
                 # 获取图片数据
@@ -379,6 +385,10 @@ class BasicTask(object):
                         # 图片转换
                         image_gray = img.astype(numpy.uint8)
                         template_gray = tem.astype(numpy.uint8)
+                    if show:
+                        cv2.imshow('1', img)
+                        cv2.imshow('2', tem)
+                        cv2.waitKey(0)
 
                     if process:
                         template1 = template_gray - 6
@@ -455,11 +465,12 @@ class BasicTask(object):
         histogram_process = kwargs.get('histogram_process', False)
         laplacian_process = kwargs.get('laplacian_process', False)
         binary_process = kwargs.get('binary_process', False)
-        canny_process= kwargs.get('canny_process', False)
+        canny_process = kwargs.get('canny_process', False)
         process = kwargs.get('process', False)
         SIFT = kwargs.get('SIFT', False)
         threshold = kwargs.get('threshold', 0.23)
         tap = kwargs.get('tap', True)
+        show = kwargs.get('show', False)
         tap_ago_timeout = kwargs.get('tap_ago_timeout', 1)
         tap_after_timeout = kwargs.get('tap_after_timeout', 1)
         random_tap = kwargs.get('random_tap', True)
@@ -477,7 +488,7 @@ class BasicTask(object):
                                         histogram_process=histogram_process)
             else:
                 coordinates = self.coord(*args, search_scope=search_scope, histogram_process=histogram_process,
-                                         laplacian_process=laplacian_process, binary_process=binary_process,
+                                         laplacian_process=laplacian_process, binary_process=binary_process, show=show,
                                          canny_process=canny_process, process=process, threshold=threshold)
             if coordinates:
                 if random_tap:
@@ -533,6 +544,21 @@ class BasicTask(object):
                 time.sleep(0.13)
                 basic_functional.mouse_up(self.handle, x, y)
                 time.sleep(tap_after_timeout)
+
+    # 持续点击
+    def mouse_Keep_clicking(self, x, y, keep_time=1):
+        """
+
+        :param x: x坐标
+        :param y: y坐标
+        :param keep_time: 持续点击时间
+        :return:
+        """
+        if not event.unbind[self.mapp].is_set():
+            with event.stop[self.mapp]:
+                basic_functional.mouse_down(self.handle, x, y)
+                time.sleep(keep_time)
+                basic_functional.mouse_up(self.handle, x, y)
 
     def mouse_move(self, start_x, start_y, end_x, end_y, step=1, move_timeout=1.5):
         """
@@ -628,7 +654,7 @@ class Initialize(BasicTask):
         while not event.unbind[self.mapp].is_set():
             if self.coord('梦仔', histogram_process=True, threshold=0.8):
                 self.journal('梦仔弹窗')
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
             time.sleep(2)
 
 
@@ -761,7 +787,7 @@ class HeroListTask(BasicTask):
         for _ in range(4):
             if event.unbind[self.mapp].is_set():
                 break
-            self.Visual('关闭', histogram_process=True, threshold=0.65, random_tap=False)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.65, random_tap=False)
 
 
 # 日常副本
@@ -802,7 +828,7 @@ class DailyCopiesTask(BasicTask):
                     self.key_down_up('T')
                     self.Visual('自动匹配', laplacian_process=True)
                     self.key_down_up('T')
-                    self.Visual('关闭', threshold=0.7, histogram_process=True)
+                    self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
 
                 # 脱离卡死
                 if count_stuck != 0:
@@ -882,7 +908,7 @@ class DailyCopiesTask(BasicTask):
                     break
             self.Visual('普通喊话', laplacian_process=True, threshold=0.25)
             if time.time() - time_1 > 30:
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
                 # (剩余: {self.number_copies}次)
                 self.world_shouts(f'{text}')
                 self.key_down_up("T")
@@ -935,7 +961,7 @@ class BountyMissionsTask(DailyCopiesTask):
                         self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
 
                 self.mouse_down_up(0, 0)
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
                 if finish_flag:
                     self.leave_team()
@@ -965,7 +991,7 @@ class BountyMissionsTask(DailyCopiesTask):
                 elif switch == 4 and not bounty_flag:
                     self.mouse_down_up(0, 0)
                     if not self.coord('日常1', binary_process=True, threshold=0.5):
-                        self.Visual('关闭', histogram_process=True, threshold=0.7)
+                        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
                 elif switch == 6:
                     self.Visual('就近复活', histogram_process=True, threshold=0.7, search_scope=(960, 540, 1157, 750))
                 elif switch == 4 and bounty_flag:
@@ -1034,7 +1060,7 @@ class ChivalryShoutTask(BasicTask):
                 self.journal(f'侠缘喊话{num + 1}次')
                 time.sleep(1.5)
                 self.mouse_down_up(0, 0)
-        self.Visual('关闭', histogram_process=True, threshold=0.7)
+        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
 
 # 帮派任务
@@ -1082,7 +1108,7 @@ class FactionTask(BasicTask):
                             for _ in range(5):
                                 if event.unbind[self.mapp].is_set():
                                     break
-                                if not self.Visual('关闭', histogram_process=True, threshold=0.7):
+                                if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
                                     break
                             lg = self.faction_task_1()
                             if lg == 0:
@@ -1101,7 +1127,7 @@ class FactionTask(BasicTask):
             for _ in range(3):
                 if event.unbind[self.mapp].is_set():
                     break
-                if not self.Visual('关闭', histogram_process=True, threshold=0.7):
+                if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
                     break
 
     # 激活任务
@@ -1135,7 +1161,7 @@ class FactionTask(BasicTask):
                 self.journal('帮派仓库提交成功')
                 return 2
             else:
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
                 self.Visual('主界面帮派任务', '主界面帮派任务1', histogram_process=True, threshold=0.7, wait_count=1)
                 self.Visual('摆摊购买', y=-45, histogram_process=True, threshold=0.7)
                 self.journal(f'尝试摆摊购买{i}次')
@@ -1148,7 +1174,7 @@ class FactionTask(BasicTask):
                             return 1
                 else:
                     self.journal('没有商品可以购买')
-                    self.Visual('关闭', histogram_process=True, threshold=0.7)
+                    self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
         return 0
 
@@ -1229,13 +1255,13 @@ class GangBanquet(BasicTask):
         for _ in range(4):
             if event.unbind[self.mapp].is_set():
                 break
-            self.Visual('关闭', histogram_process=True, threshold=0.6)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.6)
 
     def gangs_set_up_feasts_1(self):
         if self.Visual('帮派仓库', y=-71, histogram_process=True, threshold=0.7):
             self.Visual('提交', laplacian_process=True)
             if self.coord('帮派仓库界面', laplacian_process=True):
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
     def gangs_set_up_feasts_2(self):
         if self.Visual('摆摊购买', y=-71, histogram_process=True, threshold=0.7):
@@ -1243,9 +1269,9 @@ class GangBanquet(BasicTask):
                 self.Visual('确定', binary_process=True, threshold=0.4)
                 self.Visual('确认', wait_count=12, binary_process=True, threshold=0.4)
                 if self.coord('交易界面', laplacian_process=True):
-                    self.Visual('关闭', histogram_process=True, threshold=0.7)
+                    self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
             else:
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
         else:
             self.mouse_down_up(0, 0)
 
@@ -1253,7 +1279,7 @@ class GangBanquet(BasicTask):
         if self.Visual('商城购买', y=-71, histogram_process=True, threshold=0.7):
             if self.coord('珍宝阁界面', laplacian_process=True):
                 self.mouse_down_up(988, 697)
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
         else:
             self.mouse_down_up(0, 0)
 
@@ -1332,7 +1358,7 @@ class BreakingBanquet(GangBanquet):
         for _ in range(4):
             if event.unbind[self.mapp].is_set():
                 break
-            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
     # def formation_set_up_banquet_1(self):
     #     if self.get_tap('帮派仓库', y=-71):
@@ -1396,8 +1422,10 @@ class LessonTask(BasicTask):
                 self.Visual('活动', binary_process=True, threshold=0.5)
             elif switch == 2:
                 self.Visual('活动界面江湖', binary_process=True, threshold=0.6)
-                self.Visual('濯剑', '观梦', '漱尘', '止杀', '锻心', '吟风', '含灵', '寻道', '悟禅', '归义',
-                            histogram_process=True, threshold=0.7, y=45)
+                if not self.Visual('濯剑', '观梦', '漱尘', '止杀', '锻心', '吟风', '含灵', '寻道', '悟禅', '归义',
+                                   histogram_process=True, threshold=0.7, y=45):
+                    self.close_win(2)
+                    break
             elif switch == 3:
                 if self.Visual('课业', binary_process=True, threshold=0.4, y=210):
                     self.target_location = True
@@ -1408,9 +1436,10 @@ class LessonTask(BasicTask):
                 if not self.Visual('困难课业', histogram_process=True, threshold=0.7):
                     self.Visual('刷新1', binary_process=True, threshold=0.5, x=-55)
                     self.Visual('确定', binary_process=True, threshold=0.4)
-                elif self.coord('已接取', binary_process=True, threshold=0.4):
                     self.target = True
+                elif self.coord('已接取', binary_process=True, threshold=0.4):
                     self.close_win(2)
+                    self.target = True
                 else:
                     self.target = True
             elif switch == 6:
@@ -1435,9 +1464,9 @@ class LessonTask(BasicTask):
             elif switch == 9:
                 self.Visual('铜钱购买', histogram_process=True, threshold=0.7, search_scope=(820, 517, 1242, 673))
             elif switch == 10:
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
             elif switch == 12:
-                self.Visual('一大桶水', binary_process=True, threshold=0.7, y=80)
+                self.Visual('一大桶水', canny_process=True, threshold=0.6, search_scope=(775, 188, 1260, 600), y=80)
             elif switch == 13:
                 self.Visual('对话回答', canny_process=True, threshold=0.5)
             elif switch == 8:
@@ -1454,7 +1483,7 @@ class LessonTask(BasicTask):
                 return 8  # 提交界面
             elif self.coord('商城购买', binary_process=True, threshold=0.4):
                 return 11  # 商城购买弹窗
-            elif self.coord('一大桶水', binary_process=True, threshold=0.7):
+            elif self.coord('一大桶水', canny_process=True, threshold=0.6, search_scope=(775, 188, 1260, 600)):
                 return 12  # 和尚课业
             return 0  # 大世界主界面
         elif self.coord('物品界面', histogram_process=True, threshold=0.7):
@@ -1499,7 +1528,7 @@ class PostBounty(BasicTask):
             self.Visual('发布悬赏', laplacian_process=True)
             self.Visual('确定', laplacian_process=True)
         else:
-            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
         self.Visual('发布', search_scope=(968, 558, 1269, 700), laplacian_process=True)
         self.Visual('下拉', histogram_process=True, threshold=0.8)
@@ -1508,15 +1537,15 @@ class PostBounty(BasicTask):
             self.Visual('发布悬赏', laplacian_process=True)
             self.Visual('确定', laplacian_process=True)
         else:
-            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
         time.sleep(2)
         self.mouse_down_up(0, 0)
-        self.Visual('关闭', histogram_process=True, threshold=0.7)
+        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
         self.mouse_down_up(0, 0)
-        self.Visual('关闭', histogram_process=True, threshold=0.7)
+        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
         self.mouse_down_up(0, 0)
-        self.Visual('关闭', histogram_process=True, threshold=0.7)
+        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
 
 # 茶馆说书
@@ -1546,7 +1575,7 @@ class TeaStory(BasicTask):
             for _ in range(4):
                 if event.unbind[self.mapp].is_set():
                     break
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
 
 # 华山论剑
@@ -1569,7 +1598,7 @@ class TheSword(BasicTask):
                 self.Visual('活动入口', histogram_process=True, threshold=0.7)
                 self.Visual('活动', laplacian_process=True)
                 self.Visual('活动界面纷争', laplacian_process=True)
-                self.Visual('华山论剑', binary_process=True, threshold=0.4, y=45)
+                self.Visual('华山论剑', binary_process=True, threshold=0.4, y=45, x=-50)
             flag = True
 
             for _ in range(600):
@@ -1597,15 +1626,16 @@ class TheSword(BasicTask):
                         time.sleep(5)
                         break
                 if not self.coord('取消匹配', laplacian_process=True):
-                    self.Visual('匹配1', laplacian_process=True, wait_count=1)
+                    if self.coord('论剑界面', canny_process=True, threshold=0.6):
+                        self.Visual('匹配1', laplacian_process=True, wait_count=1)
                 self.Visual('确认', laplacian_process=True, wait_count=1)
 
-            if self.coord('论剑界面', canny_process=True, threshold=0.7):
+            if self.coord('论剑界面', canny_process=True, threshold=0.6):
                 flag = False
         for _ in range(4):
             if event.unbind[self.mapp].is_set():
                 break
-            self.Visual('关闭', histogram_process=True, threshold=0.7, wait_count=1)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7, wait_count=1)
 
 
 # 每日一卦
@@ -1648,7 +1678,7 @@ class UrgentDeliveryTask(BasicTask):
                 self.Visual('势力', histogram_process=True, threshold=0.7)
                 self.Visual('江湖急送', laplacian_process=True)
                 if self.Visual('订单上限', histogram_process=True, threshold=0.7, wait_count=1):
-                    self.Visual('关闭', histogram_process=True, threshold=0.7, random_tap=False)
+                    self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7, random_tap=False)
                     self.journal('今日订单已达上限')
                     break
                 self.Visual('抢单', histogram_process=True, threshold=0.7)
@@ -1695,7 +1725,7 @@ class UrgentDeliveryTask(BasicTask):
                                 self.journal('去掉一个标签')
                                 self.Visual('选中标签', histogram_process=True, threshold=0.8)
                                 self.mouse_down_up(1334, 750)
-                    self.Visual('关闭', histogram_process=True, threshold=0.7)
+                    self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
                     if not buy:
                         buy = True
                         self.journal('购买失败 >>> 放弃任务')
@@ -1807,7 +1837,7 @@ class DrinkPunch(BasicTask):
 #         self.get_tap('聚义平冤目标')
 #         # self.get_tap('队伍界面自动匹配')
 #         self.get_tap('确定')
-#         # self.get_tap('关闭', process=False, threshold=0.7)
+#         # self.get_tap('关闭', '关闭1', process=False, threshold=0.7)
 #         self.key_down_up(self.ranks)
 #
 #     # 等待队伍人数
@@ -1867,8 +1897,8 @@ class MerchantLake(BasicTask):
                 elif not self.create_team:
                     if not self.task_execution:
                         if not self.target_location:  # 判断是否在行商目标地点 不在则前往
-                            self.merchants_lakes_2()
-                            self.target_location = True
+                            if self.merchants_lakes_2():
+                                self.target_location = True
                         elif self.target_location:  # 在行商目标地点 判断队伍人数
                             if not self.team_satisfied:
                                 self.merchants_lakes_3()
@@ -1951,7 +1981,7 @@ class MerchantLake(BasicTask):
         self.Visual('江湖行商目标', histogram_process=True, threshold=0.6)
         # self.Visual()('队伍界面自动匹配')
         self.Visual('确定', binary_process=True, threshold=0.4)
-        # self.get_tap('关闭', process=False, threshold=0.7)
+        # self.get_tap('关闭', '关闭1', process=False, threshold=0.7)
         self.key_down_up('T')
 
     # 前往目标地点
@@ -1962,7 +1992,7 @@ class MerchantLake(BasicTask):
         self.Visual('活动界面行当', binary_process=True, threshold=0.5, wait_count=1)
         self.Visual('江湖行商', '江湖行商1', histogram_process=True, threshold=0.65)
         self.Visual('前往', binary_process=True, threshold=0.4, search_scope=(716, 525, 1334, 750))
-        if self.Visual('参与行商', binary_process=True, threshold=0.4, wait_count=100, tap=False):
+        if self.Visual('参与行商', binary_process=True, threshold=0.4, wait_count=180, tap=False):
             return True
         return False
 
@@ -1982,7 +2012,7 @@ class MerchantLake(BasicTask):
                 num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
                 if 5 - num >= 3:
                     if self.Visual('一键召回', binary_process=True, threshold=0.45):
-                        time.sleep(20)
+                        time.sleep(15)
                         while not event.unbind[self.mapp].is_set():
                             if self.Visual('暂离', histogram_process=True, threshold=0.7):
                                 self.Visual('请离队伍', binary_process=True, threshold=0.4)
@@ -2016,11 +2046,11 @@ class MerchantLake(BasicTask):
                     time.sleep(3)
                     self.mouse_up(1029, 485)
                     self.Visual('购买', binary_process=True, threshold=0.4, search_scope=(871, 230, 1209, 631))
-            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
         elif self.coord('出售', binary_process=True, threshold=0.4, search_scope=(871, 377, 1209, 631)):
             for _ in range(5):
                 self.Visual('出售', binary_process=True, threshold=0.4, search_scope=(871, 377, 1209, 631))
-            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
 
 # 采集任务
@@ -2033,10 +2063,10 @@ class AcquisitionTask(BasicTask):
         self.acquisition_1_flag = True
         self.acquisition_flag = False
         self.last_coord = None
-        self.line_dict = {1: (1068, 81), 2: (1068, 161), 3: (1068, 241), 4: (1068, 321), 5: (1068, 401), 6: (1068, 481),
-                          7: (1068, 561), 8: '8线', 9: '9线', 10: '10线', 11: '11线', 12: '12线', 13: '13线',
-                          14: '14线',
-                          15: '15线', 16: '16线', 17: '17线', 18: '18线', 19: '19线', 20: '20线', 21: '21线'}
+        self.line_dict = {1: '1线', 2: '2线', 3: '3线', 4: '4线', 5: '5线', 6: '6线', 7: '7线', 8: '8线', 9: '9线',
+                          10: '10线', 11: '11线', 12: '12线', 13: '13线', 14: '14线', 15: '15线', 16: '16线',
+                          17: '17线',
+                          18: '18线', 19: '19线', 20: '20线', 21: '21线'}
         self.coords = [
             event.task_config[self.mapp].get('坐标1'),
             event.task_config[self.mapp].get('坐标2'),
@@ -2059,7 +2089,6 @@ class AcquisitionTask(BasicTask):
         pass
 
     def implement(self):
-        self.Visual('1线', binary_process=True, threshold=0.4, search_scope=(910, 40, 1176, 643))
         line_Limit = int(event.task_config[self.mapp].get('采集线数'))
         if event.task_config[self.mapp].get('地图搜索'):
             method = '地图搜索'
@@ -2158,18 +2187,35 @@ class AcquisitionTask(BasicTask):
 
         self.mouse_down_up(0, 0)
         self.mouse_down_up(1235, 20)
-        if 0 < index <= 7:
-            self.mouse_down_up(self.line_dict[index][0], self.line_dict[index][1])
-        if 7 < index <= 14:
-            self.mouse_move(1068, 561, 1068, 331)
-            self.Visual(self.line_dict[index], histogram_process=True, threshold=0.75,
+        if 0 < index <= 2:
+            self.Visual(self.line_dict[index], canny_process=True, threshold=0.7,
                         search_scope=(910, 40, 1176, 643))
-        elif 14 < index <= 21:
-            self.mouse_move(1068, 561, 1068, 331)
-            self.mouse_move(1068, 561, 1068, 331)
+        if 2 < index <= 4:
+            self.Visual(self.line_dict[index], canny_process=True, threshold=0.8,
+                        search_scope=(910, 40, 1176, 643))
+        if 5 < index <= 6:
+            self.Visual(self.line_dict[index], canny_process=True, threshold=0.9,
+                        search_scope=(910, 40, 1176, 643))
+        if 6 < index <= 10:
+            self.mouse_move(1068, 561, 1068, 431)
+            self.Visual(self.line_dict[index], canny_process=True, threshold=0.8,
+                        search_scope=(910, 40, 1176, 643))
+        elif 10 < index <= 14:
+            self.mouse_move(1068, 561, 1068, 431, 2)
+            self.Visual(self.line_dict[index], canny_process=True, threshold=0.8,
+                        search_scope=(910, 40, 1176, 643))
+        elif 14 < index <= 17:
+            self.mouse_move(1068, 561, 1068, 431, 3)
             self.Visual(self.line_dict[index], histogram_process=True, threshold=0.85,
                         search_scope=(910, 40, 1176, 643))
-
+        elif 17 < index <= 18:
+            self.mouse_move(1068, 561, 1068, 431, 3)
+            self.Visual(self.line_dict[index], histogram_process=True, threshold=0.95,
+                        search_scope=(910, 40, 1176, 643))
+        elif 18 < index <= 21:
+            self.mouse_move(1068, 561, 1068, 431, 4)
+            self.Visual(self.line_dict[index], histogram_process=True, threshold=0.8,
+                        search_scope=(910, 40, 1176, 643))
         self.mouse_down_up(0, 0)
         time.sleep(4)
 
@@ -2182,7 +2228,7 @@ class AcquisitionTask(BasicTask):
         self.Visual('传送点', histogram_process=True, threshold=0.6)
         # self.Visual('传送点', histogram_process=True, threshold=0.6)
         # self.key_down_up('M')
-        self.Visual('关闭', histogram_process=True, threshold=0.7)
+        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
         self.arrive()
 
     # 地图就近查找目标
@@ -2251,7 +2297,7 @@ class AcquisitionTask(BasicTask):
                     self.Visual('搜索图标', binary_process=True, threshold=0.7)
                     self.Visual('一筐鸡蛋', binary_process=True, threshold=0.7)
                     self.Visual('使用', binary_process=True, threshold=0.7)
-                self.Visual('关闭', histogram_process=True, threshold=0.7)
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
             else:
                 return 3
 
@@ -2279,11 +2325,12 @@ class AcquisitionTask(BasicTask):
     # 关闭掉落物品
     def acquisition_4(self):
         while self.acquisition_1_flag and not event.unbind[self.mapp].is_set():
-            if self.coord('关闭', histogram_process=True, threshold=0.7, search_scope=(871, 230, 1209, 631)):
+            if self.coord('关闭', '关闭1', histogram_process=True, threshold=0.7, search_scope=(871, 230, 1209, 631)):
                 for _ in range(4):
                     if event.unbind[self.mapp].is_set():
                         break
-                    self.Visual('关闭', histogram_process=True, threshold=0.7, search_scope=(871, 230, 1209, 631))
+                    self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7,
+                                search_scope=(871, 230, 1209, 631))
             time.sleep(3)
 
 
@@ -2546,7 +2593,7 @@ class SittingObserving(BasicTask):
         for _ in range(5):
             if event.unbind[self.mapp].is_set():
                 break
-            if not self.Visual('关闭', histogram_process=True, threshold=0.7):
+            if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
                 break
 
 
@@ -2698,7 +2745,7 @@ class DailyRedemption(BasicTask):
                         time.sleep(3)
                         continue
 
-            self.Visual('关闭', histogram_process=True, threshold=0.7)
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
         # 银票礼盒
         if event.task_config[self.mapp].get('银票礼盒'):
@@ -2718,7 +2765,7 @@ class DailyRedemption(BasicTask):
             for _ in range(5):
                 if event.unbind[self.mapp].is_set():
                     break
-                if not self.Visual('关闭', histogram_process=True, threshold=0.7):
+                if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
                     break
 
         # 榫头卯眼 鸡蛋
@@ -2751,7 +2798,7 @@ class DailyRedemption(BasicTask):
             for _ in range(6):
                 if event.unbind[self.mapp].is_set():
                     break
-                if not self.Visual('关闭', histogram_process=True, threshold=0.7):
+                if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
                     break
 
         # 锦芳秀
@@ -2767,7 +2814,7 @@ class DailyRedemption(BasicTask):
                 for _ in range(5):
                     if event.unbind[self.mapp].is_set():
                         break
-                    if not self.Visual('关闭', histogram_process=True, threshold=0.7):
+                    if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
                         break
 
         # 帮派铜钱捐献和银两捐献
@@ -2797,8 +2844,54 @@ class DailyRedemption(BasicTask):
             for _ in range(3):
                 if event.unbind[self.mapp].is_set():
                     break
-                if not self.Visual('关闭', random_tap=False, histogram_process=True, threshold=0.7):
+                if not self.Visual('关闭', '关闭1', random_tap=False, histogram_process=True, threshold=0.7):
                     break
+
+        # 神厨食材兑换 莲子 艾草
+        if event.task_config[self.mapp].get('生活技能莲子') or event.task_config[self.mapp].get('生活技能艾草'):
+            self.key_down_up('M')
+            self.Visual('世界', binary_process=True, threshold=0.6)
+            self.Visual('江南', binary_process=True, threshold=0.6)
+            self.Visual('传送点', histogram_process=True, threshold=0.6)
+            # self.Visual('传送点', histogram_process=True, threshold=0.6)
+            # self.key_down_up('M')
+            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
+            self.arrive()
+
+            if event.task_config[self.mapp].get('生活技能艾草'):
+                self.key_down_up('M')
+                self.Visual('地图目标设置', binary_process=True, threshold=0.7)
+                self.Visual('商人1', canny_process=True, threshold=0.7)
+                self.mouse_move(312, 616, 312, 416)
+                self.mouse_move(312, 616, 312, 416)
+                self.Visual('王韭菜', canny_process=True, threshold=0.7)
+                self.Visual('采集目标关闭', binary_process=True, threshold=0.6)
+                self.key_down_up('M')
+                self.arrive()
+                self.Visual('对话', canny_process=True, threshold=0.7)
+                self.Visual('新鲜蔬菜', canny_process=True, threshold=0.7)
+                self.Visual('输入名称搜索', canny_process=True, threshold=0.7)
+                self.input('艾草')
+                self.Visual('搜索图标', binary_process=True, threshold=0.7)
+                self.mouse_Keep_clicking(1180, 541, 2)
+                self.mouse_down_up(1011, 612)
+                self.close_win(2)
+
+            if event.task_config[self.mapp].get('生活技能莲子'):
+                self.key_down_up('M')
+                self.Visual('地图目标设置', binary_process=True, threshold=0.7)
+                self.Visual('商人1', canny_process=True, threshold=0.7)
+                self.mouse_move(312, 616, 312, 116)
+                self.mouse_move(312, 616, 312, 116)
+                self.Visual('兔崽崽', canny_process=True, threshold=0.7)
+                self.Visual('采集目标关闭', binary_process=True, threshold=0.6)
+                self.key_down_up('M')
+                self.arrive()
+                self.Visual('对话', canny_process=True, threshold=0.7)
+                self.Visual('小虾小蟹', canny_process=True, threshold=0.7)
+                self.mouse_Keep_clicking(1042, 539, 2)
+                self.mouse_down_up(1011, 612)
+                self.close_win(2)
 
         # 帮派摇钱树
         if event.task_config[self.mapp].get('摇钱树'):
@@ -2828,7 +2921,7 @@ class DailyRedemption(BasicTask):
             for _ in range(4):
                 if event.unbind[self.mapp].is_set():
                     break
-                if not self.Visual('关闭', random_tap=False, histogram_process=True, threshold=0.7):
+                if not self.Visual('关闭', '关闭1', random_tap=False, histogram_process=True, threshold=0.7):
                     break
 
         # 商票上缴
@@ -2854,3 +2947,11 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
 TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 2148), '悬赏任务': (0, 0), '每日兑换': (0, 537),
              '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148),
              '江湖英雄榜': (0, 2148), '采集任务': (0, 2685), '切换角色': (0, 2148), '江湖行商': (0, 2148)}
+
+if __name__ == '__main__':
+    DEBUG = True
+    PATH = r"D:\Desktop\test_img\1713236778.8824358.bmp"
+    event.unbind[0] = Event()
+    event.stop[0] = Lock()
+    task = BasicTask(0, None, 0)
+    task.coord('一大桶水', canny_process=True, threshold=0.5, search_scope=(775, 188, 1260, 600))

@@ -193,17 +193,20 @@ class BasicFunctional:
         :param handle: 句柄
         :return:
         """
-        if self.primaryScreen is None:
-            self.primaryScreen = QApplication.primaryScreen()
+        try:
+            if self.primaryScreen is None:
+                self.primaryScreen = QApplication.primaryScreen()
 
-        image = self.primaryScreen.grabWindow(handle).toImage()
-        # 获取图像数据，转换为 NumPy 数组
-        width, height = image.width(), image.height()
-        buffer = image.bits().asstring(width * height * 4)
-        image = numpy.frombuffer(buffer, dtype=numpy.uint8).reshape((height, width, 4))
-        # cv2.imshow('Image', image)
-        # cv2.waitKey(0)
-        return image
+            image = self.primaryScreen.grabWindow(handle).toImage()
+            # 获取图像数据，转换为 NumPy 数组
+            width, height = image.width(), image.height()
+            buffer = image.bits().asstring(width * height * 4)
+            image = numpy.frombuffer(buffer, dtype=numpy.uint8).reshape((height, width, 4))
+            # cv2.imshow('Image', image)
+            # cv2.waitKey(0)
+            return image
+        except AttributeError:
+            return None
 
     @staticmethod
     def img_ocr(handle, search_area):
@@ -280,6 +283,6 @@ VkCode = {
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    image = basic_functional.screen_shot(basic_functional.get_handle())
+    image = basic_functional.screen_shot(722294)
     # rect = win32gui.GetWindowRect(basic_functional.get_handle())
     cv2.imwrite(fr"D:\Desktop\test_img\{time.time()}.bmp", image)

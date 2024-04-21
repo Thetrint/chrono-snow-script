@@ -445,7 +445,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>-2605</y>
+                     <y>-503</y>
                      <width>713</width>
                      <height>5000</height>
                     </rect>
@@ -980,6 +980,30 @@
                             </property>
                             <property name="text">
                              <string>商票上缴</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_30">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>生活技能-艾草</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_31">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>生活技能-莲子</string>
                             </property>
                            </widget>
                           </item>
