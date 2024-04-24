@@ -536,8 +536,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_15.setCurrentIndex(config.getint('日常任务', '优先级7'))
             self.script.comboBox_16.setCurrentIndex(config.getint('日常任务', '优先级8'))
 
-            self.script.checkBox_30.setChecked(config.getboolean('日常任务', '生活技能-艾草'))
-            self.script.checkBox_31.setChecked(config.getboolean('日常任务', '生活技能-莲子'))
+            self.script.checkBox_30.setChecked(config.getboolean('日常任务', '生活技能艾草'))
+            self.script.checkBox_31.setChecked(config.getboolean('日常任务', '生活技能莲子'))
 
         except configparser.NoOptionError:
             pass
