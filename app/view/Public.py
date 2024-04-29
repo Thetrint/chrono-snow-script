@@ -2,9 +2,12 @@ import json
 import os
 import tempfile
 
-from PyQt6.QtCore import QObject, pyqtSignal, QTimer, Qt, QRegularExpression
-from PyQt6.QtGui import QValidator
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QDialogButtonBox, QLineEdit, QMessageBox
+from PyQt6.QtCore import Qt, QStringListModel
+from PyQt6.QtGui import QTextCursor
+from PyQt6.QtWidgets import QTextEdit, QCompleter
+
 TABLE_WINDOW = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 DPI_MAPP = {1.0: (1350, 789), 1.25: (1352, 797), 1.5: (1356, 806), 1.75: (1360, 814), 2.0: (1360, 822)}
 Mask = True
@@ -212,6 +215,148 @@ KEY_DICT = {
     # 16777235: 'Num8',
     # 16777238: 'Num9',
     # 16777222: 'Num0',
+    16777248: 'shift',
+    16777220: 'Enter',
     16777249: 'ctrl',
     16777216: 'ESC'
 }
+
+
+class TextEdit(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.textChangedSign = True
+        self._completer = None
+        self.searchWords_dict = {
+            "技能": "技能[$CURSON$] 延迟[200]ms <>\n",
+        }
+        self.matchWords_list = [
+            '普攻',
+            '绝学',
+            '闪避',
+            '技能1',
+            '技能2',
+            '技能3',
+            '技能4',
+            '技能5',
+            '技能6',
+            '技能7',
+            '技能8'
+
+        ]
+        self.initAutoCompleteWords()
+        self.completion_prefix = ''
+
+    def initAutoCompleteWords(self):
+        self.autoCompleteWords_list = []
+        self.specialCursorDict = {}
+        for i in self.searchWords_dict:
+            if "$CURSON$" in self.searchWords_dict[i]:
+                cursorPosition = len(self.searchWords_dict[i]) - len("$CURSON$") - self.searchWords_dict[i].find(
+                    "$CURSON$")
+                self.searchWords_dict[i] = self.searchWords_dict[i].replace("$CURSON$", '')
+                self.specialCursorDict[i] = cursorPosition
+        for i in self.matchWords_list:
+            if "$CURSON$" in i:
+                cursorPosition = len(i) - len("$CURSON$") - i.find("$CURSON$")
+                self.matchWords_list[self.matchWords_list.index(i)] = i.replace("$CURSON$", '')
+                self.specialCursorDict[i.replace("$CURSON$", '')] = cursorPosition
+
+        self.autoCompleteWords_list = list(self.searchWords_dict.keys()) + self.matchWords_list
+
+    def setCompleter(self, c):
+        self._completer = c
+        c.setWidget(self)
+        c.popup().setStyleSheet('''
+        QListView {
+            color: red;
+            padding-top: 0px;
+            padding-bottom: 0px;
+        }
+        QListView::item:selected {
+            background-color: #9C9C9C;
+        }
+        ''')
+
+        c.popup().setFixedWidth(100)  # 设置宽度为50像素
+
+        c.setModelSorting(QCompleter.ModelSorting.CaseSensitivelySortedModel)
+        c.setFilterMode(Qt.MatchFlag.MatchContains)
+        c.setWrapAround(False)
+        c.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+
+        c.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+
+        c.setModel(QStringListModel(self.autoCompleteWords_list, self._completer))
+
+        c.activated.connect(self.insertCompletion)
+
+    def insertCompletion(self, completion):
+        if self._completer.widget() is not self:
+            return
+
+        tc = self.textCursor()
+
+        if completion in self.searchWords_dict:
+            for i in self._completer.completionPrefix():
+                tc.deletePreviousChar()
+            self.setTextCursor(tc)
+
+            insertText = self.searchWords_dict[completion]
+            tc.insertText(insertText)
+
+            self._completer.popup().hide()
+
+        else:
+            for i in self._completer.completionPrefix():
+                tc.deletePreviousChar()
+            tc.insertText(completion)
+            self._completer.popup().hide()
+
+        tc.movePosition(QTextCursor.MoveOperation.EndOfWord)
+        if completion in self.specialCursorDict.keys():
+            for i in range(self.specialCursorDict[completion]):
+                tc.movePosition(QTextCursor.MoveOperation.PreviousCharacter)
+            self.setTextCursor(tc)
+        else:
+            tc.movePosition(QTextCursor.MoveOperation.EndOfWord)
+            self.setTextCursor(tc)
+
+    def getLastPhrase(self):
+        connect = self.toPlainText()
+        lastPhrase = connect.split('\n')[-1].split(' ')[-1]
+        return lastPhrase
+
+    def keyPressEvent(self, e):
+        isShortcut = False
+
+        if self._completer is not None and self._completer.popup().isVisible():
+            if e.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return, Qt.Key.Key_Escape, Qt.Key.Key_Tab, Qt.Key.Key_Backtab):
+                e.ignore()
+                return
+
+        if (self._completer is None or not isShortcut) and e.key() != 0:
+            super().keyPressEvent(e)
+
+        ctrlOrShift = e.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+        if self._completer is None or (ctrlOrShift and len(e.text()) == 0):
+            return
+
+        eow = ''
+        hasModifier = (e.modifiers() != Qt.KeyboardModifier.NoModifier) and not ctrlOrShift
+
+        lastPhrase = self.getLastPhrase()
+        self.completion_prefix = lastPhrase
+
+        if not isShortcut and (len(e.text()) == 0 or len(lastPhrase) < 0):
+            self._completer.popup().hide()
+            return
+
+        if lastPhrase != self._completer.completionPrefix():
+            self._completer.setCompletionPrefix(lastPhrase)
+            self._completer.popup().setCurrentIndex(self._completer.completionModel().index(0, 0))
+
+        cr = self.cursorRect()
+        cr.setWidth(self._completer.popup().sizeHintForColumn(0) + self._completer.popup().verticalScrollBar().sizeHint().width())
+        self._completer.complete(cr)

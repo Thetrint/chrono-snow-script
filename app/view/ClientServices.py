@@ -34,7 +34,7 @@ class ClientServices:
 
     @staticmethod
     def login(username, password):
-        url = 'https://75561x0s00.vicp.fun/login'
+        url = 'http://8.130.47.143:8082/login'
         data = {
             'username': username,
             'password': password,
@@ -49,7 +49,7 @@ class ClientServices:
 
     @staticmethod
     def signup(username, password):
-        url = 'https://75561x0s00.vicp.fun/signup'
+        url = 'http://8.130.47.143:8082/signup'
         data = {
             'username': username,
             'password': password
@@ -64,7 +64,7 @@ class ClientServices:
         while not self.stop.is_set():
             print('更新状态')
             try:
-                url = 'https://75561x0s00.vicp.fun/heartbeat'
+                url = 'http://8.130.47.143:8082/heartbeat'
                 data = {
                     'username': username,
                     'token': TOKEN

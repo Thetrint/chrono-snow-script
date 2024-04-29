@@ -15,7 +15,7 @@ from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt, QDateTime, QRegularExpression
 from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage
 from PyQt6.QtWidgets import QWidget, QPushButton, QApplication, QDialog, QTableWidget, \
-    QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit
+    QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit, QCompleter
 from win32gui import GetWindowRect
 from threading import Thread
 
@@ -27,7 +27,7 @@ from app.view.Ui.LoginWindow import Ui_Login
 from app.Script.BasicFunctional import basic_functional
 from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
 from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit,\
-    TimingQMessageBox, Mask
+    TimingQMessageBox, Mask, TextEdit
 from app.view.ClientServices import services
 
 
@@ -142,6 +142,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "队伍": self.script.lineEdit_16.text(),
             "地图": self.script.lineEdit_17.text(),
             "设置": self.script.lineEdit_18.text(),
+            "技能逻辑": self.script.textEdit.toPlainText(),
             "采集线数": self.script.comboBox_7.currentIndex(),
             "指定地图": self.script.comboBox_8.currentText(),
             "自动吃鸡蛋": self.script.checkBox_19.isChecked(),
@@ -179,19 +180,22 @@ class MainWindow(QWidget, Ui_MainWindow):
             "坐标13": [self.script.lineEdit_43.text(), self.script.lineEdit_44.text()],
             "坐标14": [self.script.lineEdit_45.text(), self.script.lineEdit_46.text()],
             "坐标15": [self.script.lineEdit_47.text(), self.script.lineEdit_48.text()],
-            "技能列表": [
-                self.script.lineEdit_4.text(),
-                self.script.lineEdit_9.text(),
-                self.script.lineEdit_5.text(),
-                self.script.lineEdit_6.text(),
-                self.script.lineEdit_7.text(),
-                self.script.lineEdit_8.text(),
-                self.script.lineEdit_10.text(),
-                self.script.lineEdit_11.text(),
-                self.script.lineEdit_12.text(),
-                self.script.lineEdit_13.text(),
+            "普攻": self.script.lineEdit_4.text(),
+            "技能1": self.script.lineEdit_9.text(),
+            "技能2": self.script.lineEdit_5.text(),
+            "技能3": self.script.lineEdit_6.text(),
+            "技能4": self.script.lineEdit_7.text(),
+            "技能5": self.script.lineEdit_8.text(),
+            "技能6": self.script.lineEdit_10.text(),
+            "技能7": self.script.lineEdit_11.text(),
+            "技能8": self.script.lineEdit_12.text(),
+            "绝学": self.script.lineEdit_13.text(),
+            "闪避": self.script.lineEdit_50.text(),
+            "关山": self.script.lineEdit_51.text(),
+            "自创1": self.script.lineEdit_52.text(),
+            "自创2": self.script.lineEdit_53.text(),
+            "自创3": self.script.lineEdit_54.text(),
 
-            ]
 
         }
 
@@ -323,18 +327,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_5.setCurrentText('枯木')
             self.script.comboBox_6.setCurrentText('碎石')
 
-            kill_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'R']
-            self.script.lineEdit_4.setText(kill_list[0]),
-            self.script.lineEdit_9.setText(kill_list[1]),
-            self.script.lineEdit_5.setText(kill_list[2]),
-            self.script.lineEdit_6.setText(kill_list[3]),
-            self.script.lineEdit_7.setText(kill_list[4]),
-            self.script.lineEdit_8.setText(kill_list[5]),
-            self.script.lineEdit_10.setText(kill_list[6]),
-            self.script.lineEdit_11.setText(kill_list[7]),
-            self.script.lineEdit_12.setText(kill_list[8]),
-            self.script.lineEdit_13.setText(kill_list[9]),
-
             coord = ['', '']
             self.script.lineEdit_19.setText(coord[0])
             self.script.lineEdit_20.setText(coord[1])
@@ -411,6 +403,21 @@ class MainWindow(QWidget, Ui_MainWindow):
 
             self.script.lineEdit.setText('悬赏副本来人!!!')
 
+            self.script.lineEdit_50.setText('F'),
+            self.script.lineEdit_51.setText('G'),
+            self.script.lineEdit_52.setText('K'),
+            self.script.lineEdit_53.setText('L'),
+            self.script.lineEdit_54.setText('5'),
+
+            self.script.textEdit.setText('技能[技能1] 延迟[200]ms <>\n'
+                                         '技能[技能5] 延迟[200]ms <>\n'
+                                         '技能[技能6] 延迟[200]ms <>\n'
+                                         '技能[技能2] 延迟[200]ms <>\n'
+                                         '技能[技能8] 延迟[200]ms <>\n'
+                                         '技能[技能2] 延迟[200]ms <>\n'
+                                         '技能[技能3] 延迟[200]ms <>\n'
+                                         '技能[技能4] 延迟[2000]ms <>\n')
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -455,18 +462,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_4.setCurrentText(config.get('日常任务', '采草目标'))
             self.script.comboBox_5.setCurrentText(config.get('日常任务', '伐木目标'))
             self.script.comboBox_6.setCurrentText(config.get('日常任务', '挖矿目标'))
-
-            kill_list = eval(config.get('日常任务', '技能列表'))
-            self.script.lineEdit_4.setText(kill_list[0]),
-            self.script.lineEdit_9.setText(kill_list[1]),
-            self.script.lineEdit_5.setText(kill_list[2]),
-            self.script.lineEdit_6.setText(kill_list[3]),
-            self.script.lineEdit_7.setText(kill_list[4]),
-            self.script.lineEdit_8.setText(kill_list[5]),
-            self.script.lineEdit_10.setText(kill_list[6]),
-            self.script.lineEdit_11.setText(kill_list[7]),
-            self.script.lineEdit_12.setText(kill_list[8]),
-            self.script.lineEdit_13.setText(kill_list[9]),
 
             coord = eval(config.get('日常任务', '坐标1'))
             self.script.lineEdit_19.setText(coord[0])
@@ -543,6 +538,14 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_31.setChecked(config.getboolean('日常任务', '生活技能莲子'))
 
             self.script.lineEdit.setText(config.get('日常任务', '副本喊话内容'))
+
+            self.script.lineEdit_50.setText(config.get('日常任务', '闪避')),
+            self.script.lineEdit_51.setText(config.get('日常任务', '关山')),
+            self.script.lineEdit_52.setText(config.get('日常任务', '自创1')),
+            self.script.lineEdit_53.setText(config.get('日常任务', '自创2')),
+            self.script.lineEdit_54.setText(config.get('日常任务', '自创3')),
+
+            self.script.textEdit.setText(config.get('日常任务', '技能逻辑'))
 
         except configparser.NoOptionError:
             pass
@@ -782,21 +785,53 @@ class ScriptWindow(QWidget, Ui_Script):
         self.setupUi(self)
         self.initWindow()
         # 重构输入框
-        self.lineEdit_4 = CustomLineEdit(self.lineEdit_4)
-        self.lineEdit_9 = CustomLineEdit(self.lineEdit_9)
-        self.lineEdit_5 = CustomLineEdit(self.lineEdit_5)
-        self.lineEdit_6 = CustomLineEdit(self.lineEdit_6)
-        self.lineEdit_7 = CustomLineEdit(self.lineEdit_7)
-        self.lineEdit_8 = CustomLineEdit(self.lineEdit_8)
-        self.lineEdit_10 = CustomLineEdit(self.lineEdit_10)
-        self.lineEdit_11 = CustomLineEdit(self.lineEdit_11)
-        self.lineEdit_12 = CustomLineEdit(self.lineEdit_12)
-        self.lineEdit_13 = CustomLineEdit(self.lineEdit_13)
-        self.lineEdit_14 = CustomLineEdit(self.lineEdit_14)
-        self.lineEdit_15 = CustomLineEdit(self.lineEdit_15)
-        self.lineEdit_16 = CustomLineEdit(self.lineEdit_16)
-        self.lineEdit_17 = CustomLineEdit(self.lineEdit_17)
-        self.lineEdit_18 = CustomLineEdit(self.lineEdit_18)
+        self.replace_widget(CustomLineEdit, self.lineEdit_4)
+        # self.lineEdit_4 = CustomLineEdit(self.lineEdit_4)
+        self.replace_widget(CustomLineEdit, self.lineEdit_9)
+        self.replace_widget(CustomLineEdit, self.lineEdit_5)
+        self.replace_widget(CustomLineEdit, self.lineEdit_6)
+        self.replace_widget(CustomLineEdit, self.lineEdit_7)
+        self.replace_widget(CustomLineEdit, self.lineEdit_8)
+        self.replace_widget(CustomLineEdit, self.lineEdit_10)
+        self.replace_widget(CustomLineEdit, self.lineEdit_11)
+        self.replace_widget(CustomLineEdit, self.lineEdit_12)
+        self.replace_widget(CustomLineEdit, self.lineEdit_13)
+        self.replace_widget(CustomLineEdit, self.lineEdit_14)
+        self.replace_widget(CustomLineEdit, self.lineEdit_15)
+        self.replace_widget(CustomLineEdit, self.lineEdit_16)
+        self.replace_widget(CustomLineEdit, self.lineEdit_17)
+        self.replace_widget(CustomLineEdit, self.lineEdit_18)
+        self.replace_widget(CustomLineEdit, self.lineEdit_50)
+        self.replace_widget(CustomLineEdit, self.lineEdit_51)
+        self.replace_widget(CustomLineEdit, self.lineEdit_52)
+        self.replace_widget(CustomLineEdit, self.lineEdit_53)
+        self.replace_widget(CustomLineEdit, self.lineEdit_54)
+
+        self.completer = QCompleter(self)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)  # 不区分大小写
+        self.replace_widget(TextEdit, self.textEdit)
+        self.textEdit.setCompleter(self.completer)
+
+    def replace_widget(self, new_widget, old_widget):
+        # 创建一个新的TextEdit控件
+        new_text_edit = new_widget()
+
+        # 获取原始textEdit的父对象
+        parent_widget = old_widget.parent()
+
+        # 获取原始textEdit的索引
+        index = parent_widget.layout().indexOf(old_widget)
+
+        # 删除原始textEdit控件
+        parent_widget.layout().removeWidget(old_widget)
+        old_widget.deleteLater()
+
+        # 将新的textEdit控件添加到相同的位置
+        parent_widget.layout().insertWidget(index, new_text_edit)
+
+        # 更新属性引用
+        if hasattr(self, old_widget.objectName()):
+            setattr(self, old_widget.objectName(), new_text_edit)
 
     def task_append(self, text):
         sender = self.sender()
