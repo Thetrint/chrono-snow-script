@@ -27,7 +27,7 @@ from app.view.Ui.LoginWindow import Ui_Login
 from app.Script.BasicFunctional import basic_functional
 from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
 from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit,\
-    TimingQMessageBox
+    TimingQMessageBox, Mask
 from app.view.ClientServices import services
 
 
@@ -102,6 +102,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "江湖英雄榜次数": self.script.spinBox_7.value(),
             "副本人数": self.script.comboBox_2.currentIndex(),
             "副本自动匹配": self.script.checkBox.isChecked(),
+            "副本喊话内容": self.script.lineEdit.text(),
             "侠缘昵称": self.script.lineEdit_3.text(),
             # "侠缘喊话内容": self.script.textEdit_2.toPlainText(),
             "山河器": self.script.checkBox_2.isChecked(),
@@ -408,6 +409,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_30.setChecked(False)
             self.script.checkBox_31.setChecked(False)
 
+            self.script.lineEdit.setText('悬赏副本来人!!!')
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -539,6 +542,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_30.setChecked(config.getboolean('日常任务', '生活技能艾草'))
             self.script.checkBox_31.setChecked(config.getboolean('日常任务', '生活技能莲子'))
 
+            self.script.lineEdit.setText(config.get('日常任务', '副本喊话内容'))
+
         except configparser.NoOptionError:
             pass
         except configparser.NoSectionError:
@@ -630,13 +635,18 @@ class MainWindow(QWidget, Ui_MainWindow):
 
             if reply == QMessageBox.StandardButton.No:
                 event.ignore()
-                return 0
-
-        self.save_system_config()
-        self.run.unbind_all(None)
-        self.user_quit = True
-        services.stop.set()
-        event.accept()
+            else:
+                self.save_system_config()
+                self.run.unbind_all(None)
+                self.user_quit = True
+                services.stop.set()
+                event.accept()
+        else:
+            self.save_system_config()
+            self.run.unbind_all(None)
+            self.user_quit = True
+            services.stop.set()
+            event.accept()
 
 
 class LoginWindow(QWidget, Ui_Login):
@@ -1105,9 +1115,12 @@ class RunWindow(QWidget, Ui_Run):
         return row
 
     def start_task(self, _):
-        if (row := self.window_inspection()) != -1:
-            # self.set_character(self.struct_task_dict[row].row)
-            Thread(target=self.start.start, args=(row, self.struct_task_dict[row].handle)).start()
+        try:
+            if (row := self.window_inspection()) != -1:
+                # self.set_character(self.struct_task_dict[row].row)
+                Thread(target=self.start.start, args=(row, self.struct_task_dict[row].handle)).start()
+        except Exception as e:
+            logging.error(f'线程发生错误{e}')
 
 
 # 任务信息构造类
@@ -1134,12 +1147,14 @@ class StructureTask:
         shutil.copytree(f'app/images/Img', temp_img_path)
 
     def block_window(self):
-        basic_functional.DisableTheWindow(self.handle)
-        basic_functional.DisableTheWindow(self.mask_window.winId())
+        if Mask:
+            basic_functional.DisableTheWindow(self.handle)
+            basic_functional.DisableTheWindow(self.mask_window.winId())
 
     def unblock_window(self):
-        basic_functional.UnDisableTheWindow(self.handle)
-        basic_functional.UnDisableTheWindow(self.mask_window.winId())
+        if Mask:
+            basic_functional.UnDisableTheWindow(self.handle)
+            basic_functional.UnDisableTheWindow(self.mask_window.winId())
 
     def resume(self):
         self.mask_window.mask_show()
@@ -1181,7 +1196,8 @@ class MaskWindow(QWidget):
             rect[2] / scale_factor), int(rect[3] / scale_factor)
         self.setFixedSize(width - x + 20, height - y + 20)
         self.move(x - 15, y - 15)
-        self.show()
+        if Mask:
+            self.show()
 
     def mask_close(self):
         self.close()
