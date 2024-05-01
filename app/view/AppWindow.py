@@ -418,6 +418,17 @@ class MainWindow(QWidget, Ui_MainWindow):
                                          '技能[技能3] 延迟[200]ms <>\n'
                                          '技能[技能4] 延迟[2000]ms <>\n')
 
+            self.script.lineEdit_4.setText('1')
+            self.script.lineEdit_9.setText('2')
+            self.script.lineEdit_5.setText('3')
+            self.script.lineEdit_6.setText('4')
+            self.script.lineEdit_7.setText('5')
+            self.script.lineEdit_8.setText('6')
+            self.script.lineEdit_10.setText('7')
+            self.script.lineEdit_11.setText('8')
+            self.script.lineEdit_12.setText('9')
+            self.script.lineEdit_13.setText('R')
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -546,6 +557,17 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_54.setText(config.get('日常任务', '自创3')),
 
             self.script.textEdit.setText(config.get('日常任务', '技能逻辑'))
+
+            self.script.lineEdit_4.setText(config.get('日常任务', '普攻'))
+            self.script.lineEdit_9.setText(config.get('日常任务', '技能1'))
+            self.script.lineEdit_5.setText(config.get('日常任务', '技能2'))
+            self.script.lineEdit_6.setText(config.get('日常任务', '技能3'))
+            self.script.lineEdit_7.setText(config.get('日常任务', '技能4'))
+            self.script.lineEdit_8.setText(config.get('日常任务', '技能5'))
+            self.script.lineEdit_10.setText(config.get('日常任务', '技能6'))
+            self.script.lineEdit_11.setText(config.get('日常任务', '技能7'))
+            self.script.lineEdit_12.setText(config.get('日常任务', '技能8'))
+            self.script.lineEdit_13.setText(config.get('日常任务', '绝学'))
 
         except configparser.NoOptionError:
             pass
