@@ -229,7 +229,7 @@ class TextEdit(QTextEdit):
         self.textChangedSign = True
         self._completer = None
         self.searchWords_dict = {
-            "技能": "技能[$CURSON$] 延迟[200]ms <>\n",
+            "技能": "技能[$CURSON$] 延迟[2000]ms <>\n",
         }
         self.matchWords_list = [
             '普攻',

@@ -12,10 +12,10 @@ import logging
 import win32con
 import win32gui
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt, QDateTime, QRegularExpression
-from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage
+from PyQt6.QtCore import Qt, QDateTime, QRegularExpression, QUrl
+from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage, QDesktopServices
 from PyQt6.QtWidgets import QWidget, QPushButton, QApplication, QDialog, QTableWidget, \
-    QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit, QCompleter
+    QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit, QCompleter, QLabel, QVBoxLayout
 from win32gui import GetWindowRect
 from threading import Thread
 
@@ -688,8 +688,8 @@ class LoginWindow(QWidget, Ui_Login):
         self.lineEdit_2.setEchoMode(QLineEdit.EchoMode.Password)
         self.lineEdit_4.setEchoMode(QLineEdit.EchoMode.Password)
         self.lineEdit_6.setEchoMode(QLineEdit.EchoMode.Password)
-        self.initWindow()
         self.load_user_config()
+        self.initWindow()
 
     def initWindow(self):
         self.login_button.clicked.connect(self.start_login)
@@ -794,11 +794,62 @@ class LoginWindow(QWidget, Ui_Login):
         self.save_user_config()
 
 
-class HomeWindow(QWidget):
+class HomeWindow(QWidget, Ui_Home):
     def __init__(self):
         super().__init__()
-        self.home = Ui_Home()
-        self.home.setupUi(self)
+        self.setupUi(self)
+        self.link_show()
+        self.text_show()
+
+    def text_show(self):
+        # 创建一个QLabel用于显示文本
+        text = """
+        <p>tips：</p>
+        <h3>[成员注意事项]</h3>
+        <p>- 为了更好的使用体验，脚本使用过程中，遇到问题请及时反馈给群主。</p>
+        <p>- 群人数有限，当本群人数达到四百人开始月末清理两个月以上不活跃成员，请适当冒泡。</p>
+        <p>- 反馈问题需有明确的逻辑关系，具体说明某某任务卡在哪里。为了更快定位问题不要只说什么任务卡住了。</p>
+        <p>- 需要解决问题,到群文件下todesk的免安装工具,官网自己下也行,不要给我发QQ远程。</p>
+    
+        <h3>[脚本基本使用教程]</h3>
+        <p>- 脚本只可以在pc端下运行。套壳pc需找到游戏安装路径启动。不懂群里问。</p>
+        <p>- 游戏设置夜泊模式</p>
+        <p>- 游戏窗口可以被遮挡/重叠。但游戏窗口不能出现在屏幕外。</p>
+        <p>- 脚本通过侧边栏切换页面，双击添加/移除 任务。</p>
+        <p>- 任务准备完成。请切换到运行页面。点击开始后，脚本将会在1秒后绑定鼠标下面的窗口，请注意鼠标移动。</p>
+        <p>- 双击角色信息 对应窗口会在一秒后展示在最上方。</p>
+        <p>- 绑定前手动通过键盘打开背包,确认键盘是否可用</p>
+        """
+        # 创建一个QLabel用于显示文本
+        self.text_label = QLabel(text)
+        self.text_label.setWordWrap(True)  # 启用自动换行
+
+        # 将文本添加到布局中
+        layout = QVBoxLayout()
+        layout.addWidget(self.text_label)
+        self.widget_3.setLayout(layout)
+
+    def link_show(self):
+        # 创建一个QLabel用于显示超链接文本
+        self.link_label = QLabel('<a href="https://www.bilibili.com/video/BV1Hb421a7Ym">时雪基础使用视频教程</a>')
+        # 设置文本居中对齐
+        self.link_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+
+        # 设置文本允许打开超链接
+        self.link_label.setOpenExternalLinks(True)
+
+        # 将超链接文本添加到布局中
+        layout = QVBoxLayout()
+        layout.addWidget(self.link_label)
+        self.widget.setLayout(layout)
+
+        # 为超链接文本连接点击事件
+        self.link_label.linkActivated.connect(self.open_link)
+
+    @staticmethod
+    # 定义超链接点击事件的槽函数
+    def open_link(self, url):
+        QDesktopServices.openUrl(QUrl(url))
 
 
 class ScriptWindow(QWidget, Ui_Script):

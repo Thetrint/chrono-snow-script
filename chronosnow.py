@@ -2,10 +2,12 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QStyleFactory
 from app.view.AppWindow import MainWindow
 
 app = QApplication(sys.argv)
+app.setStyle(QStyleFactory.create('windowsvista'))
+# print(QStyleFactory.keys())
 
 # 创建RotatingFileHandler实例
 handler = RotatingFileHandler(filename='app.log', maxBytes=1024*1024, backupCount=1)

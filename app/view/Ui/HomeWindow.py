@@ -12,10 +12,42 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_Home(object):
     def setupUi(self, Home):
         Home.setObjectName("Home")
-        Home.resize(400, 300)
-        self.pushButton = QtWidgets.QPushButton(parent=Home)
-        self.pushButton.setGeometry(QtCore.QRect(50, 60, 75, 23))
-        self.pushButton.setObjectName("pushButton")
+        Home.resize(942, 587)
+        self.gridLayout = QtWidgets.QGridLayout(Home)
+        self.gridLayout.setObjectName("gridLayout")
+        self.widget = QtWidgets.QWidget(parent=Home)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy)
+        self.widget.setStyleSheet("QWidget#widget{\n"
+"border: 3px double rgba(255, 0, 0, 150);\n"
+"}")
+        self.widget.setObjectName("widget")
+        self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
+        self.widget_2 = QtWidgets.QWidget(parent=Home)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(2)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
+        self.widget_2.setSizePolicy(sizePolicy)
+        self.widget_2.setStyleSheet("QWidget#widget_2{\n"
+"border: 3px double rgba(170, 255, 255, 200)\n"
+"}")
+        self.widget_2.setObjectName("widget_2")
+        self.gridLayout.addWidget(self.widget_2, 0, 1, 2, 1)
+        self.widget_3 = QtWidgets.QWidget(parent=Home)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(5)
+        sizePolicy.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
+        self.widget_3.setSizePolicy(sizePolicy)
+        self.widget_3.setStyleSheet("QWidget#widget_3{\n"
+"border: 3px double rgba(0, 255, 255, 150);\n"
+"}")
+        self.widget_3.setObjectName("widget_3")
+        self.gridLayout.addWidget(self.widget_3, 1, 0, 1, 1)
 
         self.retranslateUi(Home)
         QtCore.QMetaObject.connectSlotsByName(Home)
@@ -23,4 +55,3 @@ class Ui_Home(object):
     def retranslateUi(self, Home):
         _translate = QtCore.QCoreApplication.translate
         Home.setWindowTitle(_translate("Home", "Form"))
-        self.pushButton.setText(_translate("Home", "PushButton"))

@@ -1,3 +1,4 @@
+import datetime
 import heapq
 import logging
 import os
@@ -76,10 +77,10 @@ class StartTask:
             if execute:
                 init.implement()
                 publicSingle.set_character.emit(row)
-                for task in event.task_config[mapp].get('执行列表'):
-                    if not event.unbind[mapp].is_set() and task != '切换角色':
-                        self.set_state(row, task)
-                        Task = TASK_MAPPING[task](row, handle, mapp)
+                for tsk in event.task_config[mapp].get('执行列表'):
+                    if not event.unbind[mapp].is_set() and tsk != '切换角色':
+                        self.set_state(row, tsk)
+                        Task = TASK_MAPPING[tsk](row, handle, mapp)
                         Task.initialization()
                         Task.implement()
                 execute = False
@@ -222,8 +223,22 @@ class BasicTask(object):
             with event.stop[self.mapp]:
                 publicSingle.journal.emit([self.row, message])
 
+    def back_interface(self):
+        for _ in range(30):
+            if event.unbind[self.mapp].is_set():
+                return 0
+
+            if self.coord('副本挂机', histogram_process=True, threshold=0.7):
+                return 1
+            else:
+                if not self.Visual('关闭', histogram_process=True, threshold=0.75, wait_count=1):
+                    self.mouse_down_up(0, 0)
+                    self.mouse_down_up(1330, 745)
+
     def keep_activate(self, count):
         for _ in range(count):
+            if event.unbind[self.mapp].is_set():
+                return 0
             time.sleep(1)
             self.mouse_down_up(1330, 740, tap_after_timeout=0)
 
@@ -636,7 +651,7 @@ class BasicTask(object):
             with event.stop[self.mapp]:
                 basic_functional.key_up(self.handle, key)
 
-    def key_down_up(self, key, key_down_timeout=2):
+    def key_down_up(self, key, key_down_timeout=2.0):
         """
         键盘点击 key
         :param key_down_timeout: 点击后延迟
@@ -702,7 +717,7 @@ class Persona(BasicTask):
         pass
 
     def process_kill_data(self, data):
-        pattern = r'技能\[(.*?)\] 延迟\[(.*?)\]ms <>\n'
+        pattern = r'技能\[(.*?)\] 延迟\[(.*?)\]ms <>'
 
         matches = re.findall(pattern, data)
 
@@ -716,9 +731,10 @@ class Persona(BasicTask):
     def fight(self):
         while not self.fight_stop and not event.unbind[self.mapp].is_set():
             for kill, defer in self.process_kill_list:
+                if self.fight_stop and event.unbind[self.mapp].is_set():
+                    continue
                 print(kill)
-                self.key_down_up(self.kill_dict[kill])
-                time.sleep(int(defer)/1000)
+                self.key_down_up(self.kill_dict[kill], key_down_timeout=int(defer) / 1000)
 
     def stop_fight(self):
         self.fight_stop = True
@@ -735,7 +751,7 @@ class Initialize(BasicTask):
         pass
 
     def implement(self):
-        self.close_win(5)
+        self.back_interface()
         self.key_down_up('ESC')
         self.Visual('端游模式', canny_process=True, threshold=0.8)
         self.key_down_up('ESC')
@@ -788,6 +804,7 @@ class WorldShoutsTask(BasicTask):
                 self.journal(f'世界喊话{count + 1}次')
                 self.keep_activate(28)
         self.Visual('聊天窗口关闭', laplacian_process=True)
+
 
 #
 # class FightTask(BasicTask):
@@ -1558,7 +1575,7 @@ class LessonTask(BasicTask):
                 self.close_win(2)
             elif switch == 8:
                 self.journal('提交物品')
-                self.Visual('一键提交', laplacian_process=True, wait_count=1)
+                self.Visual('一键提交', canny_process=True, threshold=0.6, wait_count=1)
                 self.mouse_down_up(0, 0)
                 if self.Visual('确定', laplacian_process=True):
                     self.journal('课业任务完成')
@@ -1633,7 +1650,7 @@ class LessonTask(BasicTask):
     def detect(self):
         time.sleep(2)
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-            if self.coord('一键提交', binary_process=True, threshold=0.4):
+            if self.coord('一键提交', canny_process=True, threshold=0.6):
                 return 8  # 提交界面
             elif self.coord('商城购买', binary_process=True, threshold=0.4):
                 return 11  # 商城购买弹窗
@@ -1976,7 +1993,9 @@ class PacifyInjusticeTask(BasicTask):
         while not event.unbind[self.mapp].is_set():
             switch = self.determine()
 
-            if switch == 0:
+            if switch == -3:
+                self.back_interface()
+            elif switch == 0:
                 self.journal('打开队伍')
                 self.key_down_up(event.persona[self.mapp].team)
             elif switch == 1:
@@ -2018,6 +2037,7 @@ class PacifyInjusticeTask(BasicTask):
                     self.task_start = time.time()
                 else:
                     self.close_win(2)
+                    self.team_detect = True
                     self.cause_index = 2
             elif switch == 7:
                 time.sleep(37)
@@ -2662,7 +2682,7 @@ class SweepStalls(BasicTask):
             # 初始化优先级队列 清空队列
             priority_queue = []
             coord_data = []
-            coords = self.coord('商品数量', canny_process=True, threshold=0.7, search_scope=(365, 175, 1153, 592))
+            coords = self.coord('商品数量', canny_process=True, threshold=0.8, search_scope=(365, 175, 1153, 592))
             for coord in coords:
                 if 537 < coord[0] < 557 and 209 < coord[1] < 229:
                     coord_data.append((547, 219))
@@ -2757,12 +2777,15 @@ class GangPoints(BasicTask):
 
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
-        self.target = {
+        self.finish_time = None
+        self.cause_index = 0
+        self.last_stamina = None
+        self.cause = {
             0: '打开帮派',
             1: '打开帮派排名',
             2: '进入全服帮派',
             3: '开始清扫任务',
-            4: '过图中'
+            4: '等待完成'
         }
 
     def initialization(self):
@@ -2770,38 +2793,113 @@ class GangPoints(BasicTask):
 
     def implement(self):
         while not event.unbind[self.mapp].is_set():
-            switch = self.detect()
+            switch = self.determine()
 
             if switch == 0:
-                self.journal(self.target[switch])
+                self.journal('打开帮派')
                 self.key_down_up('O')
-
+                self.cause_index = 1
             elif switch == 1:
-                self.journal(self.target[switch])
+                self.journal('打开帮派排名')
                 self.Visual('帮派领地', laplacian_process=True, threshold=0.25)
+                self.Visual('建造气力', histogram_process=True, threshold=0.7, x=114)
+                if force := self.img_ocr(search_scope=(1040, 224, 1140, 256)):
+                    try:
+                        force = force.split('/')
+                        seconds = int(force[0]) * 20
+                        self.finish_time = (datetime.datetime.now() + datetime.timedelta(seconds=int(seconds))).strftime("%H:%M:%S")
+                    except ValueError:
+                        pass
+                self.mouse_down_up(0, 0)
                 self.Visual('排名', histogram_process=True, threshold=0.7)
-
+                self.cause_index = 2
             elif switch == 2:
-                self.journal(self.target[switch])
+                self.journal('进去全服帮派')
                 self.Visual('全服', histogram_process=True, threshold=0.7)
                 self.mouse_down_up(585, 189)
                 self.Visual('参观', binary_process=True, threshold=0.4)
+                time.sleep(3)
+                self.cause_index = 3
             elif switch == 3:
-                self.journal(self.target[switch])
                 self.key_down_up(event.persona[self.mapp].map)
                 self.mouse_down_up(768, 530)
                 self.key_down_up(event.persona[self.mapp].map)
                 self.arrive()
                 if self.Visual('清扫', canny_process=True, threshold=0.65, double=True):
                     self.journal('开始清扫')
-                    return 0
+                    self.journal(f'预计完成时间 {self.finish_time}')
+                    self.cause_index = 4
             elif switch == 4:
                 self.journal('过图中')
-                time.sleep(8)
+                time.sleep(5)
+            elif switch == 6:
+                self.journal('打开帮派')
+                self.key_down_up('O')
+            elif switch == 5:
+                self.journal('检测剩余体力')
+                self.Visual('帮派领地', laplacian_process=True, threshold=0.25)
+                self.Visual('建造气力', histogram_process=True, threshold=0.7, x=114)
+                if force := self.img_ocr(search_scope=(1040, 224, 1140, 256)):
+                    try:
+                        force = force.split('/')
+                        if self.last_stamina is not None:
+                            if self.last_stamina == int(force[0]):
+                                self.cause_index = 0
+                                self.journal('体力消耗异常 >>> 重置任务')
+                        self.last_stamina = int(force[0])
+                        if int(force[0]) == 0:
+                            self.journal('清扫任务完成')
+                            return 0
+                        seconds = int(force[0]) * 20
+                        # self.finish_time = (datetime.datetime.now() + datetime.timedelta(seconds=int(seconds))).strftime("%H:%M:%S")
+                        self.journal(f'剩余体力: {force[0]} 预计剩余时间: {seconds}秒')
+                    except ValueError:
+                        pass
+                self.mouse_down_up(0, 0)
+                self.close_win(2)
+                time.sleep(60)
+
+    def determine(self):
+        switch = self.detect()
+
+        if switch not in [0] and self.cause_index == 0:
+            return -3  # 返回主界面
+        elif switch in [0] and self.cause_index == 0:
+            return 0
+
+        if switch not in [1] and self.cause_index == 1:
+            return -3  # 返回主界面
+        elif switch in [1] and self.cause_index == 1:
+            return 1
+
+        if switch not in [2] and self.cause_index == 2:
+            return -3  # 返回主界面
+        elif switch in [2] and self.cause_index == 2:
+            return 2
+
+        if switch not in [3, 4] and self.cause_index == 3:
+            return -3  # 返回主界面
+        elif switch in [3, 4] and self.cause_index == 3:
+            if switch == 3:
+                return 3
+            elif switch == 4:
+                return 4
+
+        if switch not in [0, 1, 3] and self.cause_index == 4:
+            return -3  # 返回主界面
+        elif switch in [0, 1, 3] and self.cause_index == 4:
+            if switch == 0:
+                self.cause_index = 0
+                return -3
+            elif switch == 1:
+                return 5
+            elif switch == 3:
+                return 6
 
     def detect(self):
+        time.sleep(2)
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-            if self.coord('跨服模式', '副本退出', binary_process=True, threshold=0.4):
+            if self.coord('跨服模式', '副本退出', canny_process=True, threshold=0.7, search_scope=(1150, 80, 1334, 400)):
                 return 3  # 帮派主界面
             return 0  # 大世界主界面
         elif self.coord('帮派界面', binary_process=True, threshold=0.4):
@@ -2810,6 +2908,7 @@ class GangPoints(BasicTask):
             return 2  # 领地拜访界面
         elif self.coord('过图标志', canny_process=True, threshold=0.8):
             return 4  # 过图
+
         # self.Visual('排名', histogram_process=True, threshold=0.7)
         # self.Visual('全服', laplacian_process=True, threshold=0.25)
         # self.mouse_down_up(585, 189)
@@ -3104,7 +3203,7 @@ class TopPeakTask(BasicTask):
                 return 4  # 挑战界面
             return 0  # 主界面
         elif self.coord('庆典日历', '活动时间', histogram_process=True, threshold=0.7):
-            return 1 # 日历活动界面
+            return 1  # 日历活动界面
         elif self.coord('登峰造极界面', histogram_process=True, threshold=0.7):
             return 2  # 登峰造极界面
         elif self.coord('登峰造极1', histogram_process=True, threshold=0.7):
