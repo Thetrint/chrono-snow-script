@@ -152,10 +152,24 @@ class BasicTask(object):
         self.key_down_up(event.persona[self.mapp].map)
         self.Visual('世界', laplacian_process=True)
         self.Visual('金陵', histogram_process=True, threshold=0.7)
-        self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
-        time.sleep(2)
-        self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
-        self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
+
+        self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
+                    search_scope=(0, 647, 349, 750))
+
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=290,
+                    search_scope=(0, 631, 414, 694))
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
+        self.input('571')
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233,
+                    search_scope=(0, 631, 414, 694))
+        self.input('484')
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
+                    search_scope=(0, 631, 414, 694))
+        self.key_down_up(event.persona[self.mapp].map)
+        # self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
+        # time.sleep(2)
+        # self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
+        # self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
         self.arrive()
 
     # 到达检测
@@ -3283,60 +3297,96 @@ class DailyRedemption(BasicTask):
 
             self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
-        # 银票礼盒
-        if event.task_config[self.mapp].get('银票礼盒'):
+        # 银票礼盒 吴越剑坯 白公鼎坯
+        if event.task_config[self.mapp].get('银票礼盒') or event.task_config[self.mapp].get('吴越剑坯') or event.task_config[self.mapp].get('白公鼎坯'):
             self.key_down_up(event.persona[self.mapp].knapsack)
             self.Visual('活动入口', histogram_process=True, threshold=0.7)
             self.Visual('珍宝阁', laplacian_process=True)
             self.Visual('商城', histogram_process=True, threshold=0.7)
             self.Visual('搜索图标', histogram_process=True, threshold=0.85)
-            self.Visual('输入道具名称', laplacian_process=True)
-            self.input('银票礼盒')
-            self.Visual('搜索图标', histogram_process=True, threshold=0.85)
-            self.Visual('银票礼盒', laplacian_process=True)
-            for _ in range(30):
-                if event.unbind[self.mapp].is_set():
-                    break
-                self.mouse_down_up(987, 699, tap_after_timeout=0.15)
 
-            for _ in range(5):
-                if event.unbind[self.mapp].is_set():
-                    break
-                if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
-                    break
+            # 银票礼盒
+            if event.task_config[self.mapp].get('银票礼盒'):
+                self.Visual('输入道具名称', laplacian_process=True)
+                self.input('银票礼盒')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                self.Visual('银票礼盒', laplacian_process=True)
+                for _ in range(30):
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.mouse_down_up(987, 699, tap_after_timeout=0.15)
 
-        # 榫头卯眼 鸡蛋
-        if event.task_config[self.mapp].get('榫头卯眼') or event.task_config[self.mapp].get('商会鸡蛋'):
+                self.Visual('搜索返回图标', binary_process=True, threshold=0.7)
+
+            # 吴越剑坯
+            if event.task_config[self.mapp].get('吴越剑坯'):
+                self.Visual('输入道具名称', laplacian_process=True)
+                self.input('吴越剑坯')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                self.Visual('吴越剑坯', binary_process=True, threshold=0.7)
+                for _ in range(5):
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.mouse_down_up(987, 699, tap_after_timeout=0.15)
+
+                self.Visual('搜索返回图标', binary_process=True, threshold=0.7)
+
+            # 白公鼎坯
+            if event.task_config[self.mapp].get('白公鼎坯'):
+                self.Visual('输入道具名称', laplacian_process=True)
+                self.input('白公鼎坯')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                self.Visual('白公鼎坯', binary_process=True, threshold=0.7)
+                for _ in range(2):
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.mouse_down_up(987, 699, tap_after_timeout=0.15)
+                self.Visual('搜索返回图标', binary_process=True, threshold=0.7)
+
+            self.close_win(10)
+
+        # 榫头卯眼 鸡蛋  碧铜马坯
+        if event.task_config[self.mapp].get('榫头卯眼') or event.task_config[self.mapp].get('商会鸡蛋') or event.task_config[self.mapp].get('碧铜马坯'):
             self.key_down_up(event.persona[self.mapp].knapsack)
             self.Visual('活动入口', histogram_process=True, threshold=0.7)
             self.Visual('珍宝阁', laplacian_process=True)
             self.Visual('商会', laplacian_process=True)
-            self.Visual('商会宝石', histogram_process=True, threshold=0.7)
-            self.Visual('上拉', histogram_process=True, threshold=0.7)
-            # self.mouse_x_y(200,680,220,200)
-            self.Visual('江湖杂货', histogram_process=True, threshold=0.7)
-            self.mouse_move(580, 680, 600, 225)
-            time.sleep(1.8)
 
-            if event.task_config[self.mapp].get('商会鸡蛋'):
-                if self.Visual('鸡蛋', histogram_process=True, threshold=0.7):
-                    for _ in range(5):
-                        if event.unbind[self.mapp].is_set():
-                            break
-                        self.mouse_down_up(970, 680, tap_after_timeout=0.2)
+            # 榫头卯眼 鸡蛋
+            if event.task_config[self.mapp].get('榫头卯眼') or event.task_config[self.mapp].get('商会鸡蛋'):
+                self.Visual('商会宝石', histogram_process=True, threshold=0.7)
+                self.Visual('上拉', histogram_process=True, threshold=0.7)
+                # self.mouse_x_y(200,680,220,200)
+                self.Visual('江湖杂货', histogram_process=True, threshold=0.7)
+                self.mouse_move(580, 680, 600, 225)
+                time.sleep(1.8)
 
-            if event.task_config[self.mapp].get('榫头卯眼'):
-                if self.Visual('榫头卯眼', histogram_process=True, threshold=0.7):
-                    for _ in range(12):
-                        if event.unbind[self.mapp].is_set():
-                            break
-                        self.mouse_down_up(970, 680, tap_after_timeout=0.2)
+                if event.task_config[self.mapp].get('商会鸡蛋'):
+                    if self.Visual('鸡蛋', histogram_process=True, threshold=0.7):
+                        for _ in range(5):
+                            if event.unbind[self.mapp].is_set():
+                                break
+                            self.mouse_down_up(970, 680, tap_after_timeout=0.2)
 
-            for _ in range(6):
-                if event.unbind[self.mapp].is_set():
-                    break
-                if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7):
-                    break
+                if event.task_config[self.mapp].get('榫头卯眼'):
+                    if self.Visual('榫头卯眼', histogram_process=True, threshold=0.7):
+                        for _ in range(12):
+                            if event.unbind[self.mapp].is_set():
+                                break
+                            self.mouse_down_up(970, 680, tap_after_timeout=0.2)
+            # 碧铜马坯
+            if event.task_config[self.mapp].get('碧铜马坯'):
+                self.Visual('商会宝石', histogram_process=True, threshold=0.7)
+                self.Visual('上拉', histogram_process=True, threshold=0.7)
+                self.mouse_move(200, 675, 200, 375)
+                self.Visual('古董材料', histogram_process=True, threshold=0.7)
+                self.Visual('碧铜马坯', binary_process=True, threshold=0.6)
+                for _ in range(3):
+                    if event.unbind[self.mapp].is_set():
+                        break
+                    self.mouse_down_up(970, 680, tap_after_timeout=0.2)
+
+            self.close_win(5)
 
         # 锦芳秀
         if event.task_config[self.mapp].get('锦芳绣残片'):
@@ -3383,6 +3433,32 @@ class DailyRedemption(BasicTask):
                     break
                 if not self.Visual('关闭', '关闭1', random_tap=False, histogram_process=True, threshold=0.7):
                     break
+
+        # 天幕雅苑
+        if event.task_config[self.mapp].get('天幕雅苑'):
+            self.key_down_up(event.persona[self.mapp].knapsack)
+            self.Visual('活动入口', histogram_process=True, threshold=0.7)
+            self.mouse_move(1231, 544, 1231, 444)
+            self.Visual('天幕雅苑', canny_process=True, threshold=0.6)
+            self.Visual('展馆排名', canny_process=True, threshold=0.6, tap_after_timeout=4)
+            self.Visual('进入展馆', canny_process=True, threshold=0.7, tap_after_timeout=8)
+
+            if self.Visual('进行中', canny_process=True, threshold=0.6, wait_count=10, tap=False):
+
+                if self.coord('盖章打卡进行中', canny_process=True, threshold=0.8):
+                    self.journal('盖章打卡')
+                    self.Visual('盖章打卡进行中', canny_process=True, threshold=0.8)
+                    self.Visual('签到盖章', '签到盖章1', canny_process=True, threshold=0.8, wait_count=60)
+                    self.Visual('盖章', canny_process=True, threshold=0.6)
+                    self.close_win(2)
+
+                if self.coord('时装试穿进行中', canny_process=True, threshold=0.8):
+                    self.journal('时装试穿')
+                    self.Visual('时装试穿进行中', canny_process=True, threshold=0.8)
+                    self.arrive()
+                    self.Visual('试穿', '试穿1', canny_process=True, threshold=0.7, wait_count=60)
+                    self.close_win(2)
+            self.Visual('副本退出', canny_process=True, threshold=0.6)
 
         # 神厨食材兑换 莲子 艾草
         if event.task_config[self.mapp].get('生活技能莲子') or event.task_config[self.mapp].get('生活技能艾草'):

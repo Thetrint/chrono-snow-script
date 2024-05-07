@@ -146,6 +146,10 @@ class MainWindow(QWidget, Ui_MainWindow):
             "帮派银两捐献": self.script.checkBox_7.isChecked(),
             "银票礼盒": self.script.checkBox_3.isChecked(),
             "商会鸡蛋": self.script.checkBox_5.isChecked(),
+            "吴越剑坯": self.script.checkBox_33.isChecked(),
+            "白公鼎坯": self.script.checkBox_34.isChecked(),
+            "碧铜马坯": self.script.checkBox_35.isChecked(),
+            "天幕雅苑": self.script.checkBox_32.isChecked(),
             "榫头卯眼": self.script.checkBox_6.isChecked(),
             "锦芳绣残片": self.script.checkBox_4.isChecked(),
             "摇钱树": self.script.checkBox_9.isChecked(),
@@ -465,6 +469,11 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_12.setText('9')
             self.script.lineEdit_13.setText('R')
 
+            self.script.checkBox_33.setChecked(False)
+            self.script.checkBox_34.setChecked(False)
+            self.script.checkBox_35.setChecked(False)
+            self.script.checkBox_32.setChecked(False)
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -604,6 +613,11 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_11.setText(config.get('日常任务', '技能7'))
             self.script.lineEdit_12.setText(config.get('日常任务', '技能8'))
             self.script.lineEdit_13.setText(config.get('日常任务', '绝学'))
+
+            self.script.checkBox_33.setChecked(config.getboolean('日常任务', '吴越剑坯'))
+            self.script.checkBox_34.setChecked(config.getboolean('日常任务', '白公鼎坯'))
+            self.script.checkBox_35.setChecked(config.getboolean('日常任务', '碧铜马坯'))
+            self.script.checkBox_32.setChecked(config.getboolean('日常任务', '天幕雅苑'))
 
         except configparser.NoOptionError:
             pass
