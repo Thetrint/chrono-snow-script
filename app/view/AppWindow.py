@@ -13,7 +13,8 @@ import win32con
 import win32gui
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt, QDateTime, QRegularExpression, QUrl
-from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage, QDesktopServices
+from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage, QDesktopServices, \
+    QFontDatabase
 from PyQt6.QtWidgets import QWidget, QPushButton, QApplication, QDialog, QTableWidget, \
     QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit, QCompleter, QLabel, QVBoxLayout
 from win32gui import GetWindowRect
@@ -56,7 +57,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.script.comboBox.currentTextChanged.connect(self.load_config)
         self.load_config('默认配置')
         self.load_system_config()
-        self.main_widget.setCurrentIndex(0)
+        self.show_page(0)
 
     # add window
     def initNavigation(self):
@@ -93,6 +94,41 @@ class MainWindow(QWidget, Ui_MainWindow):
         :return:
         """
         self.main_widget.setCurrentIndex(index)
+        for i in range(self.verticalLayout.count()):
+            widget = self.verticalLayout.itemAt(i).widget()
+            if isinstance(widget, QPushButton):
+                if i == index:
+                    # 当前点击的按钮，修改样式
+                    widget.setStyleSheet("""
+                            QPushButton {
+
+                                border-color: #555; /* 被点击时的边框颜色 */
+                                border-radius: 15px; /* 圆角 */
+                                padding: 10px 20px;
+                            }
+                            QPushButton:hover {
+                                border-color: red; /* 鼠标悬停时边框颜色 */
+                            }
+                            QPushButton:pressed {
+                                border-color: #555; /* 鼠标点击时边框颜色 */
+                            }
+                        """)
+                else:
+                    # 其他按钮，恢复初始样式
+                    widget.setStyleSheet("""
+                            QPushButton {
+                                background-color: transparent;
+                                border: 2px solid transparent; /* 初始时透明边框 */
+                                border-radius: 15px; /* 圆角 */
+                                padding: 10px 20px;
+                            }
+                            QPushButton:hover {
+                                border-color: red; /* 鼠标悬停时边框颜色 */
+                            }
+                            QPushButton:pressed {
+                                border-color: #555; /* 鼠标点击时边框颜色 */
+                            }
+                        """)
 
     def return_data(self):
         return {
@@ -692,6 +728,7 @@ class LoginWindow(QWidget, Ui_Login):
         self.initWindow()
 
     def initWindow(self):
+        self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
         self.login_button.clicked.connect(self.start_login)
         self.signup_button.clicked.connect(self.start_signup)
         self.button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
@@ -797,6 +834,9 @@ class LoginWindow(QWidget, Ui_Login):
 class HomeWindow(QWidget, Ui_Home):
     def __init__(self):
         super().__init__()
+
+        QFontDatabase.addApplicationFont('app/images/font/Xingxingniannian-Bold-2.ttf')
+
         self.setupUi(self)
         self.link_show()
         self.text_show()
@@ -830,25 +870,21 @@ class HomeWindow(QWidget, Ui_Home):
         self.widget_3.setLayout(layout)
 
     def link_show(self):
+        self.label.setPixmap(QPixmap('app/images/svg/bilibili.svg'))
         # 创建一个QLabel用于显示超链接文本
-        self.link_label = QLabel('<a href="https://www.bilibili.com/video/BV1Hb421a7Ym">时雪基础使用视频教程</a>')
-        # 设置文本居中对齐
-        self.link_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        self.label_2.setText('<a href="https://www.bilibili.com/video/BV1Hb421a7Ym">点此观看视频教程</a>')
+
+        # self.label_2.setFont(18)
 
         # 设置文本允许打开超链接
-        self.link_label.setOpenExternalLinks(True)
-
-        # 将超链接文本添加到布局中
-        layout = QVBoxLayout()
-        layout.addWidget(self.link_label)
-        self.widget.setLayout(layout)
+        self.label_2.setOpenExternalLinks(True)
 
         # 为超链接文本连接点击事件
-        self.link_label.linkActivated.connect(self.open_link)
+        self.label_2.linkActivated.connect(self.open_link)
 
     @staticmethod
     # 定义超链接点击事件的槽函数
-    def open_link(self, url):
+    def open_link(url):
         QDesktopServices.openUrl(QUrl(url))
 
 

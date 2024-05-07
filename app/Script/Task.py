@@ -2031,7 +2031,7 @@ class PacifyInjusticeTask(BasicTask):
             elif switch == 6:
                 self.journal('到达npc')
                 self.Visual('聚义平冤1', binary_process=True, threshold=0.5, tap_after_timeout=2)
-                self.Visual('确定', binary_process=True, threshold=0.4, double=True)
+                self.Visual('确定4', binary_process=True, threshold=0.4, double=True)
                 if self.Visual('自动寻路中', histogram_process=True, threshold=0.7, wait_count=2, tap=False):
                     self.cause_index += 1
                     self.task_start = time.time()
@@ -2100,7 +2100,7 @@ class PacifyInjusticeTask(BasicTask):
             return 2  # 物品界面
         elif self.coord('活动界面', binary_process=True, threshold=0.4):
             return 3  # 活动界面
-        elif self.coord('聚义平冤1', '确定', binary_process=True, threshold=0.5):
+        elif self.coord('聚义平冤1', '确定4', binary_process=True, threshold=0.5):
             return 4  # 聚义npc
 
     # 创建队伍目标
@@ -3103,6 +3103,35 @@ class MailPickUpTask(BasicTask):
         self.close_win(7)
 
 
+# 行当绝活
+class BusinessSkillsTask(BasicTask):
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        self.key_down_up(event.persona[self.mapp].knapsack)
+        self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        self.mouse_move(1231, 544, 1231, 444)
+        self.Visual('精进行当', binary_process=True, threshold=0.6)
+        self.Visual('行当通用1', canny_process=True, threshold=0.8)
+        self.Visual('前去裁衣', canny_process=True, threshold=0.6)
+        self.Visual('服冠制样', '磨具打造', '鞋裤制样', '兵刃图样', canny_process=True, threshold=0.6, wait_count=180)
+        self.Visual('炼制全部', canny_process=True, threshold=0.6)
+        for _ in range(50):
+            time.sleep(15)
+            if force := self.img_ocr(search_scope=(253, 599, 360, 639)):
+                try:
+                    force = force.split('/')
+                    if int(force[1].split('\n')[0]) < int(force[0]):
+                        self.journal('剩余体力不足')
+                        self.close_win(2)
+                        return 0
+                    self.journal(f'当前剩余体力: {force[1]}')
+                except ValueError:
+                    pass
+
+
 # 限时开放
 # 登峰造极
 class TopPeakTask(BasicTask):
@@ -3447,7 +3476,7 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
                 '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask, '切换角色': None,
                 '江湖行商': MerchantLake, '主线任务': MasterStrokeTask, '邮件领取': MailPickUpTask,
-                '聚义平冤': PacifyInjusticeTask,
+                '聚义平冤': PacifyInjusticeTask, '行当绝活': BusinessSkillsTask,
 
                 # 限时开放
                 '登峰造极': TopPeakTask
