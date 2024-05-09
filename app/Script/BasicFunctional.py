@@ -1,3 +1,4 @@
+import ctypes
 import logging
 import sys
 import time
@@ -10,6 +11,7 @@ import pytesseract
 
 from ctypes import windll
 from PyQt6.QtWidgets import QApplication
+from app.view.Public import MODIFIERS_MAP
 
 
 pytesseract.pytesseract.tesseract_cmd = r'.\Tesseract-OCR\tesseract.exe'
@@ -215,6 +217,41 @@ class BasicFunctional:
         image = image[y1:y2, x1:x2]
         return pytesseract.image_to_string(image)
 
+    @staticmethod
+    # 注册热键
+    def register_hotkey(hwnd, ID, key):
+        modifiers = None
+        key_list = key.split('+')[:-1]
+        print(key)
+        if len(key.split('+')) > 1:
+            # 根据修饰键的数量和组合查找相应的Win32常量
+            for modifier_keys, modifiers_value in MODIFIERS_MAP.items():
+                if all(k in key_list for k in modifier_keys):
+                    modifiers = modifiers_value
+
+            # # 获取窗口句柄
+            # hwnd = ctypes.windll.user32.GetForegroundWindow()
+            # 注册热键
+            result = ctypes.windll.user32.RegisterHotKey(int(hwnd), ID, modifiers, ord(key.split('+')[-1]))
+
+            if result != 0:
+                print(f"Hotkey {key} registered successfully!")
+            else:
+                print("Failed to register hotkey!")
+
+    # 注销热键
+    @staticmethod
+    def unregister_hotkey(hwnd, ID):
+
+        # 注销热键
+        ctypes.windll.user32.UnregisterHotKey(int(hwnd), ID)
+
+    # 更新热键
+    @staticmethod
+    def update_hotkey(hwnd, ID, key):
+        BasicFunctional.unregister_hotkey(hwnd, ID)
+        BasicFunctional.register_hotkey(hwnd, ID, key)
+
 
 basic_functional = BasicFunctional()
 
@@ -284,6 +321,6 @@ VkCode = {
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    image = basic_functional.screen_shot(722896)
+    image = basic_functional.screen_shot(788562)
     # rect = win32gui.GetWindowRect(basic_functional.get_handle())
     cv2.imwrite(fr"D:\Desktop\test_img\{time.time()}.bmp", image)

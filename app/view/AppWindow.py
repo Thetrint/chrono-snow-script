@@ -1,3 +1,4 @@
+import ctypes.wintypes
 import json
 import os
 import shutil
@@ -25,21 +26,26 @@ from app.view.Ui.HomeWindow import Ui_Home
 from app.view.Ui.ScriptWindow import Ui_Script
 from app.view.Ui.RunWindow import Ui_Run
 from app.view.Ui.LoginWindow import Ui_Login
+from app.view.Ui.SettingWindow import Ui_Setting
 from app.Script.BasicFunctional import basic_functional
 from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
-from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit,\
-    TimingQMessageBox, Mask, TextEdit
+from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit, \
+    TimingQMessageBox, Mask, TextEdit, VERSION, ShortCutLineEdit, START_ID, WIN_ID
 from app.view.ClientServices import services
 
 
 class MainWindow(QWidget, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        QFontDatabase.addApplicationFont('app/images/font/Xingxingniannian-Bold-2.ttf')
         self.username = None
         self.user_quit = True
         self.setupUi(self)
         self.login = LoginWindow()
         publicSingle.login.connect(self.initWindow)
+        print(int(self.winId()))
+        # basic_functional.register_hotkey(self.winId(), START_ID, 'Shift+W')
+        # basic_functional.register_hotkey(self.winId(), 2, win32con.MOD_ALT | win32con.MOD_SHIFT, 'W')
 
         self.index = 0
         # self.menu_layout = QVBoxLayout(self.menu_widget)
@@ -48,6 +54,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.home = HomeWindow()
         self.script = ScriptWindow()
         self.run = RunWindow()
+        self.setting = SettingWindow(self)
         # self.main_layout = QVBoxLayout(self.main_widget)
 
         self.initNavigation()
@@ -64,6 +71,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.addSubInterface(self.home, '主页')
         self.addSubInterface(self.script, '脚本')
         self.addSubInterface(self.run, '运行')
+        self.addSubInterface(self.setting, '设置')
         # self.main_widget.addWidget(self.home)
         # self.main_widget.addWidget(self.run)
 
@@ -85,6 +93,15 @@ class MainWindow(QWidget, Ui_MainWindow):
         # button.setStyleSheet("background-color: transparent;")
         self.verticalLayout.insertWidget(index, button)
         button.clicked.connect(lambda: self.show_page(index))
+
+    def nativeEvent(self, eventType, message):
+        msg = ctypes.wintypes.MSG.from_address(message.__int__())
+        if msg.message == win32con.WM_HOTKEY:
+            print("成功了吧~~")
+            if msg.wParam == 1 and self.username is not None:
+                publicSingle.start.emit('_')
+                print(msg.wParam)
+        return False, message
 
     # SwitchPages
     def show_page(self, index):
@@ -156,6 +173,11 @@ class MainWindow(QWidget, Ui_MainWindow):
             "摇钱树目标": self.script.comboBox_3.currentIndex(),
             "生活技能艾草": self.script.checkBox_30.isChecked(),
             "生活技能莲子": self.script.checkBox_31.isChecked(),
+            "精制面粉": self.script.checkBox_36.isChecked(),
+            "土鸡蛋": self.script.checkBox_37.isChecked(),
+            "鲜笋": self.script.checkBox_38.isChecked(),
+            "猪肉": self.script.checkBox_39.isChecked(),
+            "糯米": self.script.checkBox_40.isChecked(),
             "扫摆摊延迟1": self.script.spinBox.value(),
             "扫摆摊延迟2": self.script.spinBox_2.value(),
             "扫摆摊延迟3": self.script.spinBox_3.value(),
@@ -236,7 +258,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             "自创2": self.script.lineEdit_53.text(),
             "自创3": self.script.lineEdit_54.text(),
 
-
         }
 
     # 保存任务配置信息
@@ -263,7 +284,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.resize(1000, 610)
         self.setMinimumWidth(1000)
         self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
-        self.setWindowTitle('时雪')
+        self.setWindowTitle(f'时雪{VERSION}')
 
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()
@@ -449,14 +470,14 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_53.setText('L'),
             self.script.lineEdit_54.setText('5'),
 
-            self.script.textEdit.setText('技能[技能1] 延迟[200]ms <>\n'
-                                         '技能[技能5] 延迟[200]ms <>\n'
-                                         '技能[技能6] 延迟[200]ms <>\n'
-                                         '技能[技能2] 延迟[200]ms <>\n'
-                                         '技能[技能8] 延迟[200]ms <>\n'
-                                         '技能[技能2] 延迟[200]ms <>\n'
-                                         '技能[技能3] 延迟[200]ms <>\n'
-                                         '技能[技能4] 延迟[2000]ms <>\n')
+            self.script.textEdit.setText('技能[技能1] 延迟[2000]ms <>\n'
+                                         '技能[技能5] 延迟[2000]ms <>\n'
+                                         '技能[技能6] 延迟[2000]ms <>\n'
+                                         '技能[技能2] 延迟[2000]ms <>\n'
+                                         '技能[技能8] 延迟[2000]ms <>\n'
+                                         '技能[技能2] 延迟[2000]ms <>\n'
+                                         '技能[技能3] 延迟[2000]ms <>\n'
+                                         '技能[技能4] 延迟[6000]ms <>\n')
 
             self.script.lineEdit_4.setText('1')
             self.script.lineEdit_9.setText('2')
@@ -473,6 +494,12 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_34.setChecked(False)
             self.script.checkBox_35.setChecked(False)
             self.script.checkBox_32.setChecked(False)
+
+            self.script.checkBox_36.setChecked(False)
+            self.script.checkBox_37.setChecked(False)
+            self.script.checkBox_38.setChecked(False)
+            self.script.checkBox_39.setChecked(False)
+            self.script.checkBox_40.setChecked(False)
 
         try:
             self.script.listWidget.clear()
@@ -619,6 +646,12 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_35.setChecked(config.getboolean('日常任务', '碧铜马坯'))
             self.script.checkBox_32.setChecked(config.getboolean('日常任务', '天幕雅苑'))
 
+            self.script.checkBox_36.setChecked(config.getboolean('日常任务', '精制面粉'))
+            self.script.checkBox_37.setChecked(config.getboolean('日常任务', '土鸡蛋'))
+            self.script.checkBox_38.setChecked(config.getboolean('日常任务', '鲜笋'))
+            self.script.checkBox_39.setChecked(config.getboolean('日常任务', '猪肉'))
+            self.script.checkBox_40.setChecked(config.getboolean('日常任务', '糯米'))
+
         except configparser.NoOptionError:
             pass
         except configparser.NoSectionError:
@@ -664,6 +697,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         # 添加一些配置项
         config['界面设置'] = {
             '当前配置': self.script.comboBox.currentText(),
+            '开始快捷键': self.setting.lineEdit.text(),
         }
 
         with open(config_path, 'w', encoding='utf-8') as configfile:
@@ -699,14 +733,19 @@ class MainWindow(QWidget, Ui_MainWindow):
             current_text = config.get('界面设置', '当前配置')
             if current_text in ini_files:
                 self.script.comboBox.setCurrentText(current_text)
+
+            self.setting.lineEdit.setText(config.get('界面设置', '开始快捷键'))
+        except configparser.NoOptionError as e:
+            logging.error(e)
         except configparser.NoSectionError as e:
-            print(e)
+            logging.error(e)
 
     # 重写关闭事件
     def closeEvent(self, event):
         if self.user_quit:
             reply = QMessageBox.question(self, '确认退出',
-                                         "你确定要退出吗?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                                         "你确定要退出吗?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
             if reply == QMessageBox.StandardButton.No:
                 event.ignore()
@@ -730,10 +769,14 @@ class LoginWindow(QWidget, Ui_Login):
         super().__init__()
         self.setupUi(self)
         self.lineEdit.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9]{16}"), self.lineEdit))
-        self.lineEdit_3.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9]{16}"), self.lineEdit_3))
-        self.lineEdit_2.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_2))
-        self.lineEdit_4.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_4))
-        self.lineEdit_6.setValidator(QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_6))
+        self.lineEdit_3.setValidator(
+            QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9]{16}"), self.lineEdit_3))
+        self.lineEdit_2.setValidator(
+            QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_2))
+        self.lineEdit_4.setValidator(
+            QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_4))
+        self.lineEdit_6.setValidator(
+            QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9.@#%*+*/]{16}"), self.lineEdit_6))
 
         self.lineEdit_2.setEchoMode(QLineEdit.EchoMode.Password)
         self.lineEdit_4.setEchoMode(QLineEdit.EchoMode.Password)
@@ -743,6 +786,7 @@ class LoginWindow(QWidget, Ui_Login):
 
     def initWindow(self):
         self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
+        self.setWindowTitle(f'时雪{VERSION}')
         self.login_button.clicked.connect(self.start_login)
         self.signup_button.clicked.connect(self.start_signup)
         self.button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
@@ -848,8 +892,6 @@ class LoginWindow(QWidget, Ui_Login):
 class HomeWindow(QWidget, Ui_Home):
     def __init__(self):
         super().__init__()
-
-        QFontDatabase.addApplicationFont('app/images/font/Xingxingniannian-Bold-2.ttf')
 
         self.setupUi(self)
         self.link_show()
@@ -1083,6 +1125,7 @@ class RunWindow(QWidget, Ui_Run):
         publicSingle.state.connect(self.set_state)
         publicSingle.journal.connect(self.journal)
         publicSingle.set_character.connect(self.set_character)
+        publicSingle.start.connect(self.start_task)
 
     # initialization
     def initWindow(self):
@@ -1161,6 +1204,8 @@ class RunWindow(QWidget, Ui_Run):
                 self.struct_task_dict[row].flag = True
         except KeyError:
             pass
+        except Exception as e:
+            logging.error(e)
 
     def stop_all(self, _):
         for index in range(10):
@@ -1176,6 +1221,8 @@ class RunWindow(QWidget, Ui_Run):
                 self.struct_task_dict[row].flag = False
         except KeyError:
             pass
+        except Exception as e:
+            logging.error(e)
 
     def resume_all(self, _):
         for index in range(10):
@@ -1194,6 +1241,8 @@ class RunWindow(QWidget, Ui_Run):
                 del self.struct_task_dict[row]
         except KeyError:
             pass
+        except Exception as e:
+            logging.error(e)
 
     def unbind_all(self, _):
         for index in range(10):
@@ -1245,7 +1294,8 @@ class RunWindow(QWidget, Ui_Run):
             # 获取 QTableWidgetItem
             item = self.PersonaTableWidget.item(row, 0)
             # 移除图像，将图像数据设置为 None 或空 QPixmap
-            item.setData(Qt.ItemDataRole.DecorationRole, None)
+            if item is not None:
+                item.setData(Qt.ItemDataRole.DecorationRole, None)
 
             item = self.PersonaTableWidget.item(row, 1)
 
@@ -1279,6 +1329,44 @@ class RunWindow(QWidget, Ui_Run):
                 Thread(target=self.start.start, args=(row, self.struct_task_dict[row].handle)).start()
         except Exception as e:
             logging.error(f'线程发生错误{e}')
+
+
+class SettingWindow(QWidget, Ui_Setting):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.parent = parent
+        # 重构输入框
+        self.replace_widget(ShortCutLineEdit, self.lineEdit)
+        print(int(self.parent.winId()))
+        # 信号连接
+        self.lineEdit.textChanged.connect(lambda: self.short_cut_key(START_ID))
+
+    def short_cut_key(self, ID):
+        sender_widget = self.sender()
+        if sender_widget is not None and isinstance(sender_widget, QtWidgets.QLineEdit):
+            basic_functional.update_hotkey(self.parent.winId(), ID, sender_widget.text())
+
+    def replace_widget(self, new_widget, old_widget):
+        # 创建一个新的TextEdit控件
+        new_text_edit = new_widget()
+
+        # 获取原始textEdit的父对象
+        parent_widget = old_widget.parent()
+
+        # 获取原始textEdit的索引
+        index = parent_widget.layout().indexOf(old_widget)
+
+        # 将新的textEdit控件添加到相同的位置
+        parent_widget.layout().insertWidget(index, new_text_edit)
+
+        # 删除原始textEdit控件
+        parent_widget.layout().removeWidget(old_widget)
+        old_widget.deleteLater()
+
+        # 更新属性引用
+        if hasattr(self, old_widget.objectName()):
+            setattr(self, old_widget.objectName(), new_text_edit)
 
 
 # 任务信息构造类
@@ -1332,6 +1420,7 @@ class MaskWindow(QWidget):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowOpacity(0.35)  # 设置窗口半透明
         self.mask_show()
+        self.activateWindow()
 
     def paintEvent(self, event):
         painter = QPainter(self)

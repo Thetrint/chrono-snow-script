@@ -2,15 +2,30 @@ import json
 import os
 import tempfile
 
-from PyQt6.QtCore import QObject, pyqtSignal, QTimer
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QDialogButtonBox, QLineEdit, QMessageBox
+import win32con
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer, QThread
 from PyQt6.QtCore import Qt, QStringListModel
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QTextEdit, QCompleter
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QDialogButtonBox, QLineEdit, QMessageBox
 
 TABLE_WINDOW = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 DPI_MAPP = {1.0: (1350, 789), 1.25: (1352, 797), 1.5: (1356, 806), 1.75: (1360, 814), 2.0: (1360, 822)}
 Mask = True
+VERSION = '1.2.0'
+START_ID = 1
+WIN_ID = None
+# 定义修饰键与Win32常量的映射关系
+MODIFIERS_MAP = {
+    ('Shift', ): win32con.MOD_SHIFT,
+    ('Alt',): win32con.MOD_ALT,
+    ('Ctrl',): win32con.MOD_CONTROL,
+    ('Shift', 'Alt'): win32con.MOD_SHIFT | win32con.MOD_ALT,
+    ('Ctrl', 'Alt'): win32con.MOD_CONTROL | win32con.MOD_ALT,
+    ('Ctrl', 'Shift'): win32con.MOD_SHIFT | win32con.MOD_CONTROL,
+    ('Shift', 'Alt', 'Ctrl'): win32con.MOD_CONTROL | win32con.MOD_SHIFT | win32con.MOD_ALT,
+    # 可以根据需要继续添加其他情况的映射关系
+}
 
 
 class PublicSingle(QObject):
@@ -23,6 +38,7 @@ class PublicSingle(QObject):
     set_character = pyqtSignal(int)
     login = pyqtSignal(str)
     offline = pyqtSignal()
+    start = pyqtSignal(str)
 
 
 publicSingle = PublicSingle()
@@ -149,7 +165,52 @@ class TimingQMessageBox:
         message_box.exec()
 
 
+# 快捷键输入框
+class ShortCutLineEdit(QLineEdit):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def keyPressEvent(self, event):
+        self.clear()
+        print(event.modifiers())
+        key = ''
+        if str(event.modifiers()) == "KeyboardModifier.ShiftModifier":
+            key = 'Shift' + '+'
+        elif str(event.modifiers()) == "KeyboardModifier.ControlModifier":
+            key = 'Ctrl' + '+'
+        elif str(event.modifiers()) == "KeyboardModifier.AltModifier":
+            key = 'Alt' + '+'
+        elif str(event.modifiers()) == "KeyboardModifier.ShiftModifier|AltModifier":
+            key = 'Shift' + '+' + 'Alt' + '+'
+        elif str(event.modifiers()) == "KeyboardModifier.ShiftModifier|ControlModifier":
+            key = 'Ctrl' + '+' + 'Shift' + '+'
+        elif str(event.modifiers()) == "KeyboardModifier.ControlModifier|AltModifier":
+            key = 'Ctrl' + '+' + 'Alt' + '+'
+        elif str(event.modifiers()) == "KeyboardModifier.ShiftModifier|ControlModifier|AltModifier":
+            key = 'Ctrl' + '+' + 'Shift' + '+' + 'Alt' + '+'
+
+        if 48 <= event.key() <= 90:
+            key += KEY_DICT[event.key()]
+        else:
+            key = ''
+
+        # try:
+        #     key = KEY_DICT[event.key()]
+        # except KeyError:
+        #     key = ''
+        # modifiers = str(event.modifiers())
+        # if modifiers == 'KeyboardModifier.KeypadModifier':
+        #     key = 'Num' + key
+        # # 在这里添加你自定义的按键处理逻辑
+        # print("CustomLineEdit - Key pressed:", event.key(), key, modifiers)
+        #
+        self.setText(key)
+
+
+# 技能输入框
 class CustomLineEdit(QLineEdit):
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -358,5 +419,13 @@ class TextEdit(QTextEdit):
             self._completer.popup().setCurrentIndex(self._completer.completionModel().index(0, 0))
 
         cr = self.cursorRect()
-        cr.setWidth(self._completer.popup().sizeHintForColumn(0) + self._completer.popup().verticalScrollBar().sizeHint().width())
+        cr.setWidth(self._completer.popup().sizeHintForColumn(
+            0) + self._completer.popup().verticalScrollBar().sizeHint().width())
         self._completer.complete(cr)
+
+
+
+
+
+
+

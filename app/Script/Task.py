@@ -75,8 +75,9 @@ class StartTask:
                 if switch.switch_roles(i):
                     execute = True
             if execute:
-                init.implement()
-                publicSingle.set_character.emit(row)
+                if not all(tsk in event.task_config[mapp].get('执行列表') for tsk in ['血战到底']):
+                    init.implement()
+                    publicSingle.set_character.emit(row)
                 for tsk in event.task_config[mapp].get('执行列表'):
                     if not event.unbind[mapp].is_set() and tsk != '切换角色':
                         self.set_state(row, tsk)
@@ -153,9 +154,9 @@ class BasicTask(object):
         self.Visual('世界', laplacian_process=True)
         self.Visual('金陵', histogram_process=True, threshold=0.7)
 
-        self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
-                    search_scope=(0, 647, 349, 750))
-
+        # self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
+        #             search_scope=(0, 647, 349, 750))
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=290,
                     search_scope=(0, 631, 414, 694))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
@@ -174,17 +175,18 @@ class BasicTask(object):
 
     # 到达检测
     def arrive(self):
+        index = 0
         for _ in range(300):
             if event.unbind[self.mapp].is_set():
                 break
-            if (self.coord('副本挂机', histogram_process=True, threshold=0.7)
-                    and not self.coord('自动寻路中', histogram_process=True, threshold=0.6,
-                                       search_scope=(531, 498, 870, 615))):
-                time.sleep(5)
-                if (self.coord('副本挂机', histogram_process=True, threshold=0.7)
-                        and not self.coord('自动寻路中', histogram_process=True, threshold=0.6,
-                                           search_scope=(531, 498, 879, 615))):
-                    break
+            if self.coord('过图标志', canny_process=True, threshold=0.8):
+                self.journal('过图中')
+                time.sleep(8)
+                continue
+            if not self.coord('自动寻路中', histogram_process=True, threshold=0.6, search_scope=(531, 498, 870, 615)):
+                index += 1
+            if index == 2:
+                break
             time.sleep(2)
 
     # 脱离卡死
@@ -230,6 +232,22 @@ class BasicTask(object):
                 self.journal('入口打开识别')
                 self.close_win(2, left_tap=True)
                 return 0
+
+    def map_input(self, x, y):
+        self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
+                    search_scope=(0, 647, 349, 750))
+        # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
+        #             search_scope=(0, 631, 414, 694))
+        self.Visual('停止寻路', canny_process=True, threshold=0.6, search_scope=(0, 631, 414, 694))
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
+        self.input(str(x))
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233,
+                    search_scope=(0, 631, 414, 694))
+        self.input(str(y))
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
+                    search_scope=(0, 631, 414, 694))
+        self.close_win(1)
+        self.arrive()
 
     # 日志信息
     def journal(self, message):
@@ -1543,7 +1561,7 @@ class LessonTask(BasicTask):
                 self.Visual('活动', binary_process=True, threshold=0.5)
             elif switch == 2:
                 self.journal('查找课业任务')
-                self.Visual('活动界面江湖', binary_process=True, threshold=0.6)
+                self.Visual('活动界面江湖', binary_process=True, threshold=0.6, wait_count=1)
                 if not self.Visual('濯剑', '观梦', '漱尘', '止杀', '锻心', '吟风', '含灵', '寻道', '悟禅', '归义',
                                    histogram_process=True, threshold=0.7, y=45):
                     self.close_win(3)
@@ -1551,8 +1569,8 @@ class LessonTask(BasicTask):
                     return 0
             elif switch == 3:
                 self.journal('前往课业npc')
-                self.Visual('课业', binary_process=True, threshold=0.4, y=210)
-                self.start = time.time()
+                self.Visual('课业', binary_process=True, threshold=0.5, y=210)
+                self.arrive()
                 self.cause_index += 1
             elif switch == 4:
                 self.journal('到达npc')
@@ -1632,34 +1650,66 @@ class LessonTask(BasicTask):
     def determine(self):
         switch = self.detect()
 
-        if switch not in [0, 1, 2, 3] and self.cause_index == 0:
-            return -3  # 尝试返回主界面
-        elif switch in [0, 1, 2, 3] and self.cause_index == 0:
-            return switch
+        if self.cause_index == 0:
+            if switch in [0, 1, 2, 3]:
+                if switch == 0:
+                    return 0
+                elif switch == 1:
+                    return 1
+                elif switch == 2:
+                    return 2
+                elif switch == 3:
+                    return 3
+            elif switch is None:
+                return None
+            else:
+                return -3  # 尝试返回主界面
 
-        if switch != 4 and self.cause_index == 1 and time.time() - self.start > 120:
-            self.cause_index = 0
-            return -3  # 尝试返回主界面
-        elif switch in [4] and self.cause_index == 1:
-            return 4
+        elif self.cause_index == 1:
+            if switch in [4]:
+                return 4
+            else:
+                self.cause_index = 0
+                return -3  # 尝试返回主界面
 
-        if switch != 5 and self.cause_index == 2:
-            self.cause_index = 0
-            return -3  # 尝试返回主界面
-        elif switch in [5] and self.cause_index == 2:
-            if self.refresh > 6:
-                return -4  # 刷新最大次数
-            return 5
+        elif self.cause_index == 2:
+            if switch in [5]:
+                if self.refresh > 6:
+                    return -4  # 刷新最大次数
+                else:
+                    return 5
+            elif switch is None:
+                return None
+            else:
+                self.cause_index = 0
+                return -3  # 尝试返回主界面
 
-        if switch in [0, 6, 7, 8, 9, 10, 11, 12, 13] and self.cause_index == 3:
-            if self.task_target and time.time() - self.task_start > 60:
-                return 13
-            elif self.task_target and self.task_index > 10:
-                return 15
-            if switch == 13:
-                return 14
-            elif switch != 0:
-                return switch
+        elif self.cause_index == 3:
+            if switch in [0, 6, 7, 8, 9, 10, 11, 12, 13]:
+                if switch == 0 and self.task_target and time.time() - self.task_start > 60:
+                    return 13
+                elif self.task_target and self.task_index > 10:
+                    return 15
+                elif switch == 6:
+                    return 6
+                elif switch == 7:
+                    return 7
+                elif switch == 8:
+                    return 8
+                elif switch == 9:
+                    return 9
+                elif switch == 10:
+                    return 10
+                elif switch == 11:
+                    return 11
+                elif switch == 12:
+                    return 12
+                elif switch == 13:
+                    return 14
+            elif switch is None:
+                return None
+            else:
+                return -3  # 尝试返回主界面
 
     def detect(self):
         time.sleep(2)
@@ -2265,7 +2315,7 @@ class MerchantLake(BasicTask):
             self.journal('当前已有队伍')
             self.Visual('下拉', binary_process=True, threshold=0.7)
             self.mouse_move(277, 215, 277, 315, 2)
-            self.Visual('无目标', binary_process=True, threshold=0.6)
+            self.Visual('无目标', binary_process=True, threshold=0.6, wait_count=1)
             self.Visual('队伍界面行当玩法', histogram_process=True, threshold=0.6)
             self.Visual('江湖行商目标', histogram_process=True, threshold=0.6)
             self.Visual('确定', binary_process=True, threshold=0.4)
@@ -2297,8 +2347,19 @@ class MerchantLake(BasicTask):
 
     # 判断队伍人数
     def merchants_lakes_3(self):
-        time_start = 0
         self.key_down_up(event.persona[self.mapp].team)
+        if (not self.coord('创建队伍', binary_process=True, threshold=0.6)
+                and not self.coord('江湖行商任务目标', binary_process=True, threshold=0.6)):
+            self.journal('设置队伍目标')
+            self.Visual('下拉', binary_process=True, threshold=0.7)
+            self.mouse_move(277, 215, 277, 315, 2)
+            self.Visual('无目标', binary_process=True, threshold=0.6, wait_count=1)
+            self.Visual('队伍界面行当玩法', histogram_process=True, threshold=0.6)
+            self.Visual('江湖行商目标', histogram_process=True, threshold=0.6)
+            self.Visual('确定', binary_process=True, threshold=0.4)
+            # self.key_down_up(event.persona[self.mapp].team)
+        time_start = 0
+
         while not event.unbind[self.mapp].is_set():
             num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
             if 5 - num >= 3:
@@ -2561,8 +2622,9 @@ class AcquisitionTask(BasicTask):
             coord = next(self.coord_iter)
 
         self.key_down_up(event.persona[self.mapp].map)
-        self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
-                    search_scope=(0, 647, 349, 750))
+        # self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
+        #             search_scope=(0, 647, 349, 750))
+        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
                     search_scope=(0, 631, 414, 694))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
@@ -2745,8 +2807,45 @@ class SweepStalls(BasicTask):
             time.sleep(0.65)
 
 
-# # 扫集市
-# class SweepMarket(BasicTask):
+# 扫集市
+class SweepMarketTask(BasicTask):
+
+    def __init__(self, row, handle, mapp):
+        super().__init__(row, handle, mapp)
+        self.sweep_market_flag = True
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        self.key_down_up(event.persona[self.mapp].knapsack)
+        self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        self.Visual('交易', histogram_process=True, threshold=0.7, tap_after_timeout=3)
+        self.Visual('集市', canny_process=True, threshold=0.7)
+        self.mouse_down_up(1274, 244)
+        self.Visual('关注', histogram_process=True, threshold=0.7, wait_count=1)
+
+        # 开启刷新线程
+        Thread(target=self.sweep_market_1).start()
+        while not event.unbind[self.mapp].is_set():
+            if self.coord('集市商品', canny_process=True, threshold=0.7, search_scope=(362, 165, 753, 270)):
+                self.sweep_market_flag = False
+                self.mouse_down_up(550, 220, tap_after_timeout=0)
+                if self.Visual('购买', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
+                               tap_after_timeout=0, continuous_search_timeout=0, wait_count=10):
+                    self.Visual('确定', histogram_process=True, threshold=0.7, tap_ago_timeout=0,
+                                tap_after_timeout=0, continuous_search_timeout=0, wait_count=10)
+            else:
+                self.sweep_market_flag = True
+                self.mouse_down_up(189, 285, tap_after_timeout=1.5)
+
+    def sweep_market_1(self):
+        while not event.unbind[self.mapp].is_set():
+            if self.sweep_market_flag:
+                self.mouse_down_up(189, 285, tap_after_timeout=0)
+            time.sleep(0.65)
+
+
 #
 #     def __init__(self, row, handle):
 #         super().__init__(row, handle)
@@ -2821,7 +2920,9 @@ class GangPoints(BasicTask):
                     try:
                         force = force.split('/')
                         seconds = int(force[0]) * 20
-                        self.finish_time = (datetime.datetime.now() + datetime.timedelta(seconds=int(seconds))).strftime("%H:%M:%S")
+                        self.finish_time = (
+                                    datetime.datetime.now() + datetime.timedelta(seconds=int(seconds))).strftime(
+                            "%H:%M:%S")
                     except ValueError:
                         pass
                 self.mouse_down_up(0, 0)
@@ -2913,7 +3014,8 @@ class GangPoints(BasicTask):
     def detect(self):
         time.sleep(2)
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-            if self.coord('跨服模式', '副本退出', canny_process=True, threshold=0.7, search_scope=(1150, 80, 1334, 400)):
+            if self.coord('跨服模式', '副本退出', canny_process=True, threshold=0.7,
+                          search_scope=(1150, 80, 1334, 400)):
                 return 3  # 帮派主界面
             return 0  # 大世界主界面
         elif self.coord('帮派界面', binary_process=True, threshold=0.4):
@@ -3146,6 +3248,28 @@ class BusinessSkillsTask(BasicTask):
                     pass
 
 
+# 斗地主
+class BloodyBattleTask(BasicTask):
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        while not event.unbind[self.mapp].is_set():
+            if self.coord('提示', canny_process=True, threshold=0.7):
+                self.Visual('提示', canny_process=True, threshold=0.7, wait_count=1)
+                self.Visual('出牌', canny_process=True, threshold=0.7, wait_count=1)
+            elif self.coord('要不起', canny_process=True, threshold=0.7):
+                self.Visual('要不起', canny_process=True, threshold=0.6, wait_count=1)
+            elif self.coord('准备2', canny_process=True, threshold=0.7):
+                self.Visual('准备2', canny_process=True, threshold=0.6, wait_count=1)
+            elif self.coord('叫地主', canny_process=True, threshold=0.7):
+                self.Visual('叫地主', canny_process=True, threshold=0.7, wait_count=1)
+            elif self.coord('不加倍', canny_process=True, threshold=0.7):
+                self.Visual('不加倍', canny_process=True, threshold=0.7, wait_count=1)
+            time.sleep(2)
+
+
 # 限时开放
 # 登峰造极
 class TopPeakTask(BasicTask):
@@ -3200,7 +3324,7 @@ class TopPeakTask(BasicTask):
             elif switch == 6:
                 self.journal('开始挑战')
                 event.persona[self.mapp].start_fight()
-                self.Visual('退出', canny_process=True, threshold=0.6, wait_count=300)
+                self.Visual('退出', canny_process=True, threshold=0.5, wait_count=300)
                 event.persona[self.mapp].stop_fight()
                 self.journal('挑战完成')
                 self.forward = True
@@ -3298,7 +3422,8 @@ class DailyRedemption(BasicTask):
             self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
 
         # 银票礼盒 吴越剑坯 白公鼎坯
-        if event.task_config[self.mapp].get('银票礼盒') or event.task_config[self.mapp].get('吴越剑坯') or event.task_config[self.mapp].get('白公鼎坯'):
+        if event.task_config[self.mapp].get('银票礼盒') or event.task_config[self.mapp].get('吴越剑坯') or \
+                event.task_config[self.mapp].get('白公鼎坯'):
             self.key_down_up(event.persona[self.mapp].knapsack)
             self.Visual('活动入口', histogram_process=True, threshold=0.7)
             self.Visual('珍宝阁', laplacian_process=True)
@@ -3346,7 +3471,8 @@ class DailyRedemption(BasicTask):
             self.close_win(10)
 
         # 榫头卯眼 鸡蛋  碧铜马坯
-        if event.task_config[self.mapp].get('榫头卯眼') or event.task_config[self.mapp].get('商会鸡蛋') or event.task_config[self.mapp].get('碧铜马坯'):
+        if event.task_config[self.mapp].get('榫头卯眼') or event.task_config[self.mapp].get('商会鸡蛋') or \
+                event.task_config[self.mapp].get('碧铜马坯'):
             self.key_down_up(event.persona[self.mapp].knapsack)
             self.Visual('活动入口', histogram_process=True, threshold=0.7)
             self.Visual('珍宝阁', laplacian_process=True)
@@ -3502,6 +3628,75 @@ class DailyRedemption(BasicTask):
                 self.mouse_down_up(1011, 612)
                 self.close_win(2)
 
+        if event.task_config[self.mapp].get('精制面粉') or event.task_config[self.mapp].get('土鸡蛋') or \
+                event.task_config[self.mapp].get('鲜笋') or event.task_config[self.mapp].get('猪肉') or \
+                event.task_config[self.mapp].get('糯米'):
+
+            self.key_down_up(event.persona[self.mapp].map)
+            self.Visual('世界', binary_process=True, threshold=0.6)
+            self.Visual('中原', binary_process=True, threshold=0.6)
+            self.map_input(1272, 1724)
+            self.Visual('对话', canny_process=True, threshold=0.7)
+
+            self.Visual('购买食材', canny_process=True, threshold=0.7)
+
+            if event.task_config[self.mapp].get('精制面粉'):
+                self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                self.input('精制面粉')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+
+                self.mouse_down(1180, 552)
+                time.sleep(2)
+                self.mouse_up(1180, 552)
+                self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+
+            if event.task_config[self.mapp].get('土鸡蛋'):
+                self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                self.input('土鸡蛋')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+
+                self.mouse_down(1180, 552)
+                time.sleep(2)
+                self.mouse_up(1180, 552)
+                self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+
+            if event.task_config[self.mapp].get('鲜笋'):
+                self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                self.input('鲜笋')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+
+                self.mouse_down(1180, 552)
+                time.sleep(2)
+                self.mouse_up(1180, 552)
+                self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+
+            if event.task_config[self.mapp].get('猪肉'):
+                self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                self.input('猪肉')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+
+                self.mouse_down(1180, 552)
+                time.sleep(2)
+                self.mouse_up(1180, 552)
+                self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+
+            if event.task_config[self.mapp].get('糯米'):
+                self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                self.input('糯米')
+                self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+
+                self.mouse_down(1180, 552)
+                time.sleep(2)
+                self.mouse_up(1180, 552)
+                self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+
+            self.close_win(2)
+
         # 帮派摇钱树
         if event.task_config[self.mapp].get('摇钱树'):
             self.key_down_up(event.persona[self.mapp].knapsack)
@@ -3552,7 +3747,8 @@ TASK_MAPPING = {'课业任务': LessonTask, '世界喊话': WorldShoutsTask, '�
                 '华山论剑': TheSword, '帮派积分': GangPoints, '每日一卦': HexagramDay,
                 '江湖急送': UrgentDeliveryTask, '采集任务': AcquisitionTask, '切换角色': None,
                 '江湖行商': MerchantLake, '主线任务': MasterStrokeTask, '邮件领取': MailPickUpTask,
-                '聚义平冤': PacifyInjusticeTask, '行当绝活': BusinessSkillsTask,
+                '聚义平冤': PacifyInjusticeTask, '行当绝活': BusinessSkillsTask, '扫集市': SweepMarketTask,
+                '血战到底': BloodyBattleTask,
 
                 # 限时开放
                 '登峰造极': TopPeakTask
