@@ -11,8 +11,7 @@ import pytesseract
 
 from ctypes import windll
 from PyQt6.QtWidgets import QApplication
-from app.view.Public import MODIFIERS_MAP
-
+from app.view.Public import MODIFIERS_MAP, publicSingle
 
 pytesseract.pytesseract.tesseract_cmd = r'.\Tesseract-OCR\tesseract.exe'
 
@@ -235,6 +234,7 @@ class BasicFunctional:
             result = ctypes.windll.user32.RegisterHotKey(int(hwnd), ID, modifiers, ord(key.split('+')[-1]))
 
             if result != 0:
+                publicSingle.journal.emit([-1, f"快捷键 {key} 注册成功"])
                 print(f"Hotkey {key} registered successfully!")
             else:
                 print("Failed to register hotkey!")
@@ -321,6 +321,6 @@ VkCode = {
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    image = basic_functional.screen_shot(788562)
+    image = basic_functional.screen_shot(basic_functional.get_handle())
     # rect = win32gui.GetWindowRect(basic_functional.get_handle())
     cv2.imwrite(fr"D:\Desktop\test_img\{time.time()}.bmp", image)

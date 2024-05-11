@@ -30,20 +30,21 @@ from app.view.Ui.SettingWindow import Ui_Setting
 from app.Script.BasicFunctional import basic_functional
 from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
 from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit, \
-    TimingQMessageBox, Mask, TextEdit, VERSION, ShortCutLineEdit, START_ID, WIN_ID
+    TimingQMessageBox, Mask, TextEdit, VERSION, ShortCutLineEdit, START_ID
 from app.view.ClientServices import services
 
 
 class MainWindow(QWidget, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        start = time.time()
         QFontDatabase.addApplicationFont('app/images/font/Xingxingniannian-Bold-2.ttf')
         self.username = None
         self.user_quit = True
         self.setupUi(self)
         self.login = LoginWindow()
         publicSingle.login.connect(self.initWindow)
-        print(int(self.winId()))
+        # print(int(self.winId()))
         # basic_functional.register_hotkey(self.winId(), START_ID, 'Shift+W')
         # basic_functional.register_hotkey(self.winId(), 2, win32con.MOD_ALT | win32con.MOD_SHIFT, 'W')
 
@@ -65,6 +66,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.load_config('默认配置')
         self.load_system_config()
         self.show_page(0)
+        print(time.time() - start)
 
     # add window
     def initNavigation(self):
@@ -783,6 +785,7 @@ class LoginWindow(QWidget, Ui_Login):
         self.lineEdit_6.setEchoMode(QLineEdit.EchoMode.Password)
         self.load_user_config()
         self.initWindow()
+        self.auto_login()
 
     def initWindow(self):
         self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
@@ -792,6 +795,10 @@ class LoginWindow(QWidget, Ui_Login):
         self.button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.button_2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.show()
+
+    def auto_login(self):
+        if self.checkBox_2.isChecked():
+            self.login_button.click()
 
     def start_login(self, _):
         self.login_button.setText('登录中')
@@ -881,7 +888,6 @@ class LoginWindow(QWidget, Ui_Login):
                 self.lineEdit_2.setText(password)
             if config.getboolean('User', '自动登录'):
                 self.checkBox_2.setChecked(config.getboolean('User', '自动登录'))
-                self.login_button.click()
         except configparser.NoSectionError as e:
             print(e)
 
@@ -1181,12 +1187,12 @@ class RunWindow(QWidget, Ui_Run):
         # 获取当前时间
         current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
 
-        if isinstance(message, list):
+        if message[0] != -1:
             # 构造带有时间信息的文本
             formatted_message = f"[{current_time}] [窗口: {message[0] + 1} ] >>> {message[1]}\n"
         else:
             # 构造带有时间信息的文本
-            formatted_message = f"[{current_time}] >>> {message}\n"
+            formatted_message = f"[{current_time}] >>> {message[1]}\n"
 
         # 在文本框中追加信息
         self.textEdit.insertPlainText(formatted_message)
@@ -1338,7 +1344,7 @@ class SettingWindow(QWidget, Ui_Setting):
         self.parent = parent
         # 重构输入框
         self.replace_widget(ShortCutLineEdit, self.lineEdit)
-        print(int(self.parent.winId()))
+        # print(int(self.parent.winId()))
         # 信号连接
         self.lineEdit.textChanged.connect(lambda: self.short_cut_key(START_ID))
 

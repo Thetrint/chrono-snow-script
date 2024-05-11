@@ -13,8 +13,12 @@ TABLE_WINDOW = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 DPI_MAPP = {1.0: (1350, 789), 1.25: (1352, 797), 1.5: (1356, 806), 1.75: (1360, 814), 2.0: (1360, 822)}
 Mask = True
 VERSION = '1.2.0'
+
 START_ID = 1
-WIN_ID = None
+
+SHORTKEY_ID_MAP = {
+    START_ID: '开始快捷键'
+}
 # 定义修饰键与Win32常量的映射关系
 MODIFIERS_MAP = {
     ('Shift', ): win32con.MOD_SHIFT,

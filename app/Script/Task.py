@@ -153,25 +153,26 @@ class BasicTask(object):
         self.key_down_up(event.persona[self.mapp].map)
         self.Visual('世界', laplacian_process=True)
         self.Visual('金陵', histogram_process=True, threshold=0.7)
-
-        # self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
-        #             search_scope=(0, 647, 349, 750))
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=290,
-                    search_scope=(0, 631, 414, 694))
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
-        self.input('571')
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233,
-                    search_scope=(0, 631, 414, 694))
-        self.input('484')
-        self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
-                    search_scope=(0, 631, 414, 694))
-        self.key_down_up(event.persona[self.mapp].map)
+        self.map_input(571, 484)
+        #
+        # # self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
+        # #             search_scope=(0, 647, 349, 750))
+        # # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
+        # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=290,
+        #             search_scope=(0, 631, 414, 694))
+        # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
+        # self.input('571')
+        # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233,
+        #             search_scope=(0, 631, 414, 694))
+        # self.input('484')
+        # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
+        #             search_scope=(0, 631, 414, 694))
+        # self.key_down_up(event.persona[self.mapp].map)
         # self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
         # time.sleep(2)
         # self.Visual('传送点', search_scope=(614, 236, 725, 342), laplacian_process=True)
         # self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
-        self.arrive()
+        # self.arrive()
 
     # 到达检测
     def arrive(self):
@@ -179,12 +180,15 @@ class BasicTask(object):
         for _ in range(300):
             if event.unbind[self.mapp].is_set():
                 break
-            if self.coord('过图标志', canny_process=True, threshold=0.8):
+            if self.coord('过图标志', canny_process=True, threshold=0.7, search_scope=(953, 510, 1237, 756)):
                 self.journal('过图中')
                 time.sleep(8)
                 continue
             if not self.coord('自动寻路中', histogram_process=True, threshold=0.6, search_scope=(531, 498, 870, 615)):
                 index += 1
+            else:
+                index = 0
+
             if index == 2:
                 break
             time.sleep(2)
@@ -238,7 +242,7 @@ class BasicTask(object):
                     search_scope=(0, 647, 349, 750))
         # self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=300,
         #             search_scope=(0, 631, 414, 694))
-        self.Visual('停止寻路', canny_process=True, threshold=0.6, search_scope=(0, 631, 414, 694))
+        self.Visual('停止寻路', canny_process=True, threshold=0.6, search_scope=(0, 631, 414, 694), wait_count=1)
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=96, search_scope=(0, 631, 414, 694))
         self.input(str(x))
         self.Visual('前往坐标', binary_process=True, threshold=0.6, wait_count=1, x=233,
@@ -3398,7 +3402,7 @@ class DailyRedemption(BasicTask):
                     self.journal('等待到达目标地点')
                     self.arrive()
                     self.journal('到达目标地点查找目标')
-                    if self.Visual('拾取', binary_process=True, threshold=0.6):
+                    if self.Visual('拾取', canny_process=True, threshold=0.6):
                         self.journal('查找目标成功')
                     else:
                         self.journal('目标查找失败')
