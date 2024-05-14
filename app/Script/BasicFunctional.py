@@ -21,12 +21,12 @@ class BasicFunctional:
         self.primaryScreen = None
 
     @staticmethod
-    def get_handle():
+    def get_handle(timeout=0.5):
         """
         获取鼠标下窗口句柄
         :return:
         """
-        time.sleep(0.5)
+        time.sleep(timeout)
         mouse_x, mouse_y = win32gui.GetCursorPos()
         child_handle = win32gui.WindowFromPoint((mouse_x, mouse_y))
 
@@ -321,6 +321,6 @@ VkCode = {
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    image = basic_functional.screen_shot(basic_functional.get_handle())
+    image = basic_functional.screen_shot(393466)
     # rect = win32gui.GetWindowRect(basic_functional.get_handle())
     cv2.imwrite(fr"D:\Desktop\test_img\{time.time()}.bmp", image)

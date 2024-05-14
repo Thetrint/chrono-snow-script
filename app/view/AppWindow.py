@@ -100,9 +100,9 @@ class MainWindow(QWidget, Ui_MainWindow):
         msg = ctypes.wintypes.MSG.from_address(message.__int__())
         if msg.message == win32con.WM_HOTKEY:
             print("成功了吧~~")
+            print(msg.wParam)
             if msg.wParam == 1 and self.username is not None:
                 publicSingle.start.emit('_')
-                print(msg.wParam)
         return False, message
 
     # SwitchPages
@@ -219,7 +219,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "江湖行商次数": self.script.spinBox_9.value(),
             "江湖行商喊话内容": self.script.lineEdit_49.text(),
             "商票上缴": self.script.checkBox_20.isChecked(),
-            "混队模式": self.script.checkBox_13.isChecked(),
+            "队伍模式": self.script.comboBox_17.currentText(),
             "地图搜索": self.script.radioButton_2.isChecked(),
             "定点采集": self.script.radioButton_6.isChecked(),
             "自定义坐标采集": self.script.radioButton.isChecked(),
@@ -436,7 +436,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_47.setText(coord[0])
             self.script.lineEdit_48.setText(coord[1])
 
-            self.script.checkBox_13.setChecked(False)
             self.script.spinBox_9.setValue(5)
             self.script.checkBox_19.setChecked(False)
             self.script.spinBox_8.setValue(1)
@@ -594,7 +593,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.lineEdit_47.setText(coord[0])
             self.script.lineEdit_48.setText(coord[1])
 
-            self.script.checkBox_13.setChecked(config.getboolean('日常任务', '混队模式'))
             self.script.spinBox_9.setValue(config.getint('日常任务', '江湖行商次数'))
             self.script.checkBox_19.setChecked(config.getboolean('日常任务', '自动吃鸡蛋'))
             self.script.spinBox_8.setValue(config.getint('日常任务', '吃鸡蛋数量'))
@@ -1133,6 +1131,8 @@ class RunWindow(QWidget, Ui_Run):
         publicSingle.set_character.connect(self.set_character)
         publicSingle.start.connect(self.start_task)
 
+        self.journal([-1, f'当前版本: {open("../version.txt").read()}'])
+
     # initialization
     def initWindow(self):
         # 设置运行角色信息表格的行和列
@@ -1347,6 +1347,7 @@ class SettingWindow(QWidget, Ui_Setting):
         # print(int(self.parent.winId()))
         # 信号连接
         self.lineEdit.textChanged.connect(lambda: self.short_cut_key(START_ID))
+        # basic_functional.update_hotkey(self.parent.winId(), 2, 'Ctrl+P')
 
     def short_cut_key(self, ID):
         sender_widget = self.sender()

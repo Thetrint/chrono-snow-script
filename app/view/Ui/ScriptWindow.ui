@@ -103,7 +103,7 @@
           <widget class="QComboBox" name="comboBox">
            <property name="minimumSize">
             <size>
-             <width>60</width>
+             <width>100</width>
              <height>20</height>
             </size>
            </property>
@@ -445,7 +445,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>-424</y>
+                     <y>0</y>
                      <width>713</width>
                      <height>5000</height>
                     </rect>
@@ -635,15 +635,45 @@
                            </spacer>
                           </item>
                           <item>
-                           <widget class="QCheckBox" name="checkBox_13">
+                           <widget class="QLabel" name="label_69">
                             <property name="font">
                              <font>
                               <pointsize>11</pointsize>
                              </font>
                             </property>
                             <property name="text">
-                             <string>混队模式</string>
+                             <string>队伍模式:</string>
                             </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QComboBox" name="comboBox_17">
+                            <property name="minimumSize">
+                             <size>
+                              <width>88</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <item>
+                             <property name="text">
+                              <string>带队模式</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string>混队模式</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string>固定队模式</string>
+                             </property>
+                            </item>
                            </widget>
                           </item>
                           <item>
