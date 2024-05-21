@@ -151,6 +151,9 @@ class BasicTask(object):
     def location_detection(self):
         # self.log('位置检测')
         self.key_down_up(event.persona[self.mapp].map)
+        if self.coord('当前坐标金陵', canny_process=True, threshold=0.7):
+            self.close_win(1)
+            return 0
         self.Visual('世界', laplacian_process=True)
         self.Visual('金陵', histogram_process=True, threshold=0.7)
         self.map_input(571, 484)
@@ -180,16 +183,15 @@ class BasicTask(object):
         for _ in range(300):
             if event.unbind[self.mapp].is_set():
                 break
-            if self.coord('过图标志', canny_process=True, threshold=0.7, search_scope=(953, 510, 1237, 756)):
-                self.journal('过图中')
-                time.sleep(8)
-                continue
+            # if self.coord('过图标志', canny_process=True, threshold=0.85, search_scope=(953, 510, 1237, 756), show=True):
+            #     self.journal('过图中')
+            #     time.sleep(8)
+            #     continue
             if not self.coord('自动寻路中', histogram_process=True, threshold=0.6, search_scope=(531, 498, 870, 615)):
                 index += 1
-
-                if index == 4:
+                time.sleep(1)
+                if index == 8:
                     break
-
                 continue
             else:
                 index = 0
@@ -220,7 +222,7 @@ class BasicTask(object):
                 self.mouse_down_up(0, 0)
             if right_tap:
                 self.mouse_down_up(1334, 750)
-            if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7, random_tap=random_tap):
+            if not self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7, random_tap=random_tap, wait_count=1):
                 break
 
     def open_entrance(self, tem_name, laplacian_process, binary_process, threshold):
@@ -242,7 +244,7 @@ class BasicTask(object):
 
     def map_input(self, x, y):
 
-        self.Visual('停止寻路', canny_process=True, threshold=0.6, search_scope=(0, 600, 430, 750), wait_count=1)
+        self.Visual('停止寻路', canny_process=True, threshold=0.6, search_scope=(0, 600, 530, 750), wait_count=1)
 
         self.Visual('世界搜索坐标展开', histogram_process=True, threshold=0.7, wait_count=1,
                     search_scope=(0, 600, 349, 750))
@@ -276,6 +278,7 @@ class BasicTask(object):
             else:
                 if not self.Visual('关闭', histogram_process=True, threshold=0.75, wait_count=1):
                     self.mouse_down_up(0, 0)
+                if not self.Visual('关闭', histogram_process=True, threshold=0.75, wait_count=1):
                     self.mouse_down_up(1330, 745)
 
     def keep_activate(self, count):
@@ -945,602 +948,149 @@ class HeroListTask(BasicTask):
 
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
+        self.cause_index = 1
+        self.finish_count = 0
 
     def initialization(self):
         pass
 
     def implement(self):
-        self.leave_team()
-        self.location_detection()
-        self.key_down_up("B")
-        self.Visual('活动入口', histogram_process=True, threshold=0.7)
-        self.Visual('活动', binary_process=True, threshold=0.5)
-        self.Visual('活动界面纷争', laplacian_process=True)
-        self.Visual('江湖英雄榜', y=45, histogram_process=True, threshold=0.7)
-        num = 0
-        for _ in range(10):
-            if event.unbind[self.mapp].is_set():
-                break
-            if self.Visual('江湖英雄榜次数', threshold=0.95, histogram_process=True):
-                break
-            self.Visual('匹配', '晋级赛', binary_process=True, threshold=0.4)
-            self.Visual('确定', laplacian_process=True)
-            if self.Visual('准备', wait_count=15, laplacian_process=True):
-                self.key_down('W')
-                time.sleep(6)
-                self.key_up('W')
-                event.persona[self.mapp].start_fight()
-                self.Visual('离开', wait_count=300, histogram_process=True, threshold=0.7)
-                event.persona[self.mapp].stop_fight()
-                num += 1
-                self.journal(f'江湖英雄榜完成{num}次')
-                time.sleep(8)
-                if num >= int(event.task_config[self.mapp].get('江湖英雄榜次数')):
-                    break
+        while not event.unbind[self.mapp].is_set():
+            switch = self.determine()
 
-        for _ in range(4):
-            if event.unbind[self.mapp].is_set():
-                break
-            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.65, random_tap=False)
+            if switch == 0:
+                return 0
+            elif switch == -3:
+                self.back_interface()
 
+            if switch == 1:
+                self.journal('队伍检测')
+                self.key_down_up(event.persona[self.mapp].team)
+                if self.coord('队伍界面', histogram_process=True, threshold=0.7):
+                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+                        self.Visual('退出队伍', histogram_process=True, threshold=0.65)
+                        self.Visual('确定', canny_process=True, threshold=0.7)
+                        self.key_down_up(event.persona[self.mapp].team)
+                else:
+                    self.journal('队伍打开失败 请检查键位')
+                    return 0
 
-# # 日常副本
-# class DailyCopiesTask(BasicTask):
-#
-#     def __init__(self, row, handle, mapp):
-#         super().__init__(row, handle, mapp)
-#         self.replica_finish_count = 0
-#         self.replica_finish = False
-#         self.shouting_time = 0
-#         self.replica_start_time = 0
-#         self.count_stuck = 0
-#         self.cause_index = 1
-#         self.replica_count = 0
-#         self.auto_matching = False
-#
-#     def initialization(self):
-#         pass
-#
-#     def implement(self):
-#         """
-#         1.检测队伍状态
-#         2.位置检测
-#         3.创建队伍
-#         4.检测队伍人数
-#         5.检测开始任务等待任务完成
-#         :return:
-#         """
-#         while not event.unbind[self.mapp].is_set():
-#             switch = self.determine()
-#
-#             if switch == -3:
-#                 self.journal('返回主界面')
-#                 self.close_win(3)
-#             elif switch == 0:
-#                 self.journal('队伍检测')
-#                 # 队伍检测
-#                 self.leave_team()
-#                 self.cause_index = 2
-#             elif switch == 1:
-#                 self.journal('位置检测')
-#                 # 位置检测
-#                 self.location_detection()
-#                 self.cause_index = 3
-#             elif switch == 2:
-#                 self.journal('创建队伍')
-#                 # 创建队伍
-#                 self.daily_copies_1()
-#                 self.shouting_time = time.time()
-#                 self.cause_index = 4
-#             elif switch == 3:
-#                 self.Visual('自动匹配', histogram_process=True, threshold=0.7)
-#                 self.auto_matching = True
-#             elif switch == 4:
-#                 self.key_down_up(event.persona[self.mapp].team)
-#             elif switch == 5:
-#                 if self.replica_count == 2:
-#                     self.shouting_time = 0
-#                     self.replica_start_time = 0
-#                     self.count_stuck = 0
-#                     self.cause_index = 1
-#                     self.replica_count = 0
-#                     self.auto_matching = False
-#                     continue
-#                 num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
-#                 if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
-#                     time.sleep(2)
-#                     num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
-#                     if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
-#                         self.Visual('进入副本', wait_count=2, binary_process=True, threshold=0.4)
-#                         self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
-#                         self.replica_count += 1
-#                         self.shouting_time = time.time()
-#                         self.cause_index = 5
-#                         continue
-#                 self.Visual('普通喊话', laplacian_process=True, threshold=0.25)
-#
-#             elif switch == 6:
-#                 text = event.task_config[self.mapp].get('副本喊话内容')
-#                 self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
-#                 self.world_shouts(text)
-#                 self.shouting_time = time.time()
-#             elif switch == 7:
-#                 self.journal('副本中 开始任务')
-#                 if self.count_stuck == 0 and event.task_config[self.mapp].get('副本自动匹配'):
-#                     self.key_down_up(event.persona[self.mapp].team)
-#                     self.Visual('自动匹配', laplacian_process=True)
-#                     self.key_down_up(event.persona[self.mapp].team)
-#                     self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
-#
-#                 # 脱离卡死
-#                 if self.count_stuck != 0:
-#                     self.journal('副本超时执行脱离卡死')
-#                     self.escape_stuck()
-#
-#                 self.Visual('主界面任务', '主界面任务2', canny_process=True, threshold=0.7)
-#                 self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
-#                 if self.Visual('副本任务', histogram_process=True, threshold=0.65,
-#                                search_scope=(36, 209, 102, 418),
-#                                x=68, y=44):
-#                     self.journal('激活任务等待副本完成')
-#                 else:
-#                     self.journal('激活任务失败 >>> 尝试任务键激活')
-#                     self.key_down_up('Y')
-#
-#                 self.count_stuck += 1
-#                 self.replica_start_time = time.time()
-#             elif switch == 8:
-#                 self.journal('脱离卡死次数上限 >>> 退队')
-#                 self.cause_index = 1
-#             elif switch == 9:
-#                 self.journal('跳过剧情')
-#                 self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25, tap_ago_timeout=0)
-#             elif switch == 10:
-#                 self.journal('副本完成 >>> 退出副本')
-#
-#                 self.Visual('副本退出', histogram_process=True, threshold=0.7,
-#                             search_scope=(1149, 107, 1334, 329))
-#                 if self.Visual('确定', binary_process=True, threshold=0.5):
-#                     self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
-#                     self.journal('返回主界面')
-#                     if self.replica_finish_count == 3:
-#                         return 0
-#                     if self.replica_finish:
-#                         return 0
-#                     else:
-#                         self.replica_finish_count += 1
-#                         self.shouting_time = 0
-#                         self.replica_start_time = 0
-#                         self.count_stuck = 0
-#                         self.cause_index = 1
-#                         self.replica_count = 0
-#                         self.auto_matching = False
-#             elif switch == 12:
-#                 self.journal('等待队员确定')
-#                 time.sleep(10)
-#             elif switch == 13:
-#                 self.key_down_up(1334, 750)
-#                 self.replica_finish = True
-#
-#     def determine(self):
-#         switch = self.detect()
-#
-#         if self.cause_index == 1:
-#             if switch in [0]:
-#                 if switch == 0:
-#
-#                     return 0
-#             else:
-#                 return -3  # 尝试返回主界面
-#
-#         if self.cause_index == 2:
-#             if switch in [0]:
-#                 if switch == 0:
-#
-#                     return 1
-#             else:
-#                 return -3  # 尝试返回主界面
-#
-#         if self.cause_index == 3:
-#             if switch in [0]:
-#                 if switch == 0:
-#
-#                     return 2
-#             else:
-#                 return -3  # 尝试返回主界面
-#
-#         if self.cause_index == 4:
-#             if switch in [0, 1]:
-#                 if switch == 0:
-#                     return 4
-#                 elif switch == 1 and (event.task_config[self.mapp].get('副本人数') + 1) != 1 and not self.auto_matching:
-#                     return 3
-#                 elif switch == 1 and time.time() - self.shouting_time < 30:
-#                     return 5
-#                 elif switch == 1 and time.time() - self.shouting_time > 30:
-#                     return 6
-#             else:
-#                 self.cause_index = 0
-#                 return -3  # 尝试返回主界面
-#
-#         if self.cause_index == 5:
-#             if switch in [0, 1, 2, 3, 4, 5, 6]:
-#                 if switch == 0:
-#                     self.cause_index = 4
-#                 elif switch == 1:
-#                     self.cause_index = 4
-#                 elif switch == 2 and time.time() - self.replica_start_time > 720:
-#                     return 7  # 等待副本完成
-#                 elif switch == 2 and self.count_stuck >= 3:
-#                     return 8
-#                 elif switch == 2:
-#                     return 11
-#                 elif switch == 3:
-#                     return 9
-#                 elif switch == 4:
-#                     return 10
-#                 elif switch == 5:
-#                     return 12
-#                 elif switch == 6:
-#                     return 13
-#             else:
-#                 return -4  # 尝试返回主界面
-#
-#     def detect(self):
-#         time.sleep(2)
-#         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-#             if self.coord('副本完成', histogram_process=True, threshold=0.6, search_scope=(1192, 160, 1334, 250)):
-#                 if self.coord('日常获得',  histogram_process=True, threshold=0.6):
-#                     return 6
-#                 return 4
-#             elif self.coord('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329)):
-#                 return 2
-#
-#             return 0
-#         elif self.coord('队伍界面', histogram_process=True, threshold=0.7):
-#             return 1
-#         elif self.coord('跳过剧情', binary_process=True, threshold=0.6):
-#             return 3
-#         elif self.coord('日常1', canny_process=True, threshold=0.6):
-#             return 5
-#
-#     # 创建日常副本
-#     def daily_copies_1(self):
-#         self.key_down_up("T")
-#         if not self.coord('日常', laplacian_process=True, threshold=0.3):
-#             self.Visual('创建队伍', laplacian_process=True)
-#             self.Visual('下拉', laplacian_process=True, threshold=0.35)
-#             self.Visual('队伍界面江湖纪事', laplacian_process=True)
-#             self.Visual('队伍界面自动匹配', binary_process=True, threshold=0.5)
-#             self.Visual('确定', laplacian_process=True)
-#             self.Visual('确定', laplacian_process=True)
-#
-#
-# # 悬赏任务
-# class BountyMissionsTask(DailyCopiesTask):
-#
-#     def __init__(self, row, handle, mapp):
-#         super().__init__(row, handle, mapp)
-#         self.enter_team_time = 0
-#         self.enter_team = False
-#         self.bounty_count = 0
-#         self.finish_flag = False
-#         self.matching = False
-#
-#         self.bounty_mission = False
-#         self.bounty_mission_2 = True
-#
-#     def implement(self):
-#         """
-#         1.队伍检测
-#         2.位置检测
-#         3.创建队伍
-#         4.检测悬赏
-#         :return:
-#         """
-#         while not event.unbind[self.mapp].is_set():
-#             switch = self.determine()
-#
-#             if switch == -3:
-#                 self.journal('返回主界面')
-#                 self.close_win(3)
-#             elif switch == 0:
-#                 self.journal('队伍检测')
-#                 # 队伍检测
-#                 self.leave_team()
-#                 self.cause_index = 2
-#             elif switch == 1:
-#                 self.journal('队伍检测')
-#                 # 队伍检测
-#                 self.leave_team()
-#                 self.cause_index = 2
-#             elif switch == 2:
-#                 self.journal('位置检测')
-#                 # 位置检测
-#                 self.location_detection()
-#                 self.cause_index = 3
-#             elif switch == 3:
-#                 self.journal('创建队伍')
-#                 # 创建队伍
-#                 self.daily_copies_1()
-#                 self.shouting_time = time.time()
-#                 self.cause_index = 4
-#             elif switch == 10:
-#                 self.Visual('自动匹配', histogram_process=True, threshold=0.7)
-#                 self.auto_matching = True
-#             elif switch == 4:
-#                 self.journal('打开背包')
-#                 self.key_down_up(event.persona[self.mapp].knapsack)
-#             elif switch == 5:
-#                 self.journal('进入活动页面')
-#                 self.Visual('活动入口', histogram_process=True, threshold=0.7)
-#                 self.Visual('活动', binary_process=True, threshold=0.5)
-#             elif switch == 6:
-#                 self.journal('进入悬赏页面')
-#                 self.Visual('活动界面悬赏', binary_process=True, threshold=0.6)
-#             elif switch == 7:
-#                 self.journal('检测悬赏')
-#                 self.bounty_count = len(self.coord('前往', binary_process=True, threshold=0.4))
-#             elif switch == 8:
-#                 self.journal('接取悬赏')
-#                 while not event.unbind[self.mapp].is_set():
-#                     num = len(self.coord('前往', binary_process=True, threshold=0.4))
-#                     if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-#                         if num == 0 and self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-#                             self.finish_flag = True
-#                         self.cause_index = 5
-#                         self.bounty_count = num
-#                         break
-#                     self.Visual('刷新', histogram_process=True, threshold=0.7)
-#                     self.Visual('悬赏界面每日悬赏', y=330, search_scope=(267 + 231 * num, 182, 1197, 558),
-#                                 histogram_process=True, threshold=0.7)
-#                     self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
-#                 self.mouse_down_up(1337, 750)
-#                 self.close_win(2)
-#                 if self.finish_flag:
-#                     return 0
-#             elif switch == 11:
-#                 self.journal('打开队伍')
-#                 self.key_down_up(event.persona[self.mapp].team)
-#             elif switch == 9:
-#                 if self.replica_count == 2:
-#                     self.shouting_time = 0
-#                     self.replica_start_time = 0
-#                     self.count_stuck = 0
-#                     self.cause_index = 1
-#                     self.replica_count = 0
-#                     self.auto_matching = False
-#                     continue
-#                 num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
-#                 if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
-#                     time.sleep(2)
-#                     num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
-#                     if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
-#                         self.Visual('进入副本', wait_count=2, binary_process=True, threshold=0.4)
-#                         self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
-#                         self.replica_count += 1
-#                         self.shouting_time = time.time()
-#                         self.cause_index = 6
-#                         continue
-#                 self.Visual('普通喊话', laplacian_process=True, threshold=0.25)
-#             elif switch == 12:
-#                 self.journal('副本中 开始任务')
-#                 if self.count_stuck == 0 and event.task_config[self.mapp].get('副本自动匹配'):
-#                     self.key_down_up(event.persona[self.mapp].team)
-#                     self.Visual('自动匹配', laplacian_process=True)
-#                     self.key_down_up(event.persona[self.mapp].team)
-#                     self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
-#
-#                 # 脱离卡死
-#                 if self.count_stuck != 0:
-#                     self.journal('副本超时执行脱离卡死')
-#                     self.escape_stuck()
-#
-#                 self.Visual('主界面任务', '主界面任务2', canny_process=True, threshold=0.7)
-#                 self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
-#                 if self.Visual('副本任务', histogram_process=True, threshold=0.65,
-#                                search_scope=(36, 209, 102, 418),
-#                                x=68, y=44):
-#                     self.journal('激活任务等待副本完成')
-#                 else:
-#                     self.journal('激活任务失败 >>> 尝试任务键激活')
-#                     self.key_down_up('Y')
-#
-#                 self.count_stuck += 1
-#                 self.replica_start_time = time.time()
-#             elif switch == 13:
-#                 self.journal('脱离卡死次数上限 >>> 退队')
-#                 self.cause_index = 1
-#             elif switch == 14:
-#                 self.journal('跳过剧情')
-#                 self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25, tap_ago_timeout=0)
-#             elif switch == 15:
-#                 self.journal('副本完成 >>> 退出副本')
-#
-#                 self.Visual('副本退出', histogram_process=True, threshold=0.7,
-#                             search_scope=(1149, 107, 1334, 329))
-#                 if self.Visual('确定', binary_process=True, threshold=0.5):
-#                     self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
-#                     self.journal('返回主界面')
-#                     self.bounty_count -= 1
-#                     self.enter_team_time = 0
-#                     self.enter_team = False
-#                     self.finish_flag = False
-#                     self.matching = False
-#
-#                     self.bounty_mission = False
-#                     self.bounty_mission_2 = True
-#
-#                     self.replica_finish_count = 0
-#                     self.replica_finish = False
-#                     self.shouting_time = 0
-#                     self.replica_start_time = 0
-#                     self.count_stuck = 0
-#                     self.cause_index = 1
-#                     self.replica_count = 0
-#                     self.auto_matching = False
-#
-#             elif switch == 16:
-#                 self.journal('等待队员确定')
-#                 time.sleep(10)
-#             elif switch == 18:
-#                 self.journal('过图中')
-#                 time.sleep(10)
-#             elif switch == 19:
-#                 if self.Visual('便捷组队', histogram_process=True, threshold=0.7):
-#                     self.Visual('江湖纪事1', canny_process=True, threshold=0.7)
-#                     self.Visual('自动匹配1', canny_process=True, threshold=0.7)
-#                     self.matching = True
-#                 else:
-#                     self.cause_index = 1
-#             elif switch == 20:
-#                 self.Visual('跟随队长', canny_process=True, threshold=0.7)
-#                 self.enter_team = True
-#                 self.enter_team_time = time.time()
-#                 self.cause_index = 6
-#             elif switch == 21:
-#                 self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
-#                 self.cause_index = 6
-#             elif switch == 22:
-#                 self.leave_team()
-#
-#     def determine(self):
-#         switch = self.detect()
-#
-#         if self.cause_index == 1:
-#             if switch in [0, 2]:
-#                 if switch == 0 or switch == 2:
-#                     if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-#                         return 0
-#                     elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
-#                         return 1
-#                     else:
-#                         self.cause_index = 2
-#             else:
-#                 return -3  # 尝试返回主界面
-#
-#         if self.cause_index == 2:
-#             if switch in [0, 2]:
-#                 if switch == 0 or switch == 2:
-#                     if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-#                         return 2
-#                     else:
-#                         self.cause_index = 3
-#             else:
-#                 return -3
-#
-#         if self.cause_index == 3:
-#             if switch in [0]:
-#                 if switch == 0:
-#                     if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-#                         return 3
-#                     else:
-#                         self.cause_index = 4
-#             else:
-#                 return -3
-#
-#         if self.cause_index == 4:
-#             if switch in [0, 1, 7, 8, 9]:
-#
-#                 if switch == 0 and (self.bounty_count == 0 or self.bounty_count is None):
-#                     return 4
-#                 elif switch == 1 and not self.auto_matching:
-#                     return 10
-#                 elif switch == 1 and self.bounty_count == 0:
-#                     return -3
-#                 elif (switch == 1 or switch == 0) and self.bounty_count != 0:
-#                     self.cause_index = 5
-#                 elif switch == 7 and (self.bounty_count == 0 and self.bounty_count == 0):
-#                     return 5
-#                 elif switch == 8 and self.bounty_count == 0:
-#                     return 6
-#                 elif switch == 9 and self.bounty_count == 0:
-#                     return 8
-#             else:
-#                 return -3
-#
-#         if self.cause_index == 5:
-#             if switch in [0, 1, 5, 11]:
-#                 if switch == 0:
-#                     if event.task_config[self.mapp].get('队伍模式') in ['带队模式', '混队模式']:
-#                         return 11
-#
-#                 if switch == 1:
-#                     if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-#                         return 9
-#                     elif event.task_config[self.mapp].get('队伍模式') == '混队模式' and not self.matching:
-#                         return 19
-#                 elif switch == 5:
-#                     return 21
-#                 elif switch == 11:
-#                     if event.task_config[self.mapp].get('队伍模式') == '混队模式' and self.matching:
-#                         return 20
-#             else:
-#                 return -3
-#
-#         if self.cause_index == 6:
-#             if switch in [0, 1, 2, 3, 4, 5, 6, 10]:
-#                 if switch == 0:
-#                     if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-#                         self.cause_index = 5
-#                     elif event.task_config[self.mapp].get('队伍模式') == '混队模式' and not self.enter_team:
-#                         return 11
-#                     elif event.task_config[self.mapp].get('队伍模式') == '混队模式' and not self.enter_team:
-#                         if time.time() - self.enter_team_time > 60:
-#                             return 22
-#                 elif switch == 1:
-#                     if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-#                         self.cause_index = 5
-#                     elif event.task_config[self.mapp].get('队伍模式') == '混队模式' and not self.enter_team:
-#                         return 20
-#                     elif event.task_config[self.mapp].get('队伍模式') == '混队模式' and self.enter_team:
-#                         if time.time() - self.enter_team_time > 60:
-#                             return -3
-#                         return 21
-#                 elif switch == 2 and time.time() - self.replica_start_time > 720:
-#                     return 12  # 等待副本完成
-#                 elif switch == 2 and self.count_stuck >= 3:
-#                     return 13
-#                 elif switch == 2:
-#                     return -1
-#                 elif switch == 3:
-#                     return 14
-#                 elif switch == 4:
-#                     return 15
-#                 elif switch == 5:
-#                     return 16
-#                 elif switch == 10:
-#                     return 18
-#             else:
-#                 return -4
-#
-#     def detect(self):
-#         time.sleep(2)
-#         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-#             if self.coord('副本完成', histogram_process=True, threshold=0.6, search_scope=(1192, 160, 1334, 250)):
-#                 if self.coord('日常获得', histogram_process=True, threshold=0.6):
-#                     return 6
-#                 return 4
-#             elif self.coord('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329)):
-#                 return 2
-#
-#             return 0
-#         elif self.coord('队伍界面', histogram_process=True, threshold=0.7):
-#             if self.coord('跟随队长', canny_process=True, threshold=0.7):
-#                 return 11
-#             return 1
-#         elif self.coord('跳过剧情', binary_process=True, threshold=0.6):
-#             return 3
-#         elif self.coord('日常1', canny_process=True, threshold=0.6):
-#             return 5
-#         elif self.coord('物品界面', histogram_process=True, threshold=0.7):
-#             return 7
-#         elif self.coord('过图标志', canny_process=True, threshold=0.7, search_scope=(953, 510, 1237, 756)):
-#             return 10
-#         elif self.coord('活动界面', '招领', canny_process=True, threshold=0.6):
-#             if self.coord('悬赏界面', canny_process=True, threshold=0.6):
-#                 return 9
-#             return 8
+                if self.coord('创建队伍', canny_process=True, threshold=0.7):
+                    self.cause_index = 2
+            elif switch == 2:
+                self.journal('位置检测')
+                self.location_detection()
+                self.key_down_up(event.persona[self.mapp].map)
+                if self.coord('当前坐标金陵', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+                self.key_down_up(event.persona[self.mapp].map)
+            elif switch == 3:
+                self.journal('开始任务')
+                self.key_down_up(event.persona[self.mapp].knapsack)
+                self.Visual('活动入口', canny_process=True, threshold=0.7)
+                self.Visual('活动', canny_process=True, threshold=0.7)
+                self.Visual('活动界面纷争', canny_process=True, threshold=0.7, wait_count=1)
+                self.Visual('江湖英雄榜', y=45, canny_process=True, threshold=0.7)
+                if self.coord('江湖英雄榜界面', canny_process=True, threshold=0.7):
+                    self.cause_index = 4
+
+            elif switch == 4:
+                if self.coord('江湖英雄榜次数', threshold=0.95, histogram_process=True):
+                    return 0
+
+                self.Visual('匹配', '晋级赛', canny_process=True, threshold=0.7)
+                self.Visual('确定', canny_process=True, threshold=0.7)
+
+                if not event.task_config[self.mapp].get('江湖英雄榜秒退'):
+                    if self.Visual('准备', wait_count=15, canny_process=True, threshold=0.7):
+                        self.key_down('W')
+                        time.sleep(6)
+                        self.key_up('W')
+                        event.persona[self.mapp].start_fight()
+                        self.Visual('离开', wait_count=300, canny_process=True, threshold=0.7)
+                        event.persona[self.mapp].stop_fight()
+                else:
+                    if self.Visual('准备', wait_count=15, canny_process=True, threshold=0.7, tap=False):
+                        self.Visual('退出江湖英雄榜', canny_process=True, threshold=0.7)
+                        self.Visual('退出副本', canny_process=True, threshold=0.7)
+                        self.Visual('离开', wait_count=300, canny_process=True, threshold=0.7)
+                    self.finish_count += 1
+                    self.journal(f'江湖英雄榜完成{self.finish_count}次')
+                    self.Visual('江湖英雄榜界面', canny_process=True, threshold=0.7, tap=False, wait_count=10)
+                    if self.finish_count >= int(event.task_config[self.mapp].get('江湖英雄榜次数')):
+                        self.cause_index = 5
+
+                    if not self.coord('江湖英雄榜界面', canny_process=True, threshold=0.7):
+                        self.cause_index = 3
+
+    def determine(self):
+        switch = self.detect()
+
+        # 队伍检测
+        if self.cause_index == 1:
+            if switch in [1]:
+                return 1
+            else:
+                return -3
+
+        # 位置检测
+        elif self.cause_index == 2:
+            if switch in [1]:
+                return 2
+            else:
+                return -3
+
+        # 开始任务
+        elif self.cause_index == 3:
+            if switch in [1]:
+                return 3
+            else:
+                return -3
+
+        elif self.cause_index == 4:
+            if switch in [2]:
+                return 4
+            else:
+                self.cause_index = 3
+                return -3
+
+        elif self.cause_index == 5:
+            if switch in [1]:
+                return 0
+            else:
+                return -3
+
+    def detect(self):
+        time.sleep(1)
+        if self.coord('副本挂机', histogram_process=True, threshold=0.7):
+            return 1
+        elif self.coord('江湖英雄榜界面', canny_process=True, threshold=0.7):
+            return 2
+
+        # for _ in range(10):
+        #     if event.unbind[self.mapp].is_set():
+        #         break
+        #     if self.Visual('江湖英雄榜次数', threshold=0.95, histogram_process=True):
+        #         break
+        #     self.Visual('匹配', '晋级赛', binary_process=True, threshold=0.4)
+        #     self.Visual('确定', laplacian_process=True)
+        #     if self.Visual('准备', wait_count=15, laplacian_process=True):
+        #         self.key_down('W')
+        #         time.sleep(6)
+        #         self.key_up('W')
+        #         event.persona[self.mapp].start_fight()
+        #         self.Visual('离开', wait_count=300, histogram_process=True, threshold=0.7)
+        #         event.persona[self.mapp].stop_fight()
+        #         num += 1
+        #         self.journal(f'江湖英雄榜完成{num}次')
+        #         time.sleep(8)
+        #         if num >= int(event.task_config[self.mapp].get('江湖英雄榜次数')):
+        #             break
+        #
+        # for _ in range(4):
+        #     if event.unbind[self.mapp].is_set():
+        #         break
+        #     self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.65, random_tap=False)
 
 
 # 日常副本
@@ -1548,258 +1098,763 @@ class DailyCopiesTask(BasicTask):
 
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
+        self.open_replica_time = 0
+        self.open_replica_count = 0
+
+        self.activated_count = 0
+        self.confirm_time = 0
+        self.replica_start_time = 0
+        self.replica_finish = False
+
+        self.count_stuck = 0
+        self.cause_index = 1
+
+        self.replica_matching = True
+        self.replica_start = 0
+
+        self.replica_finish_count = 0
+
+        self.team_time = 0
+        self.team_matching = 0
 
     def initialization(self):
         pass
 
     def implement(self):
-        self.leave_team()
-        self.location_detection()
-        self.daily_copies_1()
-        for _ in range(30):
-            # 判断队伍人数
-            self.daily_copies_2()
-            # 判断是否进入副本
-            count_flag = self.daily_copies_3()
-
-            if count_flag:
-                self.leave_team()
-                # 创建队伍
-                self.daily_copies_1()
-                continue
-
-            self.daily_copies_4()
-            break
-
-    # 判断副本完成
-    def daily_copies_4(self):
-        start_time = 0
-        count_stuck = 0
+        """
+        带队模式
+        混队模式
+        固定队模式
+        :return:
+        """
         while not event.unbind[self.mapp].is_set():
-            if time.time() - start_time > 720:
-                if count_stuck == 0 and event.task_config[self.mapp].get('副本自动匹配'):
-                    self.key_down_up(event.persona[self.mapp].team)
-                    self.Visual('自动匹配', laplacian_process=True)
-                    self.key_down_up(event.persona[self.mapp].team)
-                    self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
+            switch = self.determine()
 
-                # 脱离卡死
-                if count_stuck != 0:
+            if switch == 0:
+                return 0
+            elif switch == -3:
+                self.back_interface()
+
+            if event.task_config[self.mapp].get('队伍模式') == '带队模式':
+                if switch == 1:
+                    self.journal('位置检测')
+                    self.location_detection()
+                    self.cause_index = 2
+                elif switch == 2:
+                    self.journal('检测队伍')
+                    self.daily_copies_team_detect()
+                elif switch == 3:
+                    self.journal('队伍人数检测')
+                    self.daily_copies_team_number_detect()
+                elif switch == 4:
+                    self.journal('开启副本')
+                    self.key_down_up(event.persona[self.mapp].team)
+                    self.Visual('进入副本', wait_count=2, binary_process=True, threshold=0.4)
+                    if self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4):
+                        time.sleep(12)
+                        self.confirm_time = time.time()
+                        self.cause_index = 5
+                elif switch == 5:
+                    self.journal('副本中 开始任务')
+                    if self.replica_matching and event.task_config[self.mapp].get('副本自动匹配'):
+                        self.key_down_up(event.persona[self.mapp].team)
+                        self.Visual('自动匹配', laplacian_process=True)
+                        self.key_down_up(event.persona[self.mapp].team)
+                        self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
+                    self.Visual('主界面任务', '主界面任务2', canny_process=True, threshold=0.7)
+                    self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
+                    self.Visual('副本任务', histogram_process=True, threshold=0.65, search_scope=(36, 209, 102, 418), x=68, y=44)
+                    self.replica_matching = False
+                    self.replica_start_time = time.time()
+                    self.confirm_time = 0
+                elif switch == 6:
+                    self.journal('副本状态检测')
+                    if self.activated_count == 2:
+                        self.journal('脱离卡死次数上限')
+                        self.leave_team()
+                        self.activated_count = 0
+                        continue
                     self.journal('副本超时执行脱离卡死')
                     self.escape_stuck()
+                    self.activated_count += 1
+                    self.replica_start_time = 0
+                elif switch == 7:
+                    self.journal('跳过剧情')
+                    self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25, tap_ago_timeout=0)
+                elif switch == 8:
+                    self.Visual('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329))
+                    self.Visual('确定', binary_process=True, threshold=0.5)
+                    self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
+                    self.journal('返回主界面')
+                    return 0
 
-                self.Visual('主界面任务', '主界面任务2', histogram_process=True, threshold=0.7)
-                self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
-                if self.Visual('副本任务', histogram_process=True, threshold=0.65,
-                               search_scope=(36, 209, 102, 418),
-                               x=68, y=44):
-                    self.journal('激活任务等待副本完成')
-                else:
-                    self.journal('激活任务失败 >>> 尝试任务键激活')
-                    self.key_down_up('Y')
+                elif switch == 9:
+                    self.mouse_down_up(1334, 750)
+                    self.replica_finish = True
 
-                count_stuck += 1
-                start_time = time.time()
-            if count_stuck == 3:
-                self.journal('脱离卡死次数上限 >>> 退队')
-                self.leave_team()
-                # 等待返回主界面
-                self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
-                break
-            if self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25,
-                           tap_ago_timeout=0):
-                self.journal('跳过剧情')
-            if self.coord('副本完成', histogram_process=True, threshold=0.6,
-                          search_scope=(1192, 160, 1334, 250)):
-                time.sleep(2)
-                if self.coord('副本完成', histogram_process=True, threshold=0.6,
-                              search_scope=(1192, 160, 1334, 250)):
-                    self.journal('副本完成 >>> 退出副本')
-                    self.Visual('副本退出', histogram_process=True, threshold=0.7,
-                                search_scope=(1149, 107, 1334, 329))
-                    if self.Visual('确定', binary_process=True, threshold=0.5):
-                        self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True,
-                                    threshold=0.7)
-                        self.journal('返回主界面')
-                        break
-
-    # 判断是否进入副本
-    def daily_copies_3(self):
-        count = 0
-        start_time = time.time()
-        while not event.unbind[self.mapp].is_set():
-            self.Visual('进入副本', wait_count=2, binary_process=True, threshold=0.4)
-            self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
-            while not event.unbind[self.mapp].is_set():
-                if (self.coord('副本退出', histogram_process=True, threshold=0.65,
-                               search_scope=(1149, 107, 1334, 329)) or
-                        self.Visual('跳过剧情', wait_count=1, laplacian_process=True, tap_ago_timeout=0,
-                                    tap=False)):
-                    self.journal('副本中 >>> 开始任务')
-                    return False
-                if (not self.coord('副本退出', histogram_process=True, threshold=0.65,
-                                   search_scope=(1149, 107, 1334, 329))
-                        and self.coord('副本挂机', histogram_process=True,
-                                       threshold=0.7) and time.time() - start_time >= 30):
-                    count += 1
-                    start_time = time.time()
+            elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
+                if switch == 1:
+                    self.journal('位置检测')
+                    self.location_detection()
+                    self.cause_index = 2
+                elif switch == 2:
+                    self.journal('检测队伍')
+                    self.daily_copies_team_detect_1()
+                elif switch == 3:
                     self.key_down_up(event.persona[self.mapp].team)
-                    self.journal('进入副本失败 >>> 再次尝试进入')
-                    break
-                if count == 4:
-                    self.journal('多次进入失败 >>> 退队')
-                    return True
-                time.sleep(10)
+                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+                        self.cause_index = 4
+                        self.team_matching = 0
+                        self.open_replica_time = time.time()
+                    else:
+                        self.Visual('便捷组队', canny_process=True, threshold=0.7)
+                        self.Visual('江湖纪事1', canny_process=True, threshold=0.7)
+                        self.Visual('自动匹配1', canny_process=True, threshold=0.7)
+                        self.team_matching = time.time()
+                elif switch == 4:
+                    self.key_down_up(event.persona[self.mapp].team)
+                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+                        self.cause_index = 4
+                        self.team_matching = 0
+                        self.open_replica_time = time.time()
+                    else:
+                        self.Visual('便捷组队', canny_process=True, threshold=0.7)
+                        self.Visual('取消匹配1', canny_process=True, threshold=0.7)
+                        self.team_matching = 0
+                elif switch == 5:
+                    self.journal('长时间未开启副本')
+                    self.cause_index = 2
 
-    # 等待队伍人数
-    def daily_copies_2(self):
-        time_1 = 0
-        if (event.task_config[self.mapp].get('副本人数') + 1) != 1:
-            self.Visual('自动匹配', histogram_process=True, threshold=0.7)
-        text = event.task_config[self.mapp].get('世界喊话内容')
-        while True:
-            if event.unbind[self.mapp].is_set():
-                break
+            elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
+                if switch == 7:
+                    self.mouse_down_up(1334, 750)
+
+    def determine(self):
+        switch = self.detect()
+
+        if event.task_config[self.mapp].get('队伍模式') == '带队模式':
+
+            if self.cause_index == 1:
+                if switch in [1]:
+                    if switch == 1:
+                        return 1
+                else:
+                    return -3  # 尝试返回主界面
+
+            elif self.cause_index == 2:
+                if switch in [1]:
+                    if switch == 1:
+                        return 2
+                else:
+                    return -3
+
+            elif self.cause_index == 3:
+                if switch in [1]:
+                    if switch == 1:
+                        if (event.task_config[self.mapp].get('副本人数') + 1) == 1:
+                            self.cause_index = 4
+                        else:
+                            return 3
+                else:
+                    return -3
+
+            elif self.cause_index == 4:
+                if switch in [1]:
+                    if switch == 1:
+                        return 4
+                else:
+                    return -3
+
+            elif self.cause_index == 5:
+                if switch in [3, 4, 6, 7]:
+                    if switch == 3:
+                        if self.replica_start_time == 0:
+                            return 5
+                        if time.time() - self.replica_start_time > 360:
+                            return 6
+                    elif switch == 4:
+                        return 7
+                    elif switch == 6:
+                        return 8
+                    elif switch == 7:
+                        return 9
+                else:
+                    if switch == 2:
+                        return -3
+                    elif time.time() - self.confirm_time > 20 and self.confirm_time != 0:
+                        self.cause_index = 4
+
+        elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
+
+            if self.cause_index == 1:
+                return 1
+
+            elif self.cause_index == 2:
+                if switch in [1, 3, 6, 7]:
+                    return 2
+                else:
+                    return -3
+
+            elif self.cause_index == 3:
+                if switch in [1, 3, 5, 8]:
+                    if switch == 1:
+                        if self.team_matching == 0:
+                            return 3
+                        elif time.time() - self.team_matching > 180:
+                            return 4
+                    elif switch == 3 or switch == 5 or switch == 8:
+                        self.cause_index = 4
+                        self.team_matching = 0
+                        self.open_replica_time = time.time()
+                else:
+                    return -3
+
+            elif self.cause_index == 4:
+                if switch in [1, 3, 5, 6]:
+                    if switch == 1:
+                        if self.open_replica_time != 0 and time.time() - self.open_replica_time > 120:
+                            return 5
+                    elif switch == 3 or switch == 5:
+                        self.cause_index = 5
+                        self.open_replica_time = 0
+                        self.replica_start_time = time.time()
+                    elif switch == 6:
+                        self.cause_index = 2
+                        self.open_replica_time = 0
+
+            elif self.cause_index == 5:
+                if switch in [1, 3, 6, 7]:
+                    if switch == 1:
+                        self.cause_index = 4
+                        self.open_replica_time = time.time()
+                        self.replica_start_time = 0
+                    elif switch == 3:
+                        if time.time() - self.replica_start_time > 360:
+                            self.cause_index = 2
+                    elif switch == 6:
+                        self.open_replica_count += 1
+                        if self.open_replica_count == 3:
+                            return 0
+                        self.cause_index = 2
+                        self.replica_start_time = 0
+                    elif switch == 7:
+                        return 0
+
+        elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
+            if self.cause_index == 1:
+                if switch in [5, 3]:
+                    if switch == 3:
+                        self.cause_index = 2
+                    elif switch == 5:
+                        self.cause_index = 2
+                        time.sleep(12)
+
+            elif self.cause_index == 2:
+                if switch in [3, 6, 7]:
+                    if switch == 2:
+                        pass
+                    elif switch == 6:
+                        return 0
+                    elif switch == 7:
+                        return 1
+
+    def detect(self):
+        time.sleep(1)
+        if self.coord('副本挂机', histogram_process=True, threshold=0.7):
+            if self.coord('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329)):
+                if self.coord('日常获得',  histogram_process=True, threshold=0.6):
+                    return 7
+                elif self.coord('副本完成', histogram_process=True, threshold=0.6, search_scope=(1192, 160, 1334, 250)):
+                    return 6
+                return 3
+            elif self.coord('跟随确认', canny_process=True, threshold=0.7):
+                return 8
+            return 1
+        elif self.coord('队伍界面', histogram_process=True, threshold=0.7):
+            return 2
+        elif self.coord('跳过剧情', binary_process=True, threshold=0.6):
+            return 4
+        elif self.coord('日常1', canny_process=True, threshold=0.6):
+            return 5
+
+    def daily_copies_team_detect_1(self):
+        self.key_down_up(event.persona[self.mapp].team)
+        if self.coord('队伍界面', histogram_process=True, threshold=0.7):
+            if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+                self.journal('退出队伍')
+                self.Visual('退出队伍', histogram_process=True, threshold=0.65)
+                self.Visual('确定', canny_process=True, threshold=0.6)
+
+        if self.coord('创建队伍', canny_process=True, threshold=0.7):
+            self.cause_index = 3
+
+    def daily_copies_team_number_detect(self):
+        shouting_timeout = 0
+        text = event.task_config[self.mapp].get('副本喊话内容')
+
+        while not event.unbind[self.mapp].is_set():
+            self.key_down_up(event.persona[self.mapp].team)
             num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
             if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
-                time.sleep(1)
-                num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
-                if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
-                    break
+                break
             self.Visual('普通喊话', laplacian_process=True, threshold=0.25)
-            if time.time() - time_1 > 30:
+            if time.time() - shouting_timeout > 30:
                 self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
                 # (剩余: {self.number_copies}次)
                 self.world_shouts(f'{text}')
-                self.key_down_up("T")
-                time_1 = time.time()
+                shouting_timeout = time.time()
 
-    # 创建日常副本
-    def daily_copies_1(self):
-        self.key_down_up("T")
-        if not self.coord('日常', laplacian_process=True, threshold=0.3):
-            self.Visual('创建队伍', laplacian_process=True)
-            self.Visual('下拉', laplacian_process=True, threshold=0.35)
-            self.Visual('队伍界面江湖纪事', laplacian_process=True)
-            self.Visual('队伍界面自动匹配', binary_process=True, threshold=0.5)
-            self.Visual('确定', laplacian_process=True)
-            self.Visual('确定', laplacian_process=True)
+        num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
+        if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
+            self.cause_index = 4
+
+    def daily_copies_team_detect(self):
+        self.key_down_up(event.persona[self.mapp].team)
+        if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+            self.journal('已有队伍 改变队伍目标')
+            self.Visual('下拉', binary_process=True, threshold=0.7)
+            self.mouse_move(277, 215, 277, 315, 2)
+            self.Visual('无目标', binary_process=True, threshold=0.6, wait_count=1)
+
+        else:
+            self.journal('创建队伍')
+            self.Visual('创建队伍', canny_process=True, threshold=0.7)
+            self.Visual('下拉', binary_process=True, threshold=0.7)
+
+        self.Visual('队伍界面江湖纪事', canny_process=True, threshold=0.7)
+        self.Visual('队伍界面自动匹配', canny_process=True, threshold=0.7, search_scope=(115, 330, 436, 629))
+        self.Visual('确定', canny_process=True, threshold=0.7)
+        self.Visual('确定', canny_process=True, threshold=0.7)
+
+        if (event.task_config[self.mapp].get('副本人数') + 1) != 1:
+            self.journal('开启自动匹配')
+            self.Visual('自动匹配', histogram_process=True, threshold=0.7)
+
+        if self.coord('日常', canny_process=True, threshold=0.7):
+            self.cause_index = 3
 
 
 # 悬赏任务
-class BountyMissionsTask(DailyCopiesTask):
+class BountyMissionsTask(BasicTask):
 
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
-        self.bounty_mission = False
-        self.bounty_mission_2 = True
+        self.open_replica_time = 0
+        self.team_matching = 0
+
+        self.activated_count = 0
+        self.replica_start_time = 0
+        self.replica_matching = True
+        self.bounty_finish = False
+        self.bounty_count = 0
+        self.confirm_time = 0
+
+        self.cause_index = 1
+
+    def initialization(self):
+        pass
 
     def implement(self):
-        bounty_flag = True
-        finish_flag = False
-        if event.task_config[self.mapp].get('队伍模式') == '带队模式':
-            # 悬赏队长模式
-            self.location_detection()
-            while True:
-                if event.unbind[self.mapp].is_set():
-                    break
-                self.key_down_up(event.persona[self.mapp].knapsack)
-                self.Visual('活动入口', histogram_process=True, threshold=0.7)
-                self.Visual('活动', binary_process=True, threshold=0.5)
-                if not self.Visual('活动界面悬赏', laplacian_process=True):
-                    continue
-                if not self.coord('前往', binary_process=True, threshold=0.4):
-                    while not event.unbind[self.mapp].is_set():
-                        num = len(self.coord('前往', binary_process=True, threshold=0.4))
-                        if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-                            if num == 0 and self.coord('悬赏完成标志', histogram_process=True,
-                                                       threshold=0.9):
-                                finish_flag = True
-                            break
-                        self.Visual('刷新', histogram_process=True, threshold=0.7)
-                        self.Visual('悬赏界面每日悬赏', y=330,
-                                    search_scope=(267 + 231 * num, 182, 1197, 558),
-                                    histogram_process=True, threshold=0.7)
-                        self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
+        while not event.unbind[self.mapp].is_set():
+            switch = self.determine()
+            if switch == 0:
+                return 0
+            elif switch == -3:
+                self.back_interface()
 
-                self.mouse_down_up(0, 0)
-                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
-
-                if finish_flag:
-                    self.leave_team()
-                    break
-
-                self.daily_copies_1()
-                self.daily_copies_2()
-
-                count_flag = self.daily_copies_3()
-
-                if count_flag:
-                    self.leave_team()
-                    continue
-
-                self.daily_copies_4()
-        else:
-            while not event.unbind[self.mapp].is_set():
-                switch = self.detect()
-                if (switch == 1 or switch == 2) and bounty_flag:
-                    self.key_down_up(event.persona[self.mapp].knapsack)
-                elif switch == 5 and bounty_flag:
-                    self.Visual('活动入口', histogram_process=True, threshold=0.7)
-                    self.Visual('活动', binary_process=True, threshold=0.5)
+            if event.task_config[self.mapp].get('队伍模式') == '带队模式':
+                if switch == 1:
+                    self.journal('位置检测')
+                    self.location_detection()
+                    self.cause_index = 2
+                elif switch == 2:
+                    self.journal('检测队伍')
+                    self.bounty_missions_team_detect()
                 elif switch == 3:
-                    self.Visual('确认', binary_process=True, threshold=0.4)
-                    bounty_flag = True
-                elif switch == 4 and not bounty_flag:
-                    self.mouse_down_up(0, 0)
-                    if not self.coord('日常1', binary_process=True, threshold=0.5):
-                        self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
+                    self.journal('悬赏检测')
+                    self.bounty_detect()
+                elif switch == 4:
+                    self.journal('队伍人数检测')
+                    self.bounty_missions_team_number_detect()
+                elif switch == 5:
+                    self.journal('打开队伍')
+                    self.key_down_up(event.persona[self.mapp].team)
                 elif switch == 6:
-                    self.Visual('就近复活', histogram_process=True, threshold=0.7,
-                                search_scope=(960, 540, 1157, 750))
-                elif switch == 4 and bounty_flag:
-                    self.Visual('活动界面悬赏', laplacian_process=True)
-                    if not self.coord('前往', binary_process=True, threshold=0.4):
-                        while not event.unbind[self.mapp].is_set():
-                            num = len(self.coord('前往', binary_process=True, threshold=0.4))
-                            if num == 3 or self.coord('悬赏完成标志', histogram_process=True,
-                                                      threshold=0.9):
-                                if num == 0 and self.coord('悬赏完成标志', histogram_process=True,
-                                                           threshold=0.9):
-                                    finish_flag = True
-                                bounty_flag = False
-                                break
-                            if not self.Visual('刷新', histogram_process=True, threshold=0.7):
-                                break
-                            self.Visual('悬赏界面每日悬赏', y=330,
-                                        search_scope=(267 + 231 * num, 182, 1197, 558),
-                                        histogram_process=True, threshold=0.7)
-                            self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
-                    else:
-                        bounty_flag = False
-                    if finish_flag:
+                    self.journal('开启副本')
+                    self.Visual('进入副本', wait_count=2, binary_process=True, threshold=0.4)
+                    self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
+                    time.sleep(20)
+                    self.confirm_time = time.time()
+                    self.cause_index = 6
+
+                elif switch == 7:
+                    self.journal('副本中 开始任务')
+                    if self.replica_matching and event.task_config[self.mapp].get('副本自动匹配'):
+                        self.key_down_up(event.persona[self.mapp].team)
+                        self.Visual('自动匹配', laplacian_process=True)
+                        self.key_down_up(event.persona[self.mapp].team)
+                        self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
+                    self.Visual('主界面任务', '主界面任务2', canny_process=True, threshold=0.7)
+                    self.Visual('主界面任务1', histogram_process=True, threshold=0.7)
+                    self.Visual('副本任务', histogram_process=True, threshold=0.65, search_scope=(36, 209, 102, 418), x=68, y=44)
+                    self.replica_matching = False
+                    self.replica_start_time = time.time()
+                    self.confirm_time = 0
+
+                elif switch == 8:
+                    self.journal('副本状态检测')
+                    if self.activated_count == 2:
+                        self.journal('脱离卡死次数上限')
                         self.leave_team()
+                        self.activated_count = 0
+                        self.cause_index = 2
+                        continue
+                    self.journal('副本超时执行脱离卡死')
+                    self.escape_stuck()
+                    self.activated_count += 1
+                    self.replica_start_time = 0
+                elif switch == 9:
+                    self.journal('跳过剧情')
+                    self.Visual('跳过剧情', wait_count=1, laplacian_process=True, threshold=0.25, tap_ago_timeout=0)
+                elif switch == 10:
+                    self.Visual('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329))
+                    if self.Visual('确定', binary_process=True, threshold=0.5):
+                        self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
+                        self.journal('返回主界面')
+                        self.bounty_count -= 1
+                        if self.bounty_count == 0:
+                            self.cause_index = 3
+                        else:
+                            self.cause_index = 4
+
+                        self.activated_count = 0
+                        self.replica_start_time = 0
+                        self.replica_matching = True
+
+            elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
+                if switch == 1:
+                    self.journal('位置检测')
+                    self.location_detection()
+                    self.cause_index = 2
+                elif switch == 2:
+                    self.journal('检测队伍')
+                    self.bounty_missions_team_detect_1()
+                elif switch == 3:
+                    self.journal('悬赏检测')
+                    self.bounty_detect_1()
+                elif switch == 4:
+                    self.journal('队伍匹配')
+                    self.key_down_up(event.persona[self.mapp].team)
+                    self.Visual('便捷组队', canny_process=True, threshold=0.7)
+                    self.Visual('江湖纪事1', canny_process=True, threshold=0.7)
+                    self.Visual('自动匹配1', canny_process=True, threshold=0.7)
+                    self.team_matching = time.time()
+                elif switch == 5:
+                    self.key_down_up(event.persona[self.mapp].team)
+                    self.Visual('便捷组队', canny_process=True, threshold=0.7)
+                    self.Visual('取消匹配1', canny_process=True, threshold=0.7)
+                    self.team_matching = 0
+                elif switch == 6:
+                    self.journal('长时间未开启副本')
+                    self.cause_index = 2
+
+            elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
+                if switch == 1:
+                    self.journal('悬赏检测')
+                    self.bounty_detect_2()
+                    if self.bounty_finish:
+                        return 0
+
+    def determine(self):
+        switch = self.detect()
+
+        if event.task_config[self.mapp].get('队伍模式') == '带队模式':
+
+            if self.cause_index == 1:
+                return 1
+
+            elif self.cause_index == 2:
+                if switch in [1]:
+                    if switch == 1:
+                        return 2
+                else:
+                    return -3
+
+            elif self.cause_index == 3:
+                if switch in [1]:
+                    if switch == 1:
+                        if self.bounty_finish:
+                            return 0
+                        return 3
+                else:
+                    return -3
+
+            elif self.cause_index == 4:
+                if switch in [1]:
+                    if switch == 1:
+                        if (event.task_config[self.mapp].get('副本人数') + 1) == 1:
+                            self.cause_index = 5
+                        else:
+                            return 4
+                else:
+                    return -3
+
+            elif self.cause_index == 5:
+                if switch in [1, 2]:
+                    if switch == 1:
+                        return 5
+                    elif switch == 2:
+                        return 6
+                else:
+                    return -3
+
+            elif self.cause_index == 6:
+                if switch in [3, 4, 6]:
+                    if switch == 3:
+                        if self.replica_start_time == 0:
+                            return 7
+                        elif time.time() - self.replica_start_time > 360 and self.replica_start_time != 0:
+                            return 8
+                    elif switch == 4:
+                        return 9
+                    elif switch == 6:
+                        return 10
+                else:
+                    if switch == 2:
+                        return -3
+                    elif time.time() - self.confirm_time > 30 and self.confirm_time != 0:
+                        self.cause_index = 5
+                    elif time.time() - self.replica_start_time > 360 and self.replica_start_time != 0:
+                        return 8
+
+        elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
+
+            if self.cause_index == 1:
+                return 1
+
+            elif self.cause_index == 2:
+                if switch in [1, 3, 5, 6]:
+                    return 2
+                else:
+                    return -3
+
+            if self.cause_index == 3:
+                if switch in [1]:
+                    if switch == 1:
+                        if self.bounty_finish:
+                            return 0
+                        return 3
+                else:
+                    return -3
+
+            elif self.cause_index == 4:
+                if switch in [1, 7]:
+                    if switch == 1:
+                        if self.team_matching == 0:
+                            return 4
+                        elif time.time() - self.team_matching > 180:
+                            return 5
+                    elif switch == 7:
+                        self.cause_index = 5
+                        self.team_matching = 0
+                        self.open_replica_time = time.time()
+                else:
+                    return -3
+
+            elif self.cause_index == 5:
+                if switch in [1, 3, 5, 6]:
+                    if switch == 1:
+                        if self.open_replica_time != 0 and time.time() - self.open_replica_time > 120:
+                            return 6
+                    elif switch == 3 or switch == 5:
+                        self.cause_index = 6
+                        self.open_replica_time = 0
+                        self.replica_start_time = time.time()
+                    elif switch == 6:
+                        self.cause_index = 2
+                        self.open_replica_time = 0
+
+            elif self.cause_index == 6:
+                if switch in [1, 3, 6]:
+                    if switch == 1:
+                        self.cause_index = 5
+                        self.open_replica_time = time.time()
+                    elif switch == 3:
+                        if time.time() - self.replica_start_time > 360:
+                            self.cause_index = 2
+                    elif switch == 6:
+                        self.bounty_count -= 1
+                        if self.bounty_count == 0:
+                            self.cause_index = 2
+                            self.replica_start_time = 0
+                        else:
+                            self.cause_index = 5
+                            self.replica_start_time = 0
+                            self.open_replica_time = time.time()
+
+        elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
+            if self.cause_index == 1:
+                if switch in [5]:
+                    self.cause_index = 2
+                    time.sleep(12)
+
+            elif self.cause_index == 2:
+                if switch in [3, 4, 6]:
+                    if switch == 3:
+                        if self.bounty_count == 0:
+                            return 1
+                    elif switch == 4:
+                        pass
+                    elif switch == 6:
+                        self.bounty_count -= 1
+                        self.cause_index = 1
+                else:
+                    return -3
 
     def detect(self):
-        if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-            if not self.coord('副本退出', histogram_process=True, threshold=0.7,
-                              search_scope=(1149, 107, 1334, 329)):
-                return 1  # 主界面
-            elif self.coord('副本退出', histogram_process=True, threshold=0.7,
-                            search_scope=(1149, 107, 1334, 329)):
-                if self.coord('就近复活', histogram_process=True, threshold=0.7,
-                              search_scope=(960, 540, 1157, 750)):
-                    return 6  # 复活界面
-                return 2  # 副本界面
-
-        elif self.coord('日常1', binary_process=True, threshold=0.5):
-            return 3  # 日常进本界面
-        elif self.coord('悬赏界面', binary_process=True, threshold=0.5) or self.coord('活动界面悬赏',
-                                                                                      laplacian_process=True):
-            return 4  # 悬赏界面
-        elif self.coord('物品界面', histogram_process=True, threshold=0.65):
-            return 5  # 物品界面
         time.sleep(1)
+        if self.coord('副本挂机', histogram_process=True, threshold=0.7):
+            if self.coord('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329)):
+                if self.coord('副本完成', histogram_process=True, threshold=0.6, search_scope=(1192, 160, 1334, 250)):
+                    return 6
+                return 3
+            elif self.coord('跟随确认', canny_process=True, threshold=0.7):
+                return 7
+            return 1
+        elif self.coord('队伍界面', histogram_process=True, threshold=0.7):
+            return 2
+        elif self.coord('跳过剧情', binary_process=True, threshold=0.6):
+            return 4
+        elif self.coord('日常1', canny_process=True, threshold=0.6):
+            return 5
+
+    def bounty_detect_2(self):
+        self.key_down_up(event.persona[self.mapp].knapsack)
+        self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        self.Visual('活动', binary_process=True, threshold=0.5)
+        self.Visual('活动界面悬赏', laplacian_process=True)
+
+        if not self.coord('前往', binary_process=True, threshold=0.4):
+            while not event.unbind[self.mapp].is_set():
+                num = len(self.coord('前往', binary_process=True, threshold=0.4))
+                if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                    if num == 0 and self.coord('悬赏完成标志', histogram_process=True,  threshold=0.9):
+                        self.bounty_finish = True
+                    break
+                if not self.Visual('刷新', histogram_process=True, threshold=0.7):
+                    break
+                self.Visual('悬赏界面每日悬赏', y=330,
+                            search_scope=(267 + 231 * num, 182, 1197, 558),
+                            histogram_process=True, threshold=0.7)
+                self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
+
+        self.bounty_count = len(self.coord('前往', binary_process=True, threshold=0.4))
+        self.close_win(2)
+
+    def bounty_detect_1(self):
+        self.key_down_up(event.persona[self.mapp].knapsack)
+        self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        self.Visual('活动', binary_process=True, threshold=0.5)
+        self.Visual('活动界面悬赏', laplacian_process=True)
+
+        if not self.coord('前往', binary_process=True, threshold=0.4):
+            while not event.unbind[self.mapp].is_set():
+                num = len(self.coord('前往', binary_process=True, threshold=0.4))
+                if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                    if num == 0 and self.coord('悬赏完成标志', histogram_process=True,  threshold=0.9):
+                        self.bounty_finish = True
+                    break
+                if not self.Visual('刷新', histogram_process=True, threshold=0.7):
+                    break
+                self.Visual('悬赏界面每日悬赏', y=330,
+                            search_scope=(267 + 231 * num, 182, 1197, 558),
+                            histogram_process=True, threshold=0.7)
+                self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
+
+        self.bounty_count = len(self.coord('前往', binary_process=True, threshold=0.4))
+        if self.bounty_count != 0:
+            self.cause_index = 4
+
+    def bounty_missions_team_number_detect(self):
+        shouting_timeout = 0
+        text = event.task_config[self.mapp].get('副本喊话内容')
+
+        while not event.unbind[self.mapp].is_set():
+            self.key_down_up(event.persona[self.mapp].team)
+            num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
+            if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
+                break
+            self.Visual('普通喊话', laplacian_process=True, threshold=0.25)
+            if time.time() - shouting_timeout > 30:
+                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
+                # (剩余: {self.number_copies}次)
+                self.world_shouts(f'{text}')
+                shouting_timeout = time.time()
+
+        num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
+        if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
+            self.cause_index = 5
+
+    def bounty_detect(self):
+        self.key_down_up(event.persona[self.mapp].knapsack)
+        self.Visual('活动入口', histogram_process=True, threshold=0.7)
+        self.Visual('活动', binary_process=True, threshold=0.5)
+        self.Visual('活动界面悬赏', laplacian_process=True)
+
+        if not self.coord('前往', binary_process=True, threshold=0.4):
+            while not event.unbind[self.mapp].is_set():
+                num = len(self.coord('前往', binary_process=True, threshold=0.4))
+                if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
+                    if num == 0 and self.coord('悬赏完成标志', histogram_process=True,  threshold=0.9):
+                        self.bounty_finish = True
+                    break
+                if not self.Visual('刷新', histogram_process=True, threshold=0.7):
+                    break
+                self.Visual('悬赏界面每日悬赏', y=330,
+                            search_scope=(267 + 231 * num, 182, 1197, 558),
+                            histogram_process=True, threshold=0.7)
+                self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
+
+        self.bounty_count = len(self.coord('前往', binary_process=True, threshold=0.4))
+        if self.bounty_count != 0:
+            self.cause_index = 4
+
+    def bounty_missions_team_detect_1(self):
+        self.key_down_up(event.persona[self.mapp].team)
+        if self.coord('队伍界面', histogram_process=True, threshold=0.7):
+            if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+                self.journal('退出队伍')
+                self.Visual('退出队伍', histogram_process=True, threshold=0.65)
+                self.Visual('确定', canny_process=True, threshold=0.6)
+
+        if self.coord('创建队伍', canny_process=True, threshold=0.7):
+            self.cause_index = 3
+
+    def bounty_missions_team_detect(self):
+        self.key_down_up(event.persona[self.mapp].team)
+        if self.coord('队伍界面', histogram_process=True, threshold=0.7):
+            if self.Visual('创建队伍', canny_process=True, threshold=0.7):
+                self.journal('创建队伍')
+                self.Visual('下拉', binary_process=True, threshold=0.7)
+            else:
+                self.journal('已有队伍 改变队伍目标')
+                self.Visual('下拉', binary_process=True, threshold=0.7)
+                self.mouse_move(277, 215, 277, 315, 2)
+                self.Visual('无目标', binary_process=True, threshold=0.6, wait_count=1)
+
+            self.Visual('队伍界面江湖纪事', histogram_process=True, threshold=0.6)
+            self.Visual('队伍界面自动匹配', canny_process=True, threshold=0.7, search_scope=(115, 330, 436, 629))
+            self.Visual('确定', canny_process=True, threshold=0.7)
+            self.Visual('确定', canny_process=True, threshold=0.7)
+
+            if (event.task_config[self.mapp].get('副本人数') + 1) != 1:
+                self.journal('开启自动匹配')
+                self.Visual('自动匹配', histogram_process=True, threshold=0.7)
+
+            if self.coord('日常', canny_process=True, threshold=0.7):
+                self.cause_index = 3
+        else:
+            self.journal('队伍打开失败 请检查')
 
 
 # 侠缘喊话
@@ -1953,104 +2008,165 @@ class GangBanquet(BasicTask):
 
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
+        self.get_count = 0
+        self.cause_index = 1
+        self.articles_index = 1
 
     def initialization(self):
         pass
 
     def implement(self):
-        flag = False
-        self.key_down_up(event.persona[self.mapp].knapsack)
-        self.Visual('活动入口', histogram_process=True, threshold=0.7)
-        self.Visual('活动', binary_process=True, threshold=0.5)
-        self.Visual('活动界面帮派', laplacian_process=True)
-        if self.Visual('帮派设宴', y=45, histogram_process=True, threshold=0.7):
-            self.Visual('前往邀约', laplacian_process=True)
-            if self.Visual('邀请赴宴', '设宴界面', wait_count=180, histogram_process=True, threshold=0.7):
-                self.Visual('确认邀约', laplacian_process=True)
-                # self.update_log.emit([self.row, '开始设宴'])
-                flag = True
-            else:
-                flag = False
+        while not event.unbind[self.mapp].is_set():
+            switch = self.determine()
+
+            if switch == 0:
+                return 0
+            elif switch == -3:
+                self.back_interface()
+
+            if switch == 1:
+                self.journal('打开活动')
                 self.key_down_up(event.persona[self.mapp].knapsack)
-                self.Visual('活动入口', histogram_process=True, threshold=0.7)
-                self.Visual('活动', binary_process=True, threshold=0.5)
-                self.Visual('活动界面帮派', laplacian_process=True)
-                if self.Visual('帮派设宴', y=45, histogram_process=True, threshold=0.7):
-                    self.Visual('前往邀约', laplacian_process=True)
-                    if self.Visual('邀请赴宴', '设宴界面', wait_count=180, histogram_process=True, threshold=0.7):
-                        self.Visual('确认邀约', laplacian_process=True)
-                        # self.update_log.emit([self.row, '开始设宴'])
-                        flag = True
-                    else:
-                        flag = False
+                self.Visual('活动入口', canny_process=True, threshold=0.7)
+                self.Visual('活动', canny_process=True, threshold=0.7)
+                self.Visual('活动界面帮派', canny_process=True, threshold=0.7, wait_count=1)
 
-        tap_x = 633
-        tap_y = 282
-        if flag:
-            for col in range(2):
-                if event.unbind[self.mapp].is_set():
-                    break
-                for row in range(4):
-                    if event.unbind[self.mapp].is_set():
-                        break
-                    x = tap_x + 172 * row
-                    y = tap_y + 182 * col
-                    self.mouse_down_up(x, y)
-                    if not self.coord('获取', laplacian_process=True):
-                        self.Visual('一键提交', laplacian_process=True, threshold=0.3)
+                if not self.Visual('帮派设宴', canny_process=True, threshold=0.7, y=45):
+                    self.close_win(2)
+                    return 0
+
+                self.Visual('前往邀约', canny_process=True, threshold=0.7, wait_count=1)
+
+                self.arrive()
+                if not self.coord('邀请赴宴', '设宴界面', canny_process=True, threshold=0.7):
+                    return 0
+
+                self.Visual('邀请赴宴', canny_process=True, threshold=0.7)
+                self.Visual('确认邀约', canny_process=True, threshold=0.7)
+                if self.coord('设宴界面', canny_process=True, threshold=0.7):
+                    self.cause_index = 2
+            elif switch == 2:
+                if self.articles_index == 9:
+                    self.cause_index = 6
+                    continue
+                self.journal(f'物品{self.articles_index}')
+                self.get_count = 0
+                x = 633 + 172 * (3 if self.articles_index % 4 == 0 else self.articles_index % 4 - 1)
+                y = 282 + 182 * (self.articles_index // 5)
+                self.mouse_down_up(x, y)
+                self.cause_index = 3
+            elif switch == 3:
+                if self.coord('获取', canny_process=True, threshold=0.7):
+                    self.cause_index = 4
+                    continue
+
+                self.Visual('一键提交', canny_process=True, threshold=0.7)
+                self.articles_index += 1
+                self.cause_index = 2
+            elif switch == 4:
+                self.get_count += 1
+                if self.get_count == 4:
+                    self.articles_index += 1
+                    self.cause_index = 2
+                    continue
+                if not self.Visual('获取', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+
+                self.journal('帮派仓库')
+
+                self.Visual('帮派仓库', y=-71, canny_process=True, threshold=0.7)
+                self.Visual('提交', canny_process=True, threshold=0.7)
+                if self.coord('帮派仓库界面', canny_process=True, threshold=0.7):
+                    self.close_win(1)
+
+                if self.coord('一键提交', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+                    continue
+                self.cause_index = 5
+            elif switch == 5:
+                if not self.Visual('获取', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+                if self.Visual('商城购买', y=-71, canny_process=True, threshold=0.7, wait_count=1):
+                    self.journal('商城购买')
+                    if self.coord('珍宝阁界面', canny_process=True, threshold=0.7):
+                        self.mouse_down_up(988, 697)
+                        self.close_win(1)
+
+                    if self.coord('一键提交', canny_process=True, threshold=0.7):
+                        self.cause_index = 3
                         continue
-                    else:
-                        for _ in range(3):
-                            if event.unbind[self.mapp].is_set():
-                                break
-                            self.Visual('获取', wait_count=1, laplacian_process=True)
-                            self.gangs_set_up_feasts_1()
-                            if self.Visual('获取', wait_count=1, laplacian_process=True):
-                                self.gangs_set_up_feasts_2()
-                                if self.Visual('获取', wait_count=1, laplacian_process=True):
-                                    self.gangs_set_up_feasts_3()
-                                    if not self.coord('获取', laplacian_process=True):
-                                        self.Visual('一键提交', laplacian_process=True, threshold=0.3)
-                                        break
-                                else:
-                                    self.Visual('一键提交', laplacian_process=True, threshold=0.3)
-                                    break
-                            else:
-                                break
-            self.journal('提交完成, 开始设宴')
-            self.Visual('开始设宴', binary_process=True, threshold=0.4)
-            self.Visual('确定', laplacian_process=True)
+                    self.cause_index = 4
+                    continue
 
-        for _ in range(4):
-            if event.unbind[self.mapp].is_set():
-                break
-            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.6)
+                if self.Visual('摆摊购买', y=-71, canny_process=True, threshold=0.7, wait_count=1):
+                    self.journal('摆摊购买')
+                    if self.Visual('查看全服', canny_process=True, threshold=0.7, wait_count=1):
+                        self.close_win(1)
+                        continue
+                    if self.Visual('购买', canny_process=True, threshold=0.7):
+                        self.Visual('确定', canny_process=True, threshold=0.7)
 
-    def gangs_set_up_feasts_1(self):
-        if self.Visual('帮派仓库', y=-71, histogram_process=True, threshold=0.7):
-            self.Visual('提交', laplacian_process=True)
-            if self.coord('帮派仓库界面', laplacian_process=True):
-                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
+                        if self.coord('确认', canny_process=True, threshold=0.7):
+                            self.Visual('确认', canny_process=True, threshold=0.7)
+                            self.Visual('确认', canny_process=True, threshold=0.7, wait_count=20)
 
-    def gangs_set_up_feasts_2(self):
-        if self.Visual('摆摊购买', y=-71, histogram_process=True, threshold=0.7):
-            if self.Visual('购买', laplacian_process=True):
-                self.Visual('确定', binary_process=True, threshold=0.4)
-                self.Visual('确认', wait_count=12, binary_process=True, threshold=0.4)
-                if self.coord('交易界面', laplacian_process=True):
-                    self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
+                    if self.coord('交易界面', laplacian_process=True):
+                        self.close_win(1)
+
+                    if self.coord('一键提交', canny_process=True, threshold=0.7):
+                        self.cause_index = 3
+                        continue
+                    self.cause_index = 4
+                    continue
+            elif switch == 6:
+                self.journal('提交完成, 开始设宴')
+                self.Visual('开始设宴', canny_process=True, threshold=0.7)
+                self.Visual('确定', canny_process=True, threshold=0.7)
+                self.close_win(3)
+                return 0
+
+    def determine(self):
+        switch = self.detect()
+
+        if self.cause_index == 1:
+            if switch in [1]:
+                return 1
             else:
-                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
-        else:
-            self.mouse_down_up(0, 0)
+                return -3
 
-    def gangs_set_up_feasts_3(self):
-        if self.Visual('商城购买', y=-71, histogram_process=True, threshold=0.7):
-            if self.coord('珍宝阁界面', laplacian_process=True):
-                self.mouse_down_up(988, 697)
-                self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
-        else:
-            self.mouse_down_up(0, 0)
+        elif self.cause_index == 2:
+            if switch in [2]:
+                return 2
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 3:
+            if switch in [2]:
+                return 3
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 4:
+            if switch in [2]:
+                return 4
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 5:
+            if switch in [2]:
+                return 5
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 6:
+            if switch in [2]:
+                return 6
+
+    def detect(self):
+        if self.coord('副本挂机', canny_process=True, threshold=0.7):
+            return 1
+        elif self.coord('设宴界面', canny_process=True, threshold=0.7):
+            return 2
 
 
 # 破阵设宴
@@ -2063,97 +2179,156 @@ class BreakingBanquet(GangBanquet):
         pass
 
     def implement(self):
-        flag = False
-        self.key_down_up(event.persona[self.mapp].knapsack)
-        self.Visual('活动入口', histogram_process=True, threshold=0.7)
-        self.Visual('活动', binary_process=True, threshold=0.5)
-        self.Visual('活动界面帮派', laplacian_process=True)
-        if self.Visual('破阵设宴', y=45, histogram_process=True, threshold=0.7):
-            self.Visual('前往邀约', laplacian_process=True)
-            if self.Visual('邀请赴宴', '设宴界面', wait_count=180, histogram_process=True, threshold=0.7):
-                self.Visual('确认邀约', laplacian_process=True)
-                self.journal('开始设宴')
-                flag = True
-            else:
+        while not event.unbind[self.mapp].is_set():
+            switch = self.determine()
+
+            if switch == 0:
+                return 0
+            elif switch == -3:
+                self.back_interface()
+
+            if switch == 1:
+                self.location_detection()
+                self.journal('打开活动')
                 self.key_down_up(event.persona[self.mapp].knapsack)
-                self.Visual('活动入口', histogram_process=True, threshold=0.7)
-                self.Visual('活动', laplacian_process=True)
-                self.Visual('活动界面帮派', laplacian_process=True)
-                if self.Visual('破阵设宴', y=45, histogram_process=True, threshold=0.7):
-                    self.Visual('前往邀约', laplacian_process=True)
-                    if self.Visual('邀请赴宴', '设宴界面', wait_count=180, histogram_process=True, threshold=0.7):
-                        self.Visual('确认邀约', laplacian_process=True)
-                        # self.update_log.emit([self.row, '开始设宴'])
-                        flag = True
-                    else:
-                        flag = False
-        tap_x = 633
-        tap_y = 282
-        if flag:
-            for col in range(2):
-                if event.unbind[self.mapp].is_set():
-                    break
-                for row in range(4):
-                    if event.unbind[self.mapp].is_set():
-                        break
-                    x = tap_x + 172 * row
-                    y = tap_y + 182 * col
-                    self.mouse_down_up(x, y)
-                    if not self.coord('获取1', laplacian_process=True):
-                        self.Visual('一键提交2', binary_process=True, threshold=0.4)
+                self.Visual('活动入口', canny_process=True, threshold=0.7)
+                self.Visual('活动', canny_process=True, threshold=0.7)
+                self.Visual('活动界面帮派', canny_process=True, threshold=0.7, wait_count=1)
+
+                if not self.Visual('破阵设宴', canny_process=True, threshold=0.7, y=45):
+                    self.close_win(2)
+                    return 0
+
+                self.Visual('前往邀约', canny_process=True, threshold=0.7, wait_count=1)
+
+                self.arrive()
+                if not self.coord('邀请赴宴', '设宴界面', canny_process=True, threshold=0.7):
+                    return 0
+
+                self.Visual('邀请赴宴', canny_process=True, threshold=0.7)
+                self.Visual('确认邀约', canny_process=True, threshold=0.7)
+                if self.coord('设宴界面', canny_process=True, threshold=0.7):
+                    self.cause_index = 2
+            elif switch == 2:
+                if self.articles_index == 9:
+                    self.cause_index = 6
+                    continue
+                self.journal(f'物品{self.articles_index}')
+                self.get_count = 0
+                x = 633 + 172 * (3 if self.articles_index % 4 == 0 else self.articles_index % 4 - 1)
+                y = 282 + 182 * (self.articles_index // 5)
+                self.mouse_down_up(x, y)
+                self.cause_index = 3
+            elif switch == 3:
+                if self.coord('获取1', canny_process=True, threshold=0.7):
+                    self.cause_index = 4
+                    continue
+
+                self.Visual('一键提交2', canny_process=True, threshold=0.7)
+                self.articles_index += 1
+                self.cause_index = 2
+            elif switch == 4:
+                self.get_count += 1
+                if self.get_count == 4:
+                    self.articles_index += 1
+                    self.cause_index = 2
+                    continue
+                if not self.Visual('获取1', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+                self.journal('帮派仓库')
+                self.Visual('帮派仓库', y=-71, canny_process=True, threshold=0.7)
+                self.Visual('提交', canny_process=True, threshold=0.7)
+                if self.coord('帮派仓库界面', canny_process=True, threshold=0.7):
+                    self.close_win(1)
+
+                if self.coord('一键提交', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+                    continue
+                self.cause_index = 5
+            elif switch == 5:
+                if not self.Visual('获取1', canny_process=True, threshold=0.7):
+                    self.cause_index = 3
+
+                if self.Visual('商城购买', y=-71, canny_process=True, threshold=0.7, wait_count=1):
+                    self.journal('商城购买')
+                    if self.coord('珍宝阁界面', canny_process=True, threshold=0.7):
+                        self.mouse_down_up(988, 697)
+                        self.close_win(1)
+                    if self.coord('一键提交2', canny_process=True, threshold=0.7):
+                        self.cause_index = 3
                         continue
-                    else:
-                        for _ in range(3):
-                            if event.unbind[self.mapp].is_set():
-                                break
-                            self.Visual('获取1', wait_count=1, laplacian_process=True)
-                            self.gangs_set_up_feasts_1()
-                            if self.Visual('获取1', wait_count=1, laplacian_process=True):
-                                self.gangs_set_up_feasts_2()
-                                if self.Visual('获取1', wait_count=1, laplacian_process=True):
-                                    self.gangs_set_up_feasts_3()
-                                    if not self.coord('获取1', laplacian_process=True):
-                                        self.Visual('一键提交2', binary_process=True, threshold=0.4)
-                                        break
-                                else:
-                                    self.Visual('一键提交2', binary_process=True, threshold=0.4)
-                                    break
-                            else:
-                                break
-            self.journal('提交完成, 开始设宴')
-            self.Visual('开始设宴', binary_process=True, threshold=0.4)
-            self.Visual('确定', laplacian_process=True)
+                    self.cause_index = 4
+                    continue
 
-        for _ in range(4):
-            if event.unbind[self.mapp].is_set():
-                break
-            self.Visual('关闭', '关闭1', histogram_process=True, threshold=0.7)
+                if self.Visual('摆摊购买', y=-71, canny_process=True, threshold=0.7, wait_count=1):
+                    self.journal('摆摊购买')
+                    if self.Visual('查看全服', canny_process=True, threshold=0.7, wait_count=1):
+                        self.close_win(1)
+                        continue
+                    if self.Visual('购买', canny_process=True, threshold=0.7):
+                        self.Visual('确定', canny_process=True, threshold=0.7)
 
-    # def formation_set_up_banquet_1(self):
-    #     if self.get_tap('帮派仓库', y=-71):
-    #         self.get_tap('提交')
-    #         if self.get_tap('帮派仓库界面'):
-    #             self.get_tap('关闭')
-    #
-    # def formation_set_up_banquet_2(self):
-    #     if self.get_tap('摆摊购买', y=-71):
-    #         if self.get_tap('购买'):
-    #             self.get_tap('确定', '确认')
-    #             self.get_tap('确认', wait_count=10)
-    #             if self.get_coordinates('交易界面'):
-    #                 self.get_tap('关闭')
-    #         else:
-    #             self.get_tap('关闭')
-    #     else:
-    #         self.tap_x_y(0, 0)
-    #
-    # def formation_set_up_banquet_3(self):
-    #     if self.get_tap('商城购买', y=-71):
-    #         if self.get_coordinates('珍宝阁界面'):
-    #             self.tap_x_y(988, 697)
-    #             self.get_tap('关闭')
-    #     else:
-    #         self.tap_x_y(0, 0)
+                        if self.coord('确认', canny_process=True, threshold=0.7):
+                            self.Visual('确认', canny_process=True, threshold=0.7)
+                            self.Visual('确认', canny_process=True, threshold=0.7, wait_count=20)
+
+                    if self.coord('交易界面', laplacian_process=True):
+                        self.close_win(1)
+
+                    if self.coord('一键提交2', canny_process=True, threshold=0.7):
+                        self.cause_index = 3
+                        continue
+                    self.cause_index = 4
+                    continue
+            elif switch == 6:
+                self.journal('提交完成, 开始设宴')
+                self.Visual('开始设宴', canny_process=True, threshold=0.7)
+                self.Visual('确定', canny_process=True, threshold=0.7)
+                self.close_win(3)
+                return 0
+
+    def determine(self):
+        switch = self.detect()
+
+        if self.cause_index == 1:
+            if switch in [1]:
+                return 1
+            else:
+                return -3
+
+        elif self.cause_index == 2:
+            if switch in [2]:
+                return 2
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 3:
+            if switch in [2]:
+                return 3
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 4:
+            if switch in [2]:
+                return 4
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 5:
+            if switch in [2]:
+                return 5
+            else:
+                self.cause_index = 1
+
+        elif self.cause_index == 6:
+            if switch in [2]:
+                return 6
+
+    def detect(self):
+        if self.coord('副本挂机', canny_process=True, threshold=0.7):
+            return 1
+        elif self.coord('设宴界面', canny_process=True, threshold=0.7):
+            return 2
 
 
 # 课业任务
@@ -2524,9 +2699,8 @@ class HexagramDay(BasicTask):
         self.Visual('活动', laplacian_process=True)
         self.Visual('活动界面游历', laplacian_process=True)
         if self.Visual('每日一卦', histogram_process=True, threshold=0.7, y=45):
-            self.close_win(1)
-            if self.Visual('算命占卜', laplacian_process=True, wait_count=400):
-                self.Visual('落笔', laplacian_process=True)
+            if self.Visual('算命占卜', canny_process=True, wait_count=400, threshold=0.7):
+                self.Visual('落笔', canny_process=True, threshold=0.7)
                 self.Visual('接受', binary_process=True, threshold=0.4)
                 self.Visual('确定', binary_process=True, threshold=0.4)
                 self.mouse_down_up(0, 0)
@@ -2742,7 +2916,7 @@ class PacifyInjusticeTask(BasicTask):
                 else:
                     self.close_win(2)
                     self.team_detect = True
-                    self.cause_index = 2
+                    self.cause_index = 1
             elif switch == 7:
                 time.sleep(37)
                 self.journal('任务完成')
@@ -3964,7 +4138,7 @@ class TopPeakTask(BasicTask):
             elif switch == 6:
                 self.journal('开始挑战')
                 event.persona[self.mapp].start_fight()
-                self.Visual('退出', canny_process=True, threshold=0.5, wait_count=300)
+                self.Visual('退出', canny_process=True, threshold=0.7, wait_count=300)
                 event.persona[self.mapp].stop_fight()
                 self.journal('挑战完成')
                 self.forward = True
@@ -4347,20 +4521,20 @@ class DailyRedemption(BasicTask):
             if self.Visual('前往1', laplacian_process=True):
                 target = event.task_config[self.mapp].get('摇钱树目标')
                 if target == 0:
-                    if self.Visual('轻轻摇', laplacian_process=True, search_scope=(750, 213, 1137, 649),
+                    if self.Visual('轻轻摇', canny_process=True, threshold=0.7, search_scope=(750, 213, 1137, 649),
                                    wait_count=360):
                         time.sleep(1)
-                        self.Visual('轻轻摇', laplacian_process=True, search_scope=(750, 213, 1137, 649))
+                        self.Visual('轻轻摇', canny_process=True, threshold=0.7, search_scope=(750, 213, 1137, 649))
                 elif target == 1:
-                    if self.Visual('用力摇', laplacian_process=True, search_scope=(750, 213, 1137, 649),
+                    if self.Visual('用力摇', canny_process=True, threshold=0.7, search_scope=(750, 213, 1137, 649),
                                    wait_count=360):
                         time.sleep(1)
-                        self.Visual('用力摇', laplacian_process=True, search_scope=(750, 213, 1137, 649))
+                        self.Visual('用力摇', canny_process=True, threshold=0.7, search_scope=(750, 213, 1137, 649))
                 elif target == 2:
-                    if self.Visual('全力摇', laplacian_process=True, search_scope=(750, 213, 1137, 649),
+                    if self.Visual('全力摇', canny_process=True, threshold=0.7, search_scope=(750, 213, 1137, 649),
                                    wait_count=360):
                         time.sleep(1)
-                        self.Visual('全力摇', laplacian_process=True, search_scope=(750, 213, 1137, 649))
+                        self.Visual('全力摇', canny_process=True, threshold=0.7, search_scope=(750, 213, 1137, 649))
 
             for _ in range(4):
                 if event.unbind[self.mapp].is_set():

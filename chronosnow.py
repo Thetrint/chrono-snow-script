@@ -18,8 +18,10 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',  # 日志格式
     handlers=[handler]              # 添加RotatingFileHandler实例
 )
-
-# create main window
-w = MainWindow()
+try:
+    # create main window
+    w = MainWindow()
+except Exception as e:
+    logging.error(e)
 
 app.exec()

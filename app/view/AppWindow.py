@@ -13,9 +13,9 @@ import logging
 import win32con
 import win32gui
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt, QDateTime, QRegularExpression, QUrl
+from PyQt6.QtCore import Qt, QDateTime, QRegularExpression, QUrl, QMimeData, QEvent
 from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage, QDesktopServices, \
-    QFontDatabase
+    QFontDatabase, QDrag, QTextCursor
 from PyQt6.QtWidgets import QWidget, QPushButton, QApplication, QDialog, QTableWidget, \
     QTableWidgetItem, QMessageBox, QListWidgetItem, QListWidget, QLineEdit, QCompleter, QLabel, QVBoxLayout
 from win32gui import GetWindowRect
@@ -27,6 +27,7 @@ from app.view.Ui.ScriptWindow import Ui_Script
 from app.view.Ui.RunWindow import Ui_Run
 from app.view.Ui.LoginWindow import Ui_Login
 from app.view.Ui.SettingWindow import Ui_Setting
+from app.view.Ui.EditorWindow import Ui_Editor
 from app.Script.BasicFunctional import basic_functional
 from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
 from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit, \
@@ -56,6 +57,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.script = ScriptWindow()
         self.run = RunWindow()
         self.setting = SettingWindow(self)
+        # self.editor = EditorWindow()
         # self.main_layout = QVBoxLayout(self.main_widget)
 
         self.initNavigation()
@@ -74,6 +76,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.addSubInterface(self.script, '脚本')
         self.addSubInterface(self.run, '运行')
         self.addSubInterface(self.setting, '设置')
+        # self.addSubInterface(self.editor, '编辑器')
         # self.main_widget.addWidget(self.home)
         # self.main_widget.addWidget(self.run)
 
@@ -155,6 +158,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "世界喊话内容": self.script.lineEdit_2.text(),
             "世界喊话次数": self.script.spinBox_4.value(),
             "江湖英雄榜次数": self.script.spinBox_7.value(),
+            "江湖英雄榜秒退": self.script.checkBox_11.isChecked(),
             "副本人数": self.script.comboBox_2.currentIndex(),
             "副本自动匹配": self.script.checkBox.isChecked(),
             "副本喊话内容": self.script.lineEdit.text(),
@@ -1131,7 +1135,10 @@ class RunWindow(QWidget, Ui_Run):
         publicSingle.set_character.connect(self.set_character)
         publicSingle.start.connect(self.start_task)
 
-        self.journal([-1, f'当前版本: {open("../version.txt").read()}'])
+        try:
+            self.journal([-1, f'当前版本: {open("../version.txt").read()}'])
+        except FileNotFoundError:
+            pass
 
     # initialization
     def initWindow(self):
@@ -1374,6 +1381,71 @@ class SettingWindow(QWidget, Ui_Setting):
         # 更新属性引用
         if hasattr(self, old_widget.objectName()):
             setattr(self, old_widget.objectName(), new_text_edit)
+
+
+class EditorWindow(QWidget, Ui_Editor):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.textDict = {
+            '界面判断': '界面判断()',
+            '目标创建': '目标(目标:N)'
+        }
+        self.parameters = {
+            '界面判断': ['图片名称'],
+            '目标创建': []
+        }
+        self.treeWidget.setDragEnabled(True)
+
+        # 连接拖放事件处理函数
+        self.treeWidget.itemPressed.connect(self.startDrag)
+
+    def startDrag(self, event, _):
+        cursor = self.textEdit.textCursor()
+        cursor.select(cursor.SelectionType.BlockUnderCursor)
+        old_text = cursor.selectedText()
+        self.clearCursor()
+        item = self.treeWidget.currentItem()
+
+        mimeData = QMimeData()
+        mimeData.setText(self.textProcess(item.text(0), old_text))
+        drag = QDrag(self.treeWidget)
+        drag.setMimeData(mimeData)
+        drag.exec(Qt.DropAction.CopyAction)
+
+        cursor.movePosition(QTextCursor.MoveOperation.EndOfLine,  QTextCursor.MoveMode.MoveAnchor)
+        self.textEdit.setTextCursor(cursor)
+        self.textEdit.setFocus()
+
+    def textProcess(self, text, old_text):
+
+        if text in self.textDict:
+            return self.textDict[text]
+
+        if text.split(':')[0] in self.parameters.get(old_text.split('(')[0].strip()) if\
+                self.parameters.get(old_text.split('(')[0].strip()) is not None else []:
+            if (text.split(':')[0] not in
+                    [s.strip() for s in old_text[old_text.find('(') + 1:old_text.rfind(')')].split(':')]):
+                new_text = old_text[:old_text.rfind(')')] + ' ' + text + old_text[old_text.rfind(')'):]
+                # new_text = old_text.replace(')', ' ' + text + ')', 1)
+            else:
+                return old_text
+        else:
+            return old_text
+        return new_text
+
+    def clearCursor(self):
+        cursor = self.textEdit.textCursor()
+        # 移动光标到当前行的开头并保持选中状态
+        cursor.movePosition(QTextCursor.MoveOperation.StartOfLine,  QTextCursor.MoveMode.KeepAnchor)
+
+        # 将光标移动到当前行的末尾并保持选中状态
+        cursor.movePosition(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText('    ')
+        # # 将光标设置回行首
+        # cursor.movePosition(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.KeepAnchor)
+        # # 插入一个空的字符串来保留当前行
+        self.textEdit.setTextCursor(cursor)
 
 
 # 任务信息构造类

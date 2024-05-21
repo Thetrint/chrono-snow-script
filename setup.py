@@ -67,4 +67,7 @@ shutil.move(f"{path}LoginWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/ap
 shutil.copy(f"{path}SettingWindow{name}.pyd", "D:/Desktop/app/view/Ui/SettingWindow.pyd")
 shutil.move(f"{path}SettingWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/Ui/SettingWindow.pyd")
 
+shutil.copy(f"{path}EditorWindow{name}.pyd", "D:/Desktop/app/view/Ui/EditorWindow.pyd")
+shutil.move(f"{path}EditorWindow{name}.pyd", "D:/Desktop/ChronoSnowScript/dist/app-备份/app/view/Ui/EditorWindow.pyd")
+
 
