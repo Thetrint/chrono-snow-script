@@ -29,7 +29,7 @@ from app.view.Ui.LoginWindow import Ui_Login
 from app.view.Ui.SettingWindow import Ui_Setting
 from app.view.Ui.EditorWindow import Ui_Editor
 from app.Script.BasicFunctional import basic_functional
-from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW
+from app.Script.Task import StartTask, TASK_MAPPING, TASK_SHOW, EXCLUDE_TASK_MAPPING, EXCLUDE_ADD_TASK
 from app.view.Public import publicSingle, TABLE_WINDOW, DPI_MAPP, ConfigDialog, DelConfigDialog, CustomLineEdit, \
     TimingQMessageBox, Mask, TextEdit, VERSION, ShortCutLineEdit, START_ID
 from app.view.ClientServices import services
@@ -39,6 +39,7 @@ class MainWindow(QWidget, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         start = time.time()
+        # 加载字体
         QFontDatabase.addApplicationFont('app/images/font/Xingxingniannian-Bold-2.ttf')
         self.username = None
         self.user_quit = True
@@ -210,6 +211,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "队伍": self.script.lineEdit_16.text(),
             "地图": self.script.lineEdit_17.text(),
             "设置": self.script.lineEdit_18.text(),
+            "帮派": self.script.lineEdit_55.text(),
             "技能逻辑": self.script.textEdit.toPlainText(),
             "采集线数": self.script.comboBox_7.currentIndex(),
             "指定地图": self.script.comboBox_8.currentText(),
@@ -263,6 +265,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "自创1": self.script.lineEdit_52.text(),
             "自创2": self.script.lineEdit_53.text(),
             "自创3": self.script.lineEdit_54.text(),
+            "自创4": self.script.lineEdit_56.text(),
 
         }
 
@@ -287,7 +290,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.username = username
         publicSingle.write_json.connect(self.write_task_json)
         publicSingle.offline.connect(self.offline)
-        self.resize(1000, 610)
+        self.resize(1100, 610)
         self.setMinimumWidth(1000)
         self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
         self.setWindowTitle(f'时雪{VERSION}')
@@ -506,6 +509,15 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_39.setChecked(False)
             self.script.checkBox_40.setChecked(False)
 
+            self.script.checkBox_14.setChecked(False)
+            self.script.checkBox_15.setChecked(False)
+            self.script.checkBox_16.setChecked(False)
+            self.script.checkBox_17.setChecked(False)
+            self.script.checkBox_18.setChecked(False)
+
+            self.script.lineEdit_55.setText('O'),
+            self.script.lineEdit_56.setText('4')
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -655,6 +667,15 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_38.setChecked(config.getboolean('日常任务', '鲜笋'))
             self.script.checkBox_39.setChecked(config.getboolean('日常任务', '猪肉'))
             self.script.checkBox_40.setChecked(config.getboolean('日常任务', '糯米'))
+
+            self.script.checkBox_14.setChecked(config.getboolean('日常任务', '切角色1'))
+            self.script.checkBox_15.setChecked(config.getboolean('日常任务', '切角色2'))
+            self.script.checkBox_16.setChecked(config.getboolean('日常任务', '切角色3'))
+            self.script.checkBox_17.setChecked(config.getboolean('日常任务', '切角色4'))
+            self.script.checkBox_18.setChecked(config.getboolean('日常任务', '切角色5'))
+
+            self.script.lineEdit_55.setText(config.get('日常任务', '帮派')),
+            self.script.lineEdit_56.setText(config.get('日常任务', '自创4'))
 
         except configparser.NoOptionError:
             pass
@@ -979,6 +1000,8 @@ class ScriptWindow(QWidget, Ui_Script):
         self.replace_widget(CustomLineEdit, self.lineEdit_52)
         self.replace_widget(CustomLineEdit, self.lineEdit_53)
         self.replace_widget(CustomLineEdit, self.lineEdit_54)
+        self.replace_widget(CustomLineEdit, self.lineEdit_55)
+        self.replace_widget(CustomLineEdit, self.lineEdit_56)
 
         self.completer = QCompleter(self)
         self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)  # 不区分大小写
@@ -1006,17 +1029,6 @@ class ScriptWindow(QWidget, Ui_Script):
         if hasattr(self, old_widget.objectName()):
             setattr(self, old_widget.objectName(), new_text_edit)
 
-    def task_append(self, text):
-        sender = self.sender()
-        if sender.isChecked():
-            item = QListWidgetItem(text)
-            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.listWidget.addItem(item)
-        else:
-            items = self.listWidget.findItems(text, Qt.MatchFlag.MatchExactly)
-            row = self.listWidget.row(items[0])
-            self.listWidget.takeItem(row)
-
     def guide(self, _):
         text = self.listWidget_2.selectedItems()[0].text()
         try:
@@ -1038,7 +1050,8 @@ class ScriptWindow(QWidget, Ui_Script):
         for item in selected_items:
             # 判断执行列表是否已有
             if item.text() not in [self.listWidget.item(i).text() for i in range(self.listWidget.count())]:
-                self.listWidget.addItem(item.text())
+                if item.text() not in EXCLUDE_ADD_TASK:
+                    self.listWidget.addItem(item.text())
             else:
                 QMessageBox.warning(self, "警告", "该项已存在！")
 
@@ -1053,9 +1066,8 @@ class ScriptWindow(QWidget, Ui_Script):
         self.listWidget.clear()
 
     def initWindow(self):
-        for text in TASK_MAPPING.keys():
-            self.listWidget_2.addItem(text)
-        # self.listWidget.clicked.connect(self.guide)
+        [self.listWidget_2.addItem(text) for text in TASK_MAPPING.keys() if text not in EXCLUDE_TASK_MAPPING]
+
         self.listWidget_2.clicked.connect(self.guide)
         self.listWidget.clicked.connect(self.guide_2)
         self.listWidget.doubleClicked.connect(self.remove)

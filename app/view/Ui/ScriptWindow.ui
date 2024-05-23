@@ -445,8 +445,8 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>0</y>
-                     <width>713</width>
+                     <y>-2220</y>
+                     <width>717</width>
                      <height>5000</height>
                     </rect>
                    </property>
@@ -3474,6 +3474,27 @@
                             </property>
                            </widget>
                           </item>
+                          <item>
+                           <widget class="QLabel" name="label_70">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>帮派:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_55">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
                          </layout>
                         </widget>
                        </item>
@@ -3659,6 +3680,27 @@
                           </item>
                           <item>
                            <widget class="QLineEdit" name="lineEdit_54">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_71">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>自创4:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="lineEdit_56">
                             <property name="font">
                              <font>
                               <pointsize>11</pointsize>
@@ -5393,6 +5435,175 @@
                        </item>
                        <item>
                         <spacer name="verticalSpacer_9">
+                         <property name="orientation">
+                          <enum>Qt::Vertical</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>20</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QWidget" name="widget_46" native="true">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>540</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>540</height>
+                       </size>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_15">
+                       <property name="spacing">
+                        <number>10</number>
+                       </property>
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>10</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QLabel" name="label_76">
+                         <property name="styleSheet">
+                          <string notr="true">    QLabel {
+        color: black;
+        background-color: rgba(255, 255, 255, 0);
+        border: none;
+        font-size: 16px;
+        font-weight: bold;
+        padding: 5px;
+        qproperty-alignment: AlignCenter;
+    }</string>
+                         </property>
+                         <property name="text">
+                          <string>=================限时任务=================</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QWidget" name="widget_49" native="true">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_38">
+                          <property name="spacing">
+                           <number>11</number>
+                          </property>
+                          <property name="leftMargin">
+                           <number>15</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>7</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_13">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>帮派修炼</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <spacer name="horizontalSpacer_37">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                          <item>
+                           <spacer name="horizontalSpacer_38">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QWidget" name="widget_50" native="true">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_39">
+                          <property name="spacing">
+                           <number>11</number>
+                          </property>
+                          <property name="leftMargin">
+                           <number>15</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>7</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <spacer name="horizontalSpacer_39">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="verticalSpacer_10">
                          <property name="orientation">
                           <enum>Qt::Vertical</enum>
                          </property>
