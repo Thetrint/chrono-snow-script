@@ -321,7 +321,7 @@ VkCode = {
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # image = basic_functional.screen_shot(198862)
-    image = basic_functional.screen_shot(basic_functional.get_handle())
+    image = basic_functional.screen_shot(264302)
+    # image = basic_functional.screen_shot(basic_functional.get_handle())
     # rect = win32gui.GetWindowRect(basic_functional.get_handle())
     cv2.imwrite(fr"D:\Desktop\test_img\{time.time()}.bmp", image)

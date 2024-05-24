@@ -164,6 +164,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "副本自动匹配": self.script.checkBox.isChecked(),
             "副本喊话内容": self.script.lineEdit.text(),
             "侠缘昵称": self.script.lineEdit_3.text(),
+            "帮派修炼": self.script.checkBox_13.isChecked(),
             # "侠缘喊话内容": self.script.textEdit_2.toPlainText(),
             "山河器": self.script.checkBox_2.isChecked(),
             "帮派铜钱捐献": self.script.checkBox_8.isChecked(),
@@ -231,6 +232,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             "自定义坐标采集": self.script.radioButton.isChecked(),
             "采草": self.script.radioButton_4.isChecked(),
             "伐木": self.script.radioButton_3.isChecked(),
+            "世界喊话": self.script.checkBox_41.isChecked(),
+            "互联世界喊话": self.script.checkBox_42.isChecked(),
             "挖矿": self.script.radioButton_5.isChecked(),
             "采草目标": self.script.comboBox_4.currentText(),
             "伐木目标": self.script.comboBox_5.currentText(),
@@ -400,46 +403,46 @@ class MainWindow(QWidget, Ui_MainWindow):
             coord = ['', '']
             self.script.lineEdit_19.setText(coord[0])
             self.script.lineEdit_20.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_21.setText(coord[0])
             self.script.lineEdit_22.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_23.setText(coord[0])
             self.script.lineEdit_24.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_25.setText(coord[0])
             self.script.lineEdit_26.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_27.setText(coord[0])
             self.script.lineEdit_28.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_29.setText(coord[0])
             self.script.lineEdit_30.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_31.setText(coord[0])
             self.script.lineEdit_32.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_33.setText(coord[0])
             self.script.lineEdit_34.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_35.setText(coord[0])
             self.script.lineEdit_36.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_37.setText(coord[0])
             self.script.lineEdit_38.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_39.setText(coord[0])
             self.script.lineEdit_40.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_41.setText(coord[0])
             self.script.lineEdit_42.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_43.setText(coord[0])
             self.script.lineEdit_44.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_45.setText(coord[0])
             self.script.lineEdit_46.setText(coord[1])
-            coord = ['', '']
+
             self.script.lineEdit_47.setText(coord[0])
             self.script.lineEdit_48.setText(coord[1])
 
@@ -515,8 +518,13 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_17.setChecked(False)
             self.script.checkBox_18.setChecked(False)
 
-            self.script.lineEdit_55.setText('O'),
+            self.script.lineEdit_55.setText('O')
             self.script.lineEdit_56.setText('4')
+
+            self.script.checkBox_13.setChecked(False)
+
+            self.script.checkBox_41.setChecked(True)
+            self.script.checkBox_42.setChecked(False)
 
         try:
             self.script.listWidget.clear()
@@ -674,8 +682,13 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_17.setChecked(config.getboolean('日常任务', '切角色4'))
             self.script.checkBox_18.setChecked(config.getboolean('日常任务', '切角色5'))
 
-            self.script.lineEdit_55.setText(config.get('日常任务', '帮派')),
+            self.script.lineEdit_55.setText(config.get('日常任务', '帮派'))
             self.script.lineEdit_56.setText(config.get('日常任务', '自创4'))
+
+            self.script.checkBox_13.setChecked(config.getboolean('日常任务', '帮派修炼'))
+
+            self.script.checkBox_41.setChecked(config.getboolean('日常任务', '世界喊话'))
+            self.script.checkBox_42.setChecked(config.getboolean('日常任务', '互联世界喊话'))
 
         except configparser.NoOptionError:
             pass

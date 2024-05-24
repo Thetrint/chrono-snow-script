@@ -445,7 +445,7 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>-2220</y>
+                     <y>-1574</y>
                      <width>717</width>
                      <height>5000</height>
                     </rect>
@@ -2419,7 +2419,7 @@
                              </font>
                             </property>
                             <property name="text">
-                             <string>世界喊话内容:</string>
+                             <string>互联/世界喊话内容:</string>
                             </property>
                            </widget>
                           </item>
@@ -2467,7 +2467,7 @@
                              </font>
                             </property>
                             <property name="text">
-                             <string>世界喊话次数:</string>
+                             <string>互联/世界喊话次数:</string>
                             </property>
                            </widget>
                           </item>
@@ -2477,6 +2477,30 @@
                              <font>
                               <pointsize>11</pointsize>
                              </font>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_41">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>世界喊话</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_42">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>互联世界喊话</string>
                             </property>
                            </widget>
                           </item>
