@@ -258,7 +258,7 @@ basic_functional = BasicFunctional()
 
 VkCode = {
     "back": 0x08,
-    "tab": 0x09,
+    "Tab": 0x09,
     "return": 0x0D,
     "shift": 0x10,
     "control": 0x11,
@@ -321,7 +321,7 @@ VkCode = {
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    image = basic_functional.screen_shot(264302)
+    image = basic_functional.screen_shot(984876)
     # image = basic_functional.screen_shot(basic_functional.get_handle())
     # rect = win32gui.GetWindowRect(basic_functional.get_handle())
     cv2.imwrite(fr"D:\Desktop\test_img\{time.time()}.bmp", image)
