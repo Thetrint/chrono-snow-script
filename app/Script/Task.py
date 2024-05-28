@@ -1240,7 +1240,6 @@ class DailyCopiesTask(BasicTask):
             switch = self.determine()
 
             if (event.disrupted_event[self.mapp].is_set() and self.disrupted_event
-                    and not event.task_config[self.mapp].get('队伍模式') == '混队模式'
                     and not event.task_config[self.mapp].get('队伍模式') == '固定队模式'):
                 return -1
 
@@ -1351,81 +1350,6 @@ class DailyCopiesTask(BasicTask):
                     self.journal('跳过剧情')
                     self.Visual('跳过剧情', wait_count=1, canny_process=True, threshold=0.7, tap_ago_timeout=0)
 
-            elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
-                if switch == 1:
-                    self.journal('位置检测')
-                    self.location_detection()
-                    self.key_down_up(event.persona[self.mapp].map)
-                    if self.coord('当前坐标金陵', canny_process=True, threshold=0.85):
-                        self.cause_index = 2
-                    self.key_down_up(event.persona[self.mapp].map)
-
-                elif switch == 2:
-                    self.journal('队伍检测')
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.journal('已有队伍 退出队伍')
-                        self.Visual('退出队伍', canny_process=True, threshold=0.7)
-                        self.Visual('确定', canny_process=True, threshold=0.7)
-
-                    # 悬赏完成 判断是否弹出奖励界面
-                    if not self.record_event[0] or self.record_count[0] >= 3:
-                        self.cause_index = 0
-                        continue
-
-                    if self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.record_time[0] = 0
-                        self.cause_index = 3
-
-                elif switch == 3:
-                    self.journal('开始匹配')
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.Visual('便捷组队', canny_process=True, threshold=0.7):
-                        self.cause_index = 2
-                        continue
-                    self.Visual('江湖纪事1', canny_process=True, threshold=0.7)
-                    self.Visual('自动匹配1', canny_process=True, threshold=0.7)
-                    # 记录开始匹配队伍时间
-                    self.record_time[0] = time.time()
-                    self.close_win(1)
-                elif switch == 4:
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.cause_index = 4
-                        # 记录进入队伍时间
-                        self.record_time[1] = time.time()
-                        continue
-                    self.Visual('便捷组队', canny_process=True, threshold=0.7)
-                    self.Visual('取消匹配1', canny_process=True, threshold=0.7)
-                    self.record_time[0] = 0
-                elif switch == 5:
-                    self.journal('副本确认')
-                    self.Visual('确认', canny_process=True, threshold=0.7)
-                    time.sleep(18)
-                elif switch == 6:
-                    self.journal('副本完成')
-                    self.cause_index = 2
-                    self.record_count[0] += 1
-                elif switch == 7:
-                    self.journal('日常奖励')
-                    self.mouse_down_up(1330, 740)
-                    self.record_event[0] = False
-                elif switch == 8:
-                    self.journal('副本中等待任务完成')
-                    self.record_time[2] = time.time()
-                    self.cause_index = 5
-                elif switch == 9:
-                    self.journal('副本超时')
-                    self.cause_index = 2
-                elif switch == 10:
-                    self.journal('队伍匹配成功')
-                    self.Visual('确定', canny_process=True, threshold=0.7, wait_count=1)
-                    self.record_time[1] = time.time()
-                    self.cause_index = 4
-                elif switch == 11:
-                    self.record_time[1] = time.time()
-                    self.cause_index = 4
-
             elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
                 if switch == 1:
                     self.journal('副本确认')
@@ -1490,66 +1414,6 @@ class DailyCopiesTask(BasicTask):
                     elif switch == 5:
                         return 11
 
-        elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
-            if self.cause_index == 0:
-                if switch in [1]:
-                    return 0
-                else:
-                    return -3
-
-            elif self.cause_index == 1:
-                return 1
-
-            elif self.cause_index == 2:
-                if switch in [1, 2, 3]:
-                    return 2
-                else:
-                    return -3
-
-            elif self.cause_index == 3:
-                if switch in [1, 2, 3, 6, 7]:
-                    if switch == 1:
-                        if self.record_time[0] == 0:
-                            return 3
-                        elif time.time() - self.record_time[0] > 120:
-                            return 4
-                    elif switch == 2:
-                        self.cause_index = 4
-                    elif switch == 3:
-                        self.cause_index = 2
-                    elif switch == 6:
-                        return 10
-                    elif switch == 7:
-                        return 11
-                else:
-                    return -3
-
-            elif self.cause_index == 4:
-                if switch in [1, 2, 3, 7]:
-                    if switch == 1:
-                        if time.time() - self.record_time[1] > 120:
-                            self.cause_index = 2
-                    elif switch == 2:
-                        return 8
-                    elif switch == 3:
-                        self.cause_index = 2
-                    elif switch == 7:
-                        return 5
-                else:
-                    return -3
-
-            elif self.cause_index == 5:
-                if switch in [1, 2, 3, 4]:
-                    if switch == 1:
-                        self.record_count[0] += 1
-                        self.cause_index = 4
-                    if switch == 2:
-                        if time.time() - self.record_time[2] > 720:
-                            return 9
-                    elif switch == 3:
-                        return 6
-                    elif switch == 4:
-                        return 7
 
         elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
             if self.cause_index == 0:
@@ -1605,7 +1469,6 @@ class BountyMissionsTask(BasicTask):
             switch = self.determine()
 
             if (event.disrupted_event[self.mapp].is_set() and self.disrupted_event
-                    and not event.task_config[self.mapp].get('队伍模式') == '混队模式'
                     and not event.task_config[self.mapp].get('队伍模式') == '固定队模式'):
                 return -1
 
@@ -1758,100 +1621,6 @@ class BountyMissionsTask(BasicTask):
                     self.journal('跳过剧情')
                     self.Visual('跳过剧情', wait_count=1, canny_process=True, threshold=0.7, tap_ago_timeout=0)
 
-            elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
-                if switch == 1:
-                    self.journal('位置检测')
-                    self.location_detection()
-                    self.key_down_up(event.persona[self.mapp].map)
-                    if self.coord('当前坐标金陵', canny_process=True, threshold=0.85):
-                        self.cause_index = 2
-                    self.key_down_up(event.persona[self.mapp].map)
-                elif switch == 2:
-                    self.journal('队伍检测')
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.journal('已有队伍 退出队伍')
-                        self.Visual('退出队伍', canny_process=True, threshold=0.7)
-                        self.Visual('确定', canny_process=True, threshold=0.7)
-
-                    if self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.record_time[0] = 0
-                        self.cause_index = 3
-                elif switch == 3:
-                    self.journal('悬赏检测')
-                    self.key_down_up(event.persona[self.mapp].knapsack)
-                    self.Visual('活动入口', histogram_process=True, threshold=0.7)
-                    self.Visual('活动', binary_process=True, threshold=0.5)
-                    self.Visual('活动界面悬赏', laplacian_process=True)
-                    # 悬赏数量记录
-                    self.record_count[0] = len(self.coord('前往', binary_process=True, threshold=0.4))
-                    if self.record_count[0] != 0:
-                        self.record_time[0] = 0
-                        self.cause_index = 4
-
-                elif switch == 4:
-                    self.journal('接取悬赏')
-                    num = len(self.coord('前往', binary_process=True, threshold=0.4))
-                    if num == 3 or self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-                        if num == 0 and self.coord('悬赏完成标志', histogram_process=True, threshold=0.9):
-                            self.cause_index = 0
-                            continue
-                        self.record_count[0] = len(self.coord('前往', binary_process=True, threshold=0.4))
-                        self.record_time[0] = 0
-                        self.cause_index = 4
-                        continue
-                    if not self.Visual('刷新', histogram_process=True, threshold=0.7):
-                        continue
-                    self.Visual('悬赏界面每日悬赏', y=330, search_scope=(267 + 231 * num, 182, 1197, 558),
-                                histogram_process=True, threshold=0.7)
-                    self.Visual('铜钱购买', histogram_process=True, threshold=0.7)
-                elif switch == 5:
-                    self.journal('开始匹配')
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.Visual('便捷组队', canny_process=True, threshold=0.7):
-                        self.cause_index = 2
-                        continue
-                    self.Visual('江湖纪事1', canny_process=True, threshold=0.7)
-                    self.Visual('自动匹配1', canny_process=True, threshold=0.7)
-                    # 记录开始匹配队伍时间
-                    self.record_time[0] = time.time()
-                    self.close_win(1)
-                elif switch == 6:
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.cause_index = 5
-                        # 记录进入队伍时间
-                        self.record_time[1] = time.time()
-                        continue
-                    self.Visual('便捷组队', canny_process=True, threshold=0.7)
-                    self.Visual('取消匹配1', canny_process=True, threshold=0.7)
-                    self.record_time[0] = 0
-                elif switch == 7:
-                    self.journal('副本确认')
-                    self.Visual('确认', canny_process=True, threshold=0.7)
-                    time.sleep(10)
-                elif switch == 8:
-                    self.journal('副本中等待任务完成')
-                    self.record_time[2] = time.time()
-                    self.cause_index = 6
-                elif switch == 9:
-                    self.journal('副本超时')
-                    self.cause_index = 2
-                elif switch == 10:
-                    self.journal('日常奖励')
-                    self.mouse_down_up(1334, 750)
-                    self.record_event[0] = False
-                elif switch == 11:
-                    self.journal('副本完成')
-                    self.record_count[0] -= 1
-                    if self.record_count[0] == 0:
-                        self.cause_index = 2
-                        continue
-                    self.record_time[1] = time.time()
-                    self.cause_index = 5
-                elif switch == 12:
-                    self.Visual('副本挂机', histogram_process=True, threshold=0.7)
-                    self.record_time[3] = time.time()
 
             elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
                 if switch == 1:
@@ -1958,70 +1727,6 @@ class BountyMissionsTask(BasicTask):
                         return 11
                     elif switch == 5:
                         return 12
-
-        elif event.task_config[self.mapp].get('队伍模式') == '混队模式':
-            if self.cause_index == 0:
-                if switch in [1]:
-                    return 0
-                else:
-                    return -3
-
-            elif self.cause_index == 1:
-                return 1
-
-            elif self.cause_index == 2:
-                if switch in [1, 2, 3]:
-                    return 2
-                else:
-                    return -3
-
-            elif self.cause_index == 3:
-                if switch in [1, 8]:
-                    if switch == 1:
-                        return 3
-                    elif switch == 8:
-                        return 4
-                else:
-                    return -3
-
-            elif self.cause_index == 4:
-                if switch in [1, 6]:
-                    if switch == 1:
-                        if self.record_time[0] == 0:
-                            return 5
-                        elif time.time() - self.record_time[0] > 300:
-                            return 6
-                        else:
-                            self.keep_activate(1)
-                    elif switch == 6:
-                        self.cause_index = 5
-                        self.record_time[1] = time.time()
-                else:
-                    return -3
-
-            elif self.cause_index == 5:
-                if time.time() - self.record_time[1] > 60:
-                    self.cause_index = 2
-                if switch in [2, 7]:
-                    if switch == 2:
-                        return 8
-                    elif switch == 7:
-                        return 7
-
-            elif self.cause_index == 6:
-                if time.time() - self.record_time[2] > 360:
-                    return 9
-                if switch in [1, 2, 3, 4]:
-                    if switch == 1:
-                        self.cause_index = 2
-
-                    if switch == 2:
-                        if time.time() - self.record_time[3] > 60:
-                            return 12
-                    elif switch == 3:
-                        return 11
-                    elif switch == 4:
-                        return 10
 
         elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
             if self.cause_index == 0:
@@ -2764,9 +2469,9 @@ class LessonTask(BasicTask):
                 self.cause_index = 2
 
         elif self.cause_index == 4:
-            if time.time() - self.task_start > 600:
+            if time.time() - self.task_start > 720:
                 self.cause_index = 0
-            if time.time() - self.task_activate > 60:
+            if time.time() - self.task_activate > 30:
                 return 9
 
             if switch in [3]:
@@ -4428,6 +4133,8 @@ class MasterStrokeTask(BasicTask):
                 self.Visual('聊天窗口关闭', canny_process=True, threshold=0.7)
             elif switch == 19:
                 self.close_win(2)
+            elif switch == 20:
+                self.Visual('防守', canny_process=True, threshold=0.7)
 
     def determine(self):
         switch = self.detect()
@@ -4441,7 +4148,7 @@ class MasterStrokeTask(BasicTask):
         elif self.cause_index == 1:
             if time.time() - self.record_time[0] > 600:
                 return 16
-            if switch in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]:
+            if switch in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
                 if switch == 1:
                     return 1
                 elif switch == 2:
@@ -4476,6 +4183,8 @@ class MasterStrokeTask(BasicTask):
                     return 18
                 elif switch == 17:
                     return 19
+                elif switch == 18:
+                    return 20
             else:
                 return 15
 
@@ -4494,7 +4203,7 @@ class MasterStrokeTask(BasicTask):
                 return 15
             elif self.coord('交互', '交互1', '交互2', '交互3', '交互4', canny_process=True, threshold=0.75, search_scope=(715, 422, 1104, 650)):
                 return 7  # 交互
-            elif self.coord('战', canny_process=True, threshold=0.65, search_scope=(49, 147, 316, 359)):
+            elif self.coord('战', canny_process=True, threshold=0.7, search_scope=(49, 147, 316, 359)):
                 return 8  # 战斗
             elif self.coord('领悟新技能', canny_process=True, threshold=0.7, search_scope=(893, 216, 1268, 582)):
                 return 6
@@ -4514,8 +4223,10 @@ class MasterStrokeTask(BasicTask):
             return 10
         elif self.coord('绝世妖姬', canny_process=True, threshold=0.7):
             return 11  # 奇遇百态人生
-        elif self.coord('点香阁', binary_process=True, threshold=0.5):
+        elif self.coord('点香阁', canny_process=True, threshold=0.7):
             return 17  # 点香阁
+        elif self.coord('防守', canny_process=True, threshold=0.7):
+            return 18
     # def implement(self):
     #     while not event.unbind[self.mapp].is_set():
     #         switch = self.detect()
