@@ -322,19 +322,20 @@ class BasicTask(object):
                 publicSingle.journal.emit([self.row, message])
 
     def back_interface(self):
-        for _ in range(30):
-            if event.unbind[self.mapp].is_set():
-                return 0
+        while not event.unbind[self.mapp].is_set():
+            if self.Visual('副本退出', canny_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329), wait_count=1):
+                self.Visual('离开2', canny_process=True, threshold=0.7)
+                continue
 
-            if self.coord('副本挂机', '挂机', histogram_process=True, threshold=0.7):
-                return 1
-            else:
+            if not self.coord('副本挂机', '挂机', canny_process=True, threshold=0.7):
                 self.Visual('聊天窗口关闭', canny_process=True, threshold=0.75, wait_count=1,
                             search_scope=(616, 203, 827, 512))
                 if not self.Visual('关闭', histogram_process=True, threshold=0.75, wait_count=1):
                     self.mouse_down_up(0, 0)
                 if not self.Visual('关闭', histogram_process=True, threshold=0.75, wait_count=1):
-                    self.mouse_down_up(1330, 745)
+                    self.mouse_down_up(1325, 745)
+                continue
+            return 1
 
     def keep_activate(self, count):
         for _ in range(count):
@@ -1180,7 +1181,7 @@ class DailyCopiesTask(BasicTask):
         self.disrupted_event = True
         self.record_time = [0.0, 0.0, 0.0]
         self.record_count = [0]
-        self.record_event = [True]
+        self.record_event = [True, False]
 
     def initialization(self):
         pass
@@ -1212,6 +1213,13 @@ class DailyCopiesTask(BasicTask):
                     if not self.coord('队伍界面', canny_process=True, threshold=0.7):
                         self.journal('队伍打开失败 请检查键位是否正确')
                         continue
+
+                    if self.record_event[1]:
+                        self.Visual('退出队伍', canny_process=True, threshold=0.7)
+                        self.Visual('确定', canny_process=True, threshold=0.7)
+                        self.record_event[1] = False
+                        continue
+
                     if not self.coord('创建队伍', canny_process=True, threshold=0.7):
                         self.journal('已有队伍 改变队伍目标')
                         self.Visual('下拉', binary_process=True, threshold=0.7)
@@ -1234,25 +1242,43 @@ class DailyCopiesTask(BasicTask):
                         self.Visual('自动匹配', histogram_process=True, threshold=0.7)
 
                     if self.coord('日常', canny_process=True, threshold=0.7):
+                        # 重置喊话时间
+                        self.record_time[0] = time.time()
                         self.cause_index = 3
-
                 elif switch == 3:
                     self.key_down_up(event.persona[self.mapp].team)
+                    # 判断离线队员
+                    while not event.unbind[self.mapp].is_set():
+                        if not self.Visual('离线', histogram_process=True, threshold=0.7):
+                            break
+                        self.Visual('请离队伍', binary_process=True, threshold=0.4)
+
                     if not self.coord('队伍界面', canny_process=True, threshold=0.7):
                         self.journal('队伍打开失败 请检查键位是否正确')
                         continue
                     self.Visual('普通喊话', canny_process=True, threshold=0.7)
                     num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
+
                     if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
+                        # 重置开启副本次数
+                        self.record_count[0] = 0
                         self.cause_index = 4
                     self.key_down_up(event.persona[self.mapp].team)
                 elif switch == 4:
                     self.world_shouts(f"{event.task_config[self.mapp].get('副本喊话内容')}")
+                    # 重置喊话时间
                     self.record_time[0] = time.time()
                 elif switch == 5:
                     self.journal('开启副本')
                     # 中断标志设置
                     self.disrupted_event = False
+                    # 记录开启副本次数
+                    self.record_count[0] += 1
+                    # 开启副本次数上限
+                    if self.record_count[0] > 3:
+                        self.record_event[1] = True
+                        self.cause_index = 2
+                        continue
                     self.key_down_up(event.persona[self.mapp].team)
                     if not self.coord('队伍界面', canny_process=True, threshold=0.7):
                         self.journal('队伍打开失败 请检查键位是否正确')
@@ -1263,11 +1289,11 @@ class DailyCopiesTask(BasicTask):
                     self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
                     if not self.Visual('副本退出', '跳过剧情', histogram_process=True, threshold=0.7,
                                        search_scope=(1149, 0, 1334, 329), wait_count=20, tap=False):
-                        self.record_count[0] += 1
-                        if self.record_count[0] > 3:
-                            self.cause_index = 2
                         continue
+                    # 记录副本开启时间
                     self.record_time[2] = time.time()
+                    # 重置副本内匹配标志
+                    self.record_event[0] = True
                     self.cause_index = 5
                 elif switch == 6:
                     self.journal('激活副本任务')
@@ -1280,17 +1306,20 @@ class DailyCopiesTask(BasicTask):
                     self.Visual('主界面任务1', histogram_process=True, threshold=0.7, wait_count=1)
                     self.Visual('副本任务', histogram_process=True, threshold=0.65, search_scope=(36, 209, 102, 418),
                                 x=68, y=44)
+                    # 副本内匹配标志
                     self.record_event[0] = False
+                    # 激活副本时间
                     self.record_time[1] = time.time()
                 elif switch == 7:
                     self.journal('副本超时执行脱离卡死')
                     self.escape_stuck()
+                    # 重置激活副本时间
                     self.record_time[1] = 0
                 elif switch == 8:
                     self.journal('副本超时任务状态重置')
-                    self.record_event[0] = True
-                    self.record_time[1] = 0
+                    # 重置任务中断标志
                     self.disrupted_event = True
+                    self.record_event[1] = True
                     self.cause_index = 2
                 elif switch == 9:
                     self.Visual('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329))
@@ -1311,7 +1340,6 @@ class DailyCopiesTask(BasicTask):
                 elif switch == 2:
                     self.journal('日常奖励')
                     self.mouse_down_up(1330, 740)
-                    self.record_event[0] = False
 
     def determine(self):
         time.sleep(1)
@@ -1325,10 +1353,13 @@ class DailyCopiesTask(BasicTask):
                     return -3
 
             elif self.cause_index == 1:
-                return 1
+                if switch in [1]:
+                    return 1
+                else:
+                    return -3
 
             elif self.cause_index == 2:
-                if switch in [1, 2]:
+                if switch in [1]:
                     return 2
                 else:
                     return -3
@@ -1337,6 +1368,8 @@ class DailyCopiesTask(BasicTask):
                 if switch in [1]:
                     if switch == 1:
                         if (event.task_config[self.mapp].get('副本人数') + 1) == 1:
+                            # 重置开启副本次数
+                            self.record_count[0] = 0
                             self.cause_index = 4
                         elif time.time() - self.record_time[0] > 30:
                             return 4
@@ -1358,7 +1391,7 @@ class DailyCopiesTask(BasicTask):
                     return 8
                 if switch in [2, 3, 4, 5]:
                     if switch == 2:
-                        if self.record_time[1] == 0.0:
+                        if self.record_time[1] == 0:
                             return 6
                     if switch == 3:
                         return 9
@@ -1409,7 +1442,7 @@ class BountyMissionsTask(BasicTask):
         self.disrupted_event = True
         self.record_time = [0.0, 0.0, 0.0, 0.0]
         self.record_count = [0, 0]
-        self.record_event = [True]
+        self.record_event = [True, False]
 
     def initialization(self):
         pass
@@ -1440,6 +1473,17 @@ class BountyMissionsTask(BasicTask):
 
                 elif switch == 2:
                     self.key_down_up(event.persona[self.mapp].team)
+
+                    if not self.coord('队伍界面', canny_process=True, threshold=0.7):
+                        self.journal('队伍打开失败 请检查键位是否正确')
+                        continue
+
+                    if self.record_event[1]:
+                        self.Visual('退出队伍', canny_process=True, threshold=0.7)
+                        self.Visual('确定', canny_process=True, threshold=0.7)
+                        self.record_event[1] = False
+                        continue
+
                     if not self.coord('创建队伍', canny_process=True, threshold=0.7):
                         self.journal('已有队伍 改变队伍目标')
                         self.Visual('下拉', binary_process=True, threshold=0.7)
@@ -1497,6 +1541,13 @@ class BountyMissionsTask(BasicTask):
                         self.journal('队伍打开失败 请检查键位是否正确')
                         continue
                     self.Visual('普通喊话', canny_process=True, threshold=0.7)
+
+                    # 判断离线队员
+                    while not event.unbind[self.mapp].is_set():
+                        if not self.Visual('离线', histogram_process=True, threshold=0.7):
+                            break
+                        self.Visual('请离队伍', binary_process=True, threshold=0.4)
+
                     num = len(self.coord('队伍空位', threshold=0.8, histogram_process=True))
                     if 10 - num >= (event.task_config[self.mapp].get('副本人数') + 1):
                         self.record_count[1] = 0
@@ -1510,7 +1561,16 @@ class BountyMissionsTask(BasicTask):
 
                 elif switch == 7:
                     self.journal('开启副本')
+                    # 任务中断标志设置
                     self.disrupted_event = False
+                    # 记录开启副本次数
+                    self.record_count[1] += 1
+                    # 开启副本次数上限
+                    if self.record_count[1] > 3:
+                        # 退出队伍标志
+                        self.record_event[1] = True
+                        self.cause_index = 2
+                        continue
                     self.key_down_up(event.persona[self.mapp].team)
                     if not self.coord('队伍界面', canny_process=True, threshold=0.7):
                         self.journal('队伍打开失败 请检查键位是否正确')
@@ -1521,15 +1581,12 @@ class BountyMissionsTask(BasicTask):
                     self.Visual('确认', wait_count=2, binary_process=True, threshold=0.4)
                     if not self.Visual('副本退出', '跳过剧情', histogram_process=True, threshold=0.7,
                                        search_scope=(1149, 0, 1334, 329), wait_count=20, tap=False):
-                        # 记录副本开启次数
-                        self.record_count[1] += 1
-                        if self.record_count[1] > 3:
-                            self.cause_index = 2
                         continue
                     # 记录副本开启时间
                     self.record_time[2] = time.time()
                     # 重置激活时间
                     self.record_time[1] = 0
+                    # 重置副本内匹配标志
                     self.record_event[0] = True
                     self.cause_index = 6
 
@@ -1545,27 +1602,25 @@ class BountyMissionsTask(BasicTask):
                     self.Visual('副本任务', histogram_process=True, threshold=0.65, search_scope=(36, 209, 102, 418),
                                 x=68, y=44)
                     self.record_event[0] = False
+                    # 副本激活时间
                     self.record_time[1] = time.time()
                 elif switch == 9:
                     self.journal('副本超时执行脱离卡死')
                     self.escape_stuck()
+                    # 重置副本激活时间
                     self.record_time[1] = 0
                 elif switch == 10:
                     self.journal('副本超时任务状态重置')
-                    self.key_down_up(event.persona[self.mapp].team)
-                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.Visual('退出队伍', canny_process=True, threshold=0.7)
-                        self.Visual('确定', canny_process=True, threshold=0.7)
-                    if self.coord('创建队伍', canny_process=True, threshold=0.7):
-                        self.cause_index = 2
                     self.disrupted_event = True
+                    self.record_event[1] = True
+                    self.cause_index = 2
                 elif switch == 11:
                     self.journal('副本完成')
-                    time.sleep(5)
                     self.Visual('副本退出', histogram_process=True, threshold=0.7, search_scope=(1149, 107, 1334, 329))
                     if self.Visual('确定', binary_process=True, threshold=0.5):
                         self.Visual('副本挂机', wait_count=30, tap=False, histogram_process=True, threshold=0.7)
                         self.disrupted_event = True
+                        # 减少悬赏数量
                         self.record_count[0] -= 1
                         if self.record_count[0] == 0:
                             self.cause_index = 3
@@ -1574,7 +1629,6 @@ class BountyMissionsTask(BasicTask):
                 elif switch == 12:
                     self.journal('跳过剧情')
                     self.Visual('跳过剧情', wait_count=1, canny_process=True, threshold=0.7, tap_ago_timeout=0)
-
 
             elif event.task_config[self.mapp].get('队伍模式') == '固定队模式':
                 if switch == 1:
@@ -1663,8 +1717,17 @@ class BountyMissionsTask(BasicTask):
                     return -3
 
             elif self.cause_index == 5:
-                if switch in [1]:
-                    return 7
+                if switch in [1, 2]:
+                    if switch == 1:
+                        return 7
+                    elif switch == 2:
+                        # 记录副本开启时间
+                        self.record_time[2] = time.time()
+                        # 重置激活时间
+                        self.record_time[1] = 0
+                        # 重置副本内匹配标志
+                        self.record_event[0] = True
+                        self.cause_index = 6
                 else:
                     return -3
 
@@ -1675,7 +1738,7 @@ class BountyMissionsTask(BasicTask):
                     return 10
                 if switch in [2, 3, 5]:
                     if switch == 2:
-                        if self.record_time[1] == 0.0:
+                        if self.record_time[1] == 0:
                             return 8
                     if switch == 3:
                         return 11
@@ -1911,6 +1974,9 @@ class FactionTask(BasicTask):
             elif switch == 6:
                 self.journal('任务提交')
                 self.Visual('一键提交', canny_process=True, threshold=0.7)
+                if self.Visual('确定', canny_process=True, threshold=0.7, wait_count=8):
+                    self.cause_index = 3
+                    continue
                 self.cause_index = 0
 
     def determine(self):
@@ -2716,6 +2782,7 @@ class TeaStory(BasicTask):
                 self.Visual('茶馆说书', histogram_process=True, threshold=0.7, y=45)
                 self.arrive()
                 if self.Visual('进入茶馆', binary_process=True, threshold=0.4):
+                    self.keep_activate(5)
                     self.cause_index = 4
 
             elif switch == 4:
@@ -2976,8 +3043,6 @@ class DrinkPunch(BasicTask):
                 return -1
 
             if switch == 0:
-                self.Visual('离开1', canny_process=True, threshold=0.7, wait_count=1)
-                self.Visual('确定', canny_process=True, threshold=0.7)
                 return 0
             elif switch == -3:
                 self.back_interface()
@@ -3042,6 +3107,20 @@ class DrinkPunch(BasicTask):
                     elif index == 2:
                         self.mouse_move(1007, 464, 1334, 750)
 
+            elif switch == 5:
+                self.key_down_up(event.persona[self.mapp].faction)
+                self.Visual('返回帮派', canny_process=True, threshold=0.7, y=-45)
+                self.arrive()
+                self.location_detection()
+                self.key_down_up(event.persona[self.mapp].map)
+                if self.coord('当前坐标金陵', canny_process=True, threshold=0.85):
+                    self.cause_index = 0
+                self.key_down_up(event.persona[self.mapp].map)
+            elif switch == 6:
+                self.Visual('离开1', canny_process=True, threshold=0.7, wait_count=1)
+                if self.Visual('确定', canny_process=True, threshold=0.7):
+                    self.cause_index = 5
+
     def determine(self):
         time.sleep(1)
         switch = self.detect()
@@ -3074,7 +3153,11 @@ class DrinkPunch(BasicTask):
             if switch in [2]:
                 return 4
             else:
-                self.cause_index = 0
+                return 6
+
+        elif self.cause_index == 5:
+            if switch in [1]:
+                return 5
 
     def detect(self):
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
@@ -4183,6 +4266,10 @@ class SittingObserving(BasicTask):
 
                 if self.coord('修炼中', histogram_process=True, threshold=0.7, search_scope=(485, 509, 769, 563)):
                     self.cause_index = 2
+            elif switch == 2:
+                self.keep_activate(1)
+                if not self.coord('修炼中', histogram_process=True, threshold=0.7, search_scope=(485, 509, 769, 563)):
+                    self.cause_index = 0
 
     def determine(self):
         switch = self.detect()
@@ -4200,23 +4287,15 @@ class SittingObserving(BasicTask):
                 return -3
 
         elif self.cause_index == 2:
-            if switch in [1, 2]:
+            if switch in [1]:
                 if switch == 1:
-                    self.record_count[0] += 1
-                    if self.record_count[0] == 5:
-                        self.cause_index = 0
-                    else:
-                        self.keep_activate(1)
-                elif switch == 2:
-                    self.keep_activate(1)
+                    return 2
             else:
                 return -3
 
     def detect(self):
         time.sleep(1)
         if self.coord('副本挂机', histogram_process=True, threshold=0.7):
-            if self.coord('修炼中', histogram_process=True, threshold=0.7, search_scope=(485, 509, 769, 563)):
-                return 2
             return 1
 
     # def implement(self):

@@ -13,7 +13,7 @@ import logging
 import win32con
 import win32gui
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt, QDateTime, QRegularExpression, QUrl, QMimeData, QEvent
+from PyQt6.QtCore import Qt, QDateTime, QRegularExpression, QUrl, QMimeData, QEvent, QTimer
 from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPixmap, QRegularExpressionValidator, QImage, QDesktopServices, \
     QFontDatabase, QDrag, QTextCursor
 from PyQt6.QtWidgets import QWidget, QPushButton, QApplication, QDialog, QTableWidget, \
@@ -294,7 +294,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         publicSingle.write_json.connect(self.write_task_json)
         publicSingle.offline.connect(self.offline)
         self.resize(1100, 610)
-        self.setMinimumWidth(1000)
+        self.setMinimumWidth(1100)
         self.setWindowIcon(QIcon('app/images/icon/favicon.ico'))
         self.setWindowTitle(f'时雪{VERSION}')
 
@@ -303,6 +303,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
         QApplication.processEvents()
+        self.activateWindow()
 
     def offline(self):
         self.user_quit = False
@@ -831,6 +832,7 @@ class LoginWindow(QWidget, Ui_Login):
         self.button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.button_2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.show()
+        self.activateWindow()
 
     def auto_login(self):
         if self.checkBox_2.isChecked():
