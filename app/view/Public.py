@@ -1,6 +1,8 @@
 import json
 import os
 import tempfile
+import threading
+import time
 
 import win32con
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer, QThread

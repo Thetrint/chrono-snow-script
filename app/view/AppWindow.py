@@ -166,7 +166,6 @@ class MainWindow(QWidget, Ui_MainWindow):
             "侠缘昵称": self.script.lineEdit_3.text(),
             "帮派修炼": self.script.checkBox_13.isChecked(),
             # "侠缘喊话内容": self.script.textEdit_2.toPlainText(),
-            "山河器": self.script.checkBox_2.isChecked(),
             "帮派铜钱捐献": self.script.checkBox_8.isChecked(),
             "帮派银两捐献": self.script.checkBox_7.isChecked(),
             "银票礼盒": self.script.checkBox_3.isChecked(),
@@ -186,6 +185,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             "鲜笋": self.script.checkBox_38.isChecked(),
             "猪肉": self.script.checkBox_39.isChecked(),
             "糯米": self.script.checkBox_40.isChecked(),
+            "物品出售": self.script.checkBox_43.isChecked(),
+            "邸宅农场": self.script.checkBox_2.isChecked(),
             "扫摆摊延迟1": self.script.spinBox.value(),
             "扫摆摊延迟2": self.script.spinBox_2.value(),
             "扫摆摊延迟3": self.script.spinBox_3.value(),
@@ -238,6 +239,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "采草目标": self.script.comboBox_4.currentText(),
             "伐木目标": self.script.comboBox_5.currentText(),
             "挖矿目标": self.script.comboBox_6.currentText(),
+            "全局延迟": self.setting.spinBox.value(),
             "坐标1": [self.script.lineEdit_19.text(), self.script.lineEdit_20.text()],
             "坐标2": [self.script.lineEdit_21.text(), self.script.lineEdit_22.text()],
             "坐标3": [self.script.lineEdit_23.text(), self.script.lineEdit_24.text()],
@@ -367,7 +369,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_2.setCurrentIndex(0)
             self.script.checkBox.setChecked(False)
             self.script.lineEdit_3.setText('')
-            self.script.checkBox_2.setChecked(False)
+
             self.script.checkBox_8.setChecked(False)
             self.script.checkBox_7.setChecked(False)
             self.script.checkBox_3.setChecked(False)
@@ -527,6 +529,11 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_41.setChecked(True)
             self.script.checkBox_42.setChecked(False)
 
+            self.script.checkBox_43.setChecked(False)
+            self.script.checkBox_2.setChecked(False)
+
+            self.script.comboBox_17.setCurrentText('带队模式')
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -538,7 +545,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.comboBox_2.setCurrentIndex(config.getint('日常任务', '副本人数'))
             self.script.checkBox.setChecked(config.getboolean('日常任务', '副本自动匹配'))
             self.script.lineEdit_3.setText(config.get('日常任务', '侠缘昵称'))
-            self.script.checkBox_2.setChecked(config.getboolean('日常任务', '山河器'))
+
             self.script.checkBox_8.setChecked(config.getboolean('日常任务', '帮派铜钱捐献'))
             self.script.checkBox_7.setChecked(config.getboolean('日常任务', '帮派银两捐献'))
             self.script.checkBox_3.setChecked(config.getboolean('日常任务', '银票礼盒'))
@@ -691,6 +698,11 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_41.setChecked(config.getboolean('日常任务', '世界喊话'))
             self.script.checkBox_42.setChecked(config.getboolean('日常任务', '互联世界喊话'))
 
+            self.script.checkBox_43.setChecked(config.getboolean('日常任务', '物品出售'))
+            self.script.checkBox_2.setChecked(config.getboolean('日常任务', '邸宅农场'))
+
+            self.script.comboBox_17.setCurrentText(config.getboolean('日常任务', '队伍模式'))
+
         except configparser.NoOptionError:
             pass
         except configparser.NoSectionError:
@@ -737,6 +749,7 @@ class MainWindow(QWidget, Ui_MainWindow):
         config['界面设置'] = {
             '当前配置': self.script.comboBox.currentText(),
             '开始快捷键': self.setting.lineEdit.text(),
+            '全局延迟': self.setting.spinBox.value()
         }
 
         with open(config_path, 'w', encoding='utf-8') as configfile:
@@ -774,6 +787,8 @@ class MainWindow(QWidget, Ui_MainWindow):
                 self.script.comboBox.setCurrentText(current_text)
 
             self.setting.lineEdit.setText(config.get('界面设置', '开始快捷键'))
+
+            self.setting.spinBox.setValue(config.getint('界面设置', '全局延迟'))
         except configparser.NoOptionError as e:
             logging.error(e)
         except configparser.NoSectionError as e:
@@ -1376,6 +1391,8 @@ class SettingWindow(QWidget, Ui_Setting):
         super().__init__(parent)
         self.setupUi(self)
         self.parent = parent
+
+        self.spinBox.setMaximum(9999)
         # 重构输入框
         self.replace_widget(ShortCutLineEdit, self.lineEdit)
         # print(int(self.parent.winId()))

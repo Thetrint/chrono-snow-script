@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>990</width>
+    <width>1027</width>
     <height>604</height>
    </rect>
   </property>
@@ -445,8 +445,8 @@
                    <property name="geometry">
                     <rect>
                      <x>0</x>
-                     <y>0</y>
-                     <width>717</width>
+                     <y>-3493</y>
+                     <width>750</width>
                      <height>5000</height>
                     </rect>
                    </property>
@@ -846,18 +846,6 @@
                            <number>0</number>
                           </property>
                           <item>
-                           <widget class="QCheckBox" name="checkBox_2">
-                            <property name="font">
-                             <font>
-                              <pointsize>11</pointsize>
-                             </font>
-                            </property>
-                            <property name="text">
-                             <string>山河器</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
                            <widget class="QCheckBox" name="checkBox_7">
                             <property name="font">
                              <font>
@@ -914,6 +902,30 @@
                             </property>
                             <property name="text">
                              <string>榫头卯眼</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_33">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>吴越剑坯</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_35">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>碧铜马坯</string>
                             </property>
                            </widget>
                           </item>
@@ -1053,6 +1065,24 @@
                            </widget>
                           </item>
                           <item>
+                           <widget class="QCheckBox" name="checkBox_34">
+                            <property name="minimumSize">
+                             <size>
+                              <width>0</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>白公鼎坯</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
                            <spacer name="horizontalSpacer_5">
                             <property name="orientation">
                              <enum>Qt::Horizontal</enum>
@@ -1097,48 +1127,6 @@
                           <property name="bottomMargin">
                            <number>0</number>
                           </property>
-                          <item>
-                           <widget class="QCheckBox" name="checkBox_34">
-                            <property name="minimumSize">
-                             <size>
-                              <width>0</width>
-                              <height>0</height>
-                             </size>
-                            </property>
-                            <property name="font">
-                             <font>
-                              <pointsize>11</pointsize>
-                             </font>
-                            </property>
-                            <property name="text">
-                             <string>白公鼎坯</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QCheckBox" name="checkBox_35">
-                            <property name="font">
-                             <font>
-                              <pointsize>11</pointsize>
-                             </font>
-                            </property>
-                            <property name="text">
-                             <string>碧铜马坯</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QCheckBox" name="checkBox_33">
-                            <property name="font">
-                             <font>
-                              <pointsize>11</pointsize>
-                             </font>
-                            </property>
-                            <property name="text">
-                             <string>吴越剑坯</string>
-                            </property>
-                           </widget>
-                          </item>
                           <item>
                            <widget class="QCheckBox" name="checkBox_32">
                             <property name="font">
@@ -5605,6 +5593,30 @@
                           <property name="bottomMargin">
                            <number>0</number>
                           </property>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_2">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>邸宅农场</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBox_43">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>物品出售</string>
+                            </property>
+                           </widget>
+                          </item>
                           <item>
                            <spacer name="horizontalSpacer_39">
                             <property name="orientation">
