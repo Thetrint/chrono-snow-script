@@ -1,4 +1,4 @@
-PyQt6~=6.6.1
+PyQt6~=6.7.0
 opencv-python~=4.9.0.80
 numpy~=1.26.4
 scikit-learn~=1.4.1.post1
@@ -16,3 +16,5 @@ certifi~=2024.2.2
 zstandard~=0.22.0
 urllib3~=2.2.1
 idna~=3.7
+APScheduler~=3.10.4
+pytz~=2024.1

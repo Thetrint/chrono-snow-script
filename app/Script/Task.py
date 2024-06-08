@@ -1,18 +1,18 @@
-import datetime
 import heapq
 import logging
 import os
 import random
 import re
 import tempfile
-import threading
-import time
 import cv2
 import numpy
-
+import time
 from threading import Lock, Event, Thread
 from sklearn.cluster import DBSCAN
 from abc import abstractmethod
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+from datetime import time as datetime_time
 
 from app.Script.BasicFunctional import basic_functional
 from app.view.Public import publicSingle, LoadTaskConfig
@@ -25,21 +25,22 @@ class EventStruct:
         self.task_config = {}
         self.stop_flag = False
         self.persona = {}
-        self.stop_event = {}
+        self.switch = {}
+
         self.disrupted_event = {}
         self.object_storage = {}
 
     # 时间获取
     @staticmethod
-    def get_time(year=datetime.datetime.now().year, month=datetime.datetime.now().month,
-                 day=datetime.datetime.now().day, hour=datetime.datetime.now().hour,
-                 minute=datetime.datetime.now().minute):
-        return datetime.datetime(year, month, day, hour, minute)
+    def get_time(year=datetime.now().year, month=datetime.now().month,
+                 day=datetime.now().day, hour=datetime.now().hour,
+                 minute=datetime.now().minute, second=datetime.now().second):
+        return datetime(year, month, day, hour, minute, second)
 
     # 当前时间获取
     @staticmethod
     def get_current_time():
-        return datetime.datetime.now()
+        return datetime.now()
 
 
 event = EventStruct()
@@ -52,7 +53,7 @@ class TimerTask:
         self.running_time = 0
         self.stop_event = True
         self.running = False
-        threading.Thread(target=self.Timer).start()
+        Thread(target=self.Timer).start()
 
     def Timer(self):
         while not event.unbind[self.mapp].is_set() and self.stop_event:
@@ -63,41 +64,76 @@ class TimerTask:
 
 class TaskSchedulingStrategy:
 
-    def __init__(self, task_list, mapp, index):
+    def __init__(self, task_list, mapp, index, switch):
         self._list = task_list
         self.mapp = mapp
         self.index = index
+        self.switch = switch
         self.execute_task = []
-        self.record_time = [0.0]
-        threading.Thread(target=self.dispatch_task).start()
+        # 创建调度器实例
+        self.scheduler = BackgroundScheduler()
+
+        self.dispatch_task()
+        # threading.Thread(target=self.dispatch_task).start()
 
     @staticmethod
-    def process_task(task_list, mapp, index):
-        return TaskSchedulingStrategy([(1, task) for task in task_list], mapp, index)
+    def process_task(task_list, mapp, index, switch):
+        obj = TaskSchedulingStrategy([(1, task) for task in task_list], mapp, index, switch)
+        switch.dl = obj
+        return obj
+
+    def task1(self):
+        if '邸宅农场' not in [item[1] for item in self._list] and event.task_config[self.mapp].get('邸宅农场'):
+            self.insert_task('邸宅农场', 2)
+            event.disrupted_event[self.mapp].set()
+
+    def task2(self):
+        if event.task_config[self.mapp].get('帮派修炼') and '帮派修炼' not in self.execute_task:
+            self.insert_task('帮派修炼', 2)
+            self.execute_task.append('帮派修炼')
+            event.disrupted_event[self.mapp].set()
+
+    def task3(self):
+        self.switch.roles = [True, True, True, True, True, True]
+        self.execute_task = []
 
     def dispatch_task(self):
-        while not event.stop_event[self.mapp][self.index].is_set() and not event.unbind[self.mapp].is_set():
-            current_time = datetime.datetime.now()
+        self.scheduler.add_job(
+            self.task1,
+            'interval',
+            minutes=30
+        )
 
-            if time.time() - self.record_time[0] > 1800 and event.task_config[self.mapp].get('邸宅农场'):
-                self.record_time[0] = time.time()
-                if '邸宅农场' in self._list:
-                    continue
-                self.insert_task('邸宅农场', 2)
-                event.disrupted_event[self.mapp].set()
+        self.scheduler.add_job(
+            self.task2,
+            'cron',
+            start_date=datetime.combine(datetime.today(), datetime_time(18, 45)),
+            end_date=datetime.combine(datetime.today(), datetime_time(19, 25))
+        )
 
-            if (event.get_time(hour=18, minute=45) < current_time < event.get_time(hour=19, minute=25)
-                    and event.task_config[self.mapp].get('帮派修炼')):
-                if '帮派修炼' not in self.execute_task:
-                    self.insert_task('帮派修炼', 2)
-                    self.execute_task.append('帮派修炼')
-                    event.disrupted_event[self.mapp].set()
+        self.scheduler.add_job(
+            self.task3,
+            'date',
+            run_date=datetime.combine(datetime.today(), datetime_time(5, 0)),
+        )
 
-            time.sleep(5)
+        self.scheduler.start()
 
     def get_task(self):
         if not self._list:
-            return None  # 当列表为空时返回 None
+            if event.task_config[self.mapp].get('切角色1') and self.switch.roles[1]:
+                return None
+            elif event.task_config[self.mapp].get('切角色2') and self.switch.roles[2]:
+                return None
+            elif event.task_config[self.mapp].get('切角色3') and self.switch.roles[3]:
+                return None
+            elif event.task_config[self.mapp].get('切角色4') and self.switch.roles[4]:
+                return None
+            elif event.task_config[self.mapp].get('切角色5') and self.switch.roles[5]:
+                return None
+            elif all(self.switch.roles):
+                return None
+            return '占位任务'  # 当列表为空时返回 None
         return self._list.pop(0)[1]  # 取出第一个元素并从列表中移除
 
     def insert_task(self, task, priority):
@@ -133,7 +169,7 @@ class StartTask:
         event.stop[mapp] = Lock()
         event.task_config[mapp] = LoadTaskConfig.load_task_config(row)
         event.persona[mapp] = Persona(row, handle, mapp)
-        event.stop_event[mapp] = {}
+        event.switch[mapp] = SwitchRoles(row, handle, mapp)
         event.disrupted_event[mapp] = Event()
         event.object_storage[mapp] = {}
 
@@ -141,16 +177,18 @@ class StartTask:
         init = Initialize(row, handle, mapp)
         # init.implement()
         Thread(target=init.global_detection).start()
-        switch = SwitchRoles(row, handle, mapp)
 
-        while switch.implement() and not event.unbind[mapp].is_set():
+        while event.switch[mapp].implement() and not event.unbind[mapp].is_set():
             dl = TaskSchedulingStrategy.process_task(event.task_config[mapp].get('执行列表'), mapp,
-                                                     self.dispatch_stop(mapp, switch))
+                                                     self.dispatch_stop(event.switch[mapp]), event.switch[mapp])
             init.implement()
             publicSingle.set_character.emit(row)
             # dl.insert_task('邸宅农场', 2)
             while (item := dl.get_task()) is not None and not event.unbind[mapp].is_set():
-                self.set_state(row, item)
+
+                if item not in ['占位任务']:
+                    self.set_state(row, item)
+
                 obj = event.object_storage[mapp].get(item) or TASK_MAPPING[item](row, handle, mapp)
                 result = obj.implement()
                 event.disrupted_event[mapp].clear()
@@ -167,15 +205,10 @@ class StartTask:
 
     @staticmethod
     # 结束上一个实例线程
-    def dispatch_stop(mapp, switch):
-        if switch.dispatch_index is None:
-            switch.dispatch_index = 1
-            event.stop_event[mapp][switch.dispatch_index] = Event()
-            return switch.dispatch_index
-        else:
-            event.stop_event[mapp][switch.dispatch_index].set()
+    def dispatch_stop(switch):
+        if switch.dl is not None:
+            switch.dl.scheduler.shutdown(wait=False)
             switch.dispatch_index += 1
-            event.stop_event[mapp][switch.dispatch_index] = Event()
             return switch.dispatch_index
 
     def create_mapping(self, row):
@@ -196,6 +229,7 @@ class StartTask:
 
     def unbind(self, row):
         event.unbind[self.mapping[row]].set()
+        event.switch[self.mapping[row]].dl.scheduler.shutdown(wait=False)
 
     @staticmethod
     def set_state(row, tk):
@@ -906,7 +940,7 @@ class SwitchRoles(BasicTask):
     def __init__(self, row, handle, mapp):
         super().__init__(row, handle, mapp)
         self.roles = [True, True, True, True, True, True]
-        self.dispatch_index = None
+        self.dl = None
 
     def initialization(self):
         pass
@@ -1316,7 +1350,7 @@ class DailyCopiesTask(BasicTask):
                             self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
                         self.Visual('主界面任务', '主界面任务2', canny_process=True, threshold=0.7, wait_count=1)
                         self.Visual('主界面任务1', histogram_process=True, threshold=0.7, wait_count=1)
-                        self.Visual('副本任务', histogram_process=True, threshold=0.65, search_scope=(36, 209, 102, 418),
+                        self.Visual('副本日常任务', canny_process=True, threshold=0.7, search_scope=(36, 209, 152, 418),
                                     x=68, y=44)
                         # 副本内匹配标志
                         self.record_event[0] = False
@@ -1595,7 +1629,7 @@ class BountyMissionsTask(BasicTask):
                             self.Visual('关闭', '关闭1', threshold=0.7, histogram_process=True)
                         self.Visual('主界面任务', '主界面任务2', canny_process=True, threshold=0.7, wait_count=1)
                         self.Visual('主界面任务1', histogram_process=True, threshold=0.7, wait_count=1)
-                        self.Visual('副本任务', histogram_process=True, threshold=0.65, search_scope=(36, 209, 102, 418),
+                        self.Visual('副本任务', histogram_process=True, threshold=0.6, search_scope=(36, 209, 102, 418),
                                     x=68, y=44)
                         self.record_event[0] = False
                         # 副本激活时间
@@ -1766,6 +1800,131 @@ class BountyMissionsTask(BasicTask):
             return 4
 
 
+class FiberHomeTask(BasicTask):
+
+    def __init__(self, row, handle, mapp):
+        super().__init__(row, handle, mapp)
+        self.cause_index = 1
+        self.disrupted_event = True
+        self.record_time = []
+        self.record_count = [0]
+        self.record_event = []
+
+    def initialization(self):
+        pass
+
+    def initialize(self, cause_index):
+        self.keep_activate(5)
+        self.cause_index = cause_index
+
+    def implement(self):
+        self.cause_index = 1
+
+        while not event.unbind[self.mapp].is_set():
+            switch = self.determine()
+
+            # if not event.get_current_time().day() in ['3', '']:
+            #     self.journal('活动不再开放时间')
+            #     self.initialize(0)
+            #     continue
+            if event.disrupted_event[self.mapp].is_set():
+                return -1
+
+            if switch == 0:
+                return 0
+            elif switch == -3:
+                self.back_interface()
+
+            if switch == 1:
+                self.journal('位置检测')
+                self.location_detection()
+                self.initialize(2)
+            elif switch == 2:
+                self.journal('队伍检测')
+                self.key_down_up(event.persona[self.mapp].team)
+                if self.coord('队伍界面', histogram_process=True, threshold=0.7):
+                    if not self.coord('创建队伍', canny_process=True, threshold=0.7):
+                        self.Visual('退出队伍', histogram_process=True, threshold=0.65)
+                        self.Visual('确定', canny_process=True, threshold=0.7)
+                        self.key_down_up(event.persona[self.mapp].team)
+                else:
+                    self.journal('队伍打开失败 请检查键位')
+                    return 0
+
+                if self.coord('创建队伍', canny_process=True, threshold=0.7):
+                    self.initialize(3)
+            elif switch == 3:
+                self.journal('开始任务')
+                self.key_down_up(event.persona[self.mapp].knapsack)
+                self.Visual('活动入口', canny_process=True, threshold=0.7)
+                self.Visual('活动', canny_process=True, threshold=0.7)
+                self.Visual('活动界面纷争', canny_process=True, threshold=0.7)
+                if not self.Visual('烽火雁门关', canny_process=True, threshold=0.7, y=45):
+                    self.initialize(0)
+                    continue
+                self.close_win(2)
+                self.initialize(4)
+
+            elif switch == 4:
+                self.Visual('确认', canny_process=True, threshold=0.7, wait_count=1)
+                if not self.Visual('烽火雁门关1', canny_process=True, threshold=0.7, wait_count=1, tap=False):
+                    continue
+                event.persona[self.mapp].start_fight()
+                self.initialize(5)
+
+            elif switch == 5:
+
+                self.Visual('复活点复活', canny_process=True, threshold=0.7, search_scope=(976, 223, 1334, 750), y=-50)
+
+                if self.Visual('离开', histogram_process=True, threshold=0.7, wait_count=10, tap_after_timeout=0):
+                    event.persona[self.mapp].stop_fight()
+                    self.record_count[0] += 1
+                    self.keep_activate(10)
+                    self.initialize(3)
+
+    def determine(self):
+        time.sleep(1)
+        switch = self.detect()
+
+        if self.cause_index == 0:
+            if switch in [1]:
+                return 0
+            else:
+                return -3
+
+        elif self.cause_index == 1:
+            if switch in [1]:
+                return 1
+            else:
+                return -3
+
+        elif self.cause_index == 2:
+            if switch in [1]:
+                return 2
+            else:
+                return -3
+
+        elif self.cause_index == 3:
+            if switch in [1]:
+                if self.record_count[0] >= event.task_config[self.mapp].get("烽火雁门关次数"):
+                    self.initialize(0)
+                else:
+                    return 3
+            else:
+                return -3
+
+        elif self.cause_index == 4:
+            if switch in [1]:
+                return 4
+
+        elif self.cause_index == 5:
+                return 5
+
+    def detect(self):
+        if self.coord('副本挂机', canny_process=True, threshold=0.7):
+            return 1
+
+
 # 侠缘喊话
 class ChivalryShoutTask(BasicTask):
 
@@ -1880,10 +2039,7 @@ class FactionTask(BasicTask):
             if switch == 1:
                 self.journal('位置检测')
                 self.location_detection()
-                self.key_down_up(event.persona[self.mapp].map)
-                if self.coord('当前坐标金陵', canny_process=True, threshold=0.85):
-                    self.initialize(2)
-                self.key_down_up(event.persona[self.mapp].map)
+                self.initialize(2)
             elif switch == 2:
                 self.journal('队伍检测')
                 self.key_down_up(event.persona[self.mapp].team)
@@ -2102,9 +2258,8 @@ class GangBanquet(BasicTask):
 
                 if self.Visual('摆摊购买', y=-71, canny_process=True, threshold=0.7, wait_count=1):
                     self.journal('摆摊购买')
-                    if self.Visual('查看全服', canny_process=True, threshold=0.7, wait_count=2):
-                        self.close_win(1)
-                        continue
+                    self.Visual('查看全服', canny_process=True, threshold=0.7, wait_count=2)
+
                     if self.Visual('购买', canny_process=True, threshold=0.7):
                         self.Visual('确定', canny_process=True, threshold=0.7)
 
@@ -2276,9 +2431,8 @@ class BreakingBanquet(GangBanquet):
 
                 if self.Visual('摆摊购买', y=-71, canny_process=True, threshold=0.7, wait_count=1):
                     self.journal('摆摊购买')
-                    if self.Visual('查看全服', canny_process=True, threshold=0.7, wait_count=2):
-                        self.close_win(1)
-                        continue
+                    self.Visual('查看全服', canny_process=True, threshold=0.7, wait_count=2)
+
                     if self.Visual('购买', canny_process=True, threshold=0.7):
                         self.Visual('确定', canny_process=True, threshold=0.7)
 
@@ -2580,10 +2734,6 @@ class PostBounty(BasicTask):
         while not event.unbind[self.mapp].is_set():
             switch = self.determine()
 
-            if event.disrupted_event[self.mapp].is_set():
-                self.initialization()
-                return -1
-
             if switch == 0:
                 return 0
             elif switch == -3:
@@ -2605,19 +2755,25 @@ class PostBounty(BasicTask):
                 self.Visual('发布', search_scope=(968, 558, 1269, 700), canny_process=True, threshold=0.7)
                 self.Visual('下拉', histogram_process=True, threshold=0.8)
 
-                if not self.record_event[0] and not self.Visual('行商次数', histogram_process=True, threshold=0.9):
-                    self.mouse_down_up(0, 0)
-                    self.close_win(1, random_tap=False)
+                if not self.record_event[0]:
                     self.record_event[0] = True
+                    if not self.Visual('行商次数', histogram_process=True, threshold=0.9):
+                        self.mouse_down_up(0, 0)
+                        self.close_win(1, random_tap=False)
+                        continue
+                    self.Visual('发布悬赏', canny_process=True, threshold=0.7)
+                    self.Visual('确定', canny_process=True, threshold=0.7)
                     continue
 
-                if not self.record_event[1] and not self.Visual('聚义次数', histogram_process=True, threshold=0.9):
-                    self.mouse_down_up(0, 0)
-                    self.close_win(1, random_tap=False)
+                if not self.record_event[1]:
                     self.record_event[1] = True
+                    if not self.Visual('聚义次数', histogram_process=True, threshold=0.9):
+                        self.mouse_down_up(0, 0)
+                        self.close_win(1, random_tap=False)
+                        continue
+                    self.Visual('发布悬赏', canny_process=True, threshold=0.7)
+                    self.Visual('确定', canny_process=True, threshold=0.7)
                     continue
-                self.Visual('发布悬赏', canny_process=True, threshold=0.7)
-                self.Visual('确定', canny_process=True, threshold=0.7)
 
     def determine(self):
         switch = self.detect()
@@ -2692,6 +2848,10 @@ class TeaStory(BasicTask):
     def initialization(self):
         pass
 
+    def initialize(self, cause_index):
+        self.keep_activate(3)
+        self.cause_index = cause_index
+
     def implement(self):
         self.cause_index = 1
 
@@ -2710,10 +2870,7 @@ class TeaStory(BasicTask):
             if switch == 1:
                 self.journal('位置检测')
                 self.location_detection()
-                self.key_down_up(event.persona[self.mapp].map)
-                if self.coord('当前坐标金陵', canny_process=True, threshold=0.85):
-                    self.cause_index = 2
-                self.key_down_up(event.persona[self.mapp].map)
+                self.initialize(2)
             elif switch == 2:
                 self.journal('队伍检测')
                 self.key_down_up(event.persona[self.mapp].team)
@@ -2727,7 +2884,7 @@ class TeaStory(BasicTask):
                     return 0
 
                 if self.coord('创建队伍', canny_process=True, threshold=0.7):
-                    self.cause_index = 3
+                    self.initialize(3)
 
             elif switch == 3:
                 self.journal('开始活动')
@@ -2737,20 +2894,20 @@ class TeaStory(BasicTask):
                 self.Visual('活动界面江湖', canny_process=True, threshold=0.7)
                 self.Visual('茶馆说书', canny_process=True, threshold=0.7, y=45)
                 self.arrive()
-                if self.Visual('进入茶馆', canny_process=True, threshold=0.4):
-                    self.keep_activate(5)
-                    self.cause_index = 4
+                if self.Visual('进入茶馆', canny_process=True, threshold=0.7, tap_after_timeout=5):
+                    self.initialize(4)
 
             elif switch == 4:
-                if self.Visual('退出茶馆', canny_process=True, threshold=0.7, wait_count=1, tap_after_timeout=6,
-                               double=True):
-                    self.close_win(3)
-                    self.cause_index = 0
-                    continue
-                if not self.coord('甲1', '乙1', '丙1', '丁1', histogram_process=True, threshold=0.7,
-                                  search_scope=(1089, 238, 1334, 750)):
-                    self.Visual('甲', '乙', '丙', '丁', histogram_process=True, wait_count=1, threshold=0.65,
-                                search_scope=(1089, 238, 1334, 750))
+                if self.coord('茶馆界面', canny_process=True, threshold=0.7):
+                    if self.Visual('退出茶馆', canny_process=True, threshold=0.7, wait_count=1, tap_after_timeout=6,
+                                   double=True):
+                        self.close_win(3)
+                        self.initialize(0)
+                        continue
+                    if not self.coord('甲1', '乙1', '丙1', '丁1', histogram_process=True, threshold=0.7,
+                                      search_scope=(1089, 238, 1334, 750)):
+                        self.Visual('甲', '乙', '丙', '丁', histogram_process=True, wait_count=1, threshold=0.65,
+                                    search_scope=(1089, 238, 1334, 750))
 
     def determine(self):
         time.sleep(1)
@@ -2781,16 +2938,12 @@ class TeaStory(BasicTask):
                 return -3
 
         elif self.cause_index == 4:
-            if switch in [1, 2]:
+            if switch in [1]:
                 if switch == 1:
-                    self.cause_index = 3
-                elif switch == 2:
                     return 4
 
     def detect(self):
         if self.coord('副本挂机', canny_process=True, threshold=0.7):
-            if self.coord('茶馆界面', canny_process=True, threshold=0.7):
-                return 2
             return 1
 
     #             if self.Visual('退出茶馆', histogram_process=True, threshold=0.7, wait_count=1, tap_after_timeout=0.1):
@@ -2862,19 +3015,16 @@ class TheSword(BasicTask):
                 self.Visual('华山论剑', canny_process=True, threshold=0.7, y=45, x=-50)
                 self.cause_index = 4
             elif switch == 4:
-                if self.record_count[0] >= int(event.task_config[self.mapp].get('华山论剑次数')):
-                    self.cause_index = 0
-                    continue
 
                 if not self.coord('取消匹配', canny_process=True, threshold=0.7):
                     self.Visual('匹配1', canny_process=True, wait_count=1, threshold=0.7)
 
                 self.Visual('确认', canny_process=True, threshold=0.7, wait_count=1)
 
-            elif switch == 5:
                 if not self.Visual('准备1', canny_process=True, threshold=0.7, wait_count=15, tap=False):
                     continue
                 self.record_count[0] += 1
+                self.cause_index = 4
                 if event.task_config[self.mapp].get('华山论剑秒退'):
                     self.Visual('退出论剑', canny_process=True, threshold=0.7)
                     self.Visual('确定', canny_process=True, threshold=0.7)
@@ -2915,18 +3065,20 @@ class TheSword(BasicTask):
                 return -3
 
         elif self.cause_index == 4:
-            if switch in [1, 2, 3]:
-                if switch == 1:
+
+            if switch in [1, 2]:
+                if self.record_count[0] >= int(event.task_config[self.mapp].get('华山论剑次数')):
+                    self.cause_index = 0
+                elif switch == 1:
                     self.cause_index = 3
                 elif switch == 2:
-                    return 4
-                elif switch == 3:
-                    return 5
+                    self.cause_index = 5
+
+        elif self.cause_index == 5:
+            return 4
 
     def detect(self):
         if self.coord('副本挂机', canny_process=True, threshold=0.7):
-            if self.coord('华山论剑1', canny_process=True, threshold=0.7):
-                return 3
             return 1
         elif self.coord('论剑界面', canny_process=True, threshold=0.7):
             return 2
@@ -4100,13 +4252,9 @@ class GangPoints(BasicTask):
 
             if event.disrupted_event[self.mapp].is_set():
                 self.timer.running = False
-                self.Visual('副本退出', canny_process=True, threshold=0.7)
-                self.Visual('离开2', canny_process=True, threshold=0.7)
                 return -1
 
             if switch == 0:
-                self.Visual('副本退出', canny_process=True, threshold=0.7)
-                self.Visual('离开2', canny_process=True, threshold=0.7)
                 return 0
             elif switch == -3:
                 self.back_interface()
@@ -4180,7 +4328,8 @@ class GangPoints(BasicTask):
             elif switch == 6:
                 self.key_down_up(event.persona[self.mapp].faction)
                 self.Visual('帮派领地', canny_process=True, threshold=0.7)
-                self.Visual('建造气力', canny_process=True, threshold=0.7, x=114)
+                if not self.Visual('建造气力', canny_process=True, threshold=0.7, x=114):
+                    continue
                 coord_1 = self.coord('共舞恢复', canny_process=True, threshold=0.7)
                 coord_2 = self.coord('鼓励恢复', canny_process=True, threshold=0.7)
 
@@ -4237,13 +4386,28 @@ class GangPoints(BasicTask):
                     self.Visual('共舞1', canny_process=True, threshold=0.7, tap_ago_timeout=0)
                     continue
             elif switch == 8:
-                self.key_down_up(event.persona[self.mapp].map)
-                self.mouse_down_up(783, 531)
-                self.key_down_up(event.persona[self.mapp].map)
-                self.arrive()
-                self.Visual('机器人1', canny_process=True, threshold=0.7, wait_count=1)
-                self.Visual('大头', canny_process=True, threshold=0.7, wait_count=1)
-                self.Visual('申请入队', canny_process=True, threshold=0.7, wait_count=1)
+                self.keep_activate(10)
+                self.Visual('副本退出', canny_process=True, threshold=0.7)
+                self.Visual('离开2', canny_process=True, threshold=0.7)
+                self.Visual('副本挂机', canny_process=True, threshold=0.7, tap=False, wait_count=30)
+                self.mouse_down_up(309, 595)
+                self.Visual('当前频道', canny_process=True, threshold=0.7)
+                self.Visual('滚动', canny_process=True, threshold=0.7)
+                self.Visual('鼓劲队', canny_process=True, threshold=0.7, x=-195)
+                self.Visual('申请入队', histogram_process=True, threshold=0.85)
+                if not self.coord('跟随确认', canny_process=True, threshold=0.7):
+                    self.key_down_up(event.persona[self.mapp].faction)
+                    self.Visual('帮派领地', canny_process=True, threshold=0.7)
+                    self.Visual('排名', canny_process=True, threshold=0.7)
+                    self.Visual('全服', histogram_process=True, threshold=0.7)
+                    self.Visual('暮雪帮派', canny_process=True, threshold=0.7)
+                    self.Visual('参观', canny_process=True, threshold=0.7)
+                    self.Visual('副本挂机', canny_process=True, threshold=0.7, tap=False, wait_count=30)
+                    continue
+                self.keep_activate(10)
+                self.Visual('聊天窗口关闭', canny_process=True, threshold=0.75, search_scope=(616, 203, 827, 512))
+                self.leave_team()
+
                 self.key_down_up(event.persona[self.mapp].faction)
                 self.Visual('帮派领地', canny_process=True, threshold=0.7)
                 self.Visual('建造气力', canny_process=True, threshold=0.7, x=114)
@@ -4258,7 +4422,6 @@ class GangPoints(BasicTask):
                         self.Visual('返回帮派', canny_process=True, threshold=0.7, y=-50)
                         self.close_win(1)
                         self.arrive()
-                        self.leave_team()
                         self.initialize(6)
                 except ValueError:
                     pass
@@ -5036,7 +5199,11 @@ class MansionFarmTask(BasicTask):
     def initialization(self):
         pass
 
+    def initialize(self, cause_index):
+        self.cause_index = cause_index
+
     def implement(self):
+        self.cause_index = 1
         while not event.unbind[self.mapp].is_set():
             switch = self.determine()
 
@@ -5071,6 +5238,10 @@ class MansionFarmTask(BasicTask):
                 self.Visual('铜钱', canny_process=True, threshold=0.7, search_scope=(326, 161, 1018, 581), wait_count=1)
                 self.mouse_down_up(0, 0)
             elif switch == 4:
+                self.Visual('养殖', canny_process=True, threshold=0.7)
+                self.Visual('种植', canny_process=True, threshold=0.7)
+                self.Visual('养殖', canny_process=True, threshold=0.7)
+                self.Visual('种植', canny_process=True, threshold=0.7)
                 self.Visual('一键收获', canny_process=True, threshold=0.7)
                 self.Visual('一键播种', canny_process=True, threshold=0.7)
                 self.Visual('养殖', canny_process=True, threshold=0.7, tap_after_timeout=10)
@@ -5083,13 +5254,13 @@ class MansionFarmTask(BasicTask):
                 if not self.coord('空闲中', canny_process=True, threshold=0.7):
                     self.cause_index = 0
                     continue
-                self.Visual('空闲中', canny_process=True, threshold=0.7)
+                self.Visual('空闲中', canny_process=True, threshold=0.7, tap_after_timeout=5)
                 self.mouse_down_up(362, 523)
                 self.mouse_down_up(461, 523)
                 self.mouse_down_up(560, 523)
                 self.mouse_down_up(416, 523)
                 self.mouse_down_up(508, 490)
-                for _ in range(7):
+                for _ in range(5):
                     if not self.Visual('空闲队列', canny_process=True, threshold=0.7):
                         self.close_win(1)
                         break
@@ -5113,11 +5284,12 @@ class MansionFarmTask(BasicTask):
 
                     self.Visual('选择1', canny_process=True, threshold=0.7)
                     self.mouse_down_up(0, 0)
-
+                self.close_win(1)
 
     def determine(self):
         time.sleep(1)
-        switch = self.detect()
+        if switch := self.detect() is None:
+            return None
 
         if self.cause_index == 0:
             if switch in [1]:
@@ -5135,21 +5307,26 @@ class MansionFarmTask(BasicTask):
             if switch in [1]:
                 return 2
             else:
-                self.cause_index = 1
+                return -3
 
         elif self.cause_index == 3:
             if switch in [2]:
                 return 3
             else:
-                self.cause_index = 1
+                return -3
 
         elif self.cause_index == 4:
             if switch in [3]:
                 return 4
+            else:
+                return -3
 
         elif self.cause_index == 5:
             if switch in [4]:
                 return 5
+            else:
+                return -3
+
     def detect(self):
         if self.coord('副本挂机', canny_process=True, threshold=0.7):
             return 1
@@ -5159,6 +5336,20 @@ class MansionFarmTask(BasicTask):
             return 3
         elif self.coord('作坊界面', canny_process=True, threshold=0.7):
             return 4
+        else:
+            return None
+
+
+class PlaceDingTask(BasicTask):
+
+    def __init__(self, row, handle, mapp):
+        super().__init__(row, handle, mapp)
+
+    def initialization(self):
+        pass
+
+    def implement(self):
+        self.keep_activate(60)
 
 
 # 帮派修炼
@@ -5627,79 +5818,76 @@ class DailyRedemption(BasicTask):
                          event.task_config[self.mapp].get('糯米') or
                          event.task_config[self.mapp].get('生活技能艾草'))):
                     self.record_event[6] = False
-                    if event.task_config[self.mapp].get('精制面粉') or event.task_config[self.mapp].get('土鸡蛋') or \
-                            event.task_config[self.mapp].get('鲜笋') or event.task_config[self.mapp].get('猪肉') or \
-                            event.task_config[self.mapp].get('糯米'):
 
-                        self.key_down_up(event.persona[self.mapp].map)
-                        self.Visual('世界', binary_process=True, threshold=0.6)
-                        self.Visual('中原', binary_process=True, threshold=0.6)
-                        self.map_input(1272, 1724)
-                        self.Visual('对话', canny_process=True, threshold=0.7)
+                    self.key_down_up(event.persona[self.mapp].map)
+                    self.Visual('世界', binary_process=True, threshold=0.6)
+                    self.Visual('中原', binary_process=True, threshold=0.6)
+                    self.map_input(1272, 1724)
+                    self.Visual('对话', canny_process=True, threshold=0.7)
 
-                        self.Visual('购买食材', canny_process=True, threshold=0.7)
+                    self.Visual('购买食材', canny_process=True, threshold=0.7)
 
-                        if event.task_config[self.mapp].get('精制面粉'):
-                            self.journal('精制面粉')
-                            self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
-                            self.input('精制面粉')
-                            self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                    if event.task_config[self.mapp].get('精制面粉'):
+                        self.journal('精制面粉')
+                        self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                        self.input('精制面粉')
+                        self.Visual('搜索图标', histogram_process=True, threshold=0.85)
 
-                            self.mouse_down(1180, 552)
-                            time.sleep(2)
-                            self.mouse_up(1180, 552)
-                            self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
-                            self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+                        self.mouse_down(1180, 552)
+                        time.sleep(2)
+                        self.mouse_up(1180, 552)
+                        self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                        self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
 
-                        if event.task_config[self.mapp].get('土鸡蛋'):
-                            self.journal('土鸡蛋')
-                            self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
-                            self.input('土鸡蛋')
-                            self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                    if event.task_config[self.mapp].get('土鸡蛋'):
+                        self.journal('土鸡蛋')
+                        self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                        self.input('土鸡蛋')
+                        self.Visual('搜索图标', histogram_process=True, threshold=0.85)
 
-                            self.mouse_down(1180, 552)
-                            time.sleep(2)
-                            self.mouse_up(1180, 552)
-                            self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
-                            self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+                        self.mouse_down(1180, 552)
+                        time.sleep(2)
+                        self.mouse_up(1180, 552)
+                        self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                        self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
 
-                        if event.task_config[self.mapp].get('鲜笋'):
-                            self.journal('鲜笋')
-                            self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
-                            self.input('鲜笋')
-                            self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                    if event.task_config[self.mapp].get('鲜笋'):
+                        self.journal('鲜笋')
+                        self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                        self.input('鲜笋')
+                        self.Visual('搜索图标', histogram_process=True, threshold=0.85)
 
-                            self.mouse_down(1180, 552)
-                            time.sleep(2)
-                            self.mouse_up(1180, 552)
-                            self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
-                            self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+                        self.mouse_down(1180, 552)
+                        time.sleep(2)
+                        self.mouse_up(1180, 552)
+                        self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                        self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
 
-                        if event.task_config[self.mapp].get('猪肉'):
-                            self.journal('猪肉')
-                            self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
-                            self.input('猪肉')
-                            self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                    if event.task_config[self.mapp].get('猪肉'):
+                        self.journal('猪肉')
+                        self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                        self.input('猪肉')
+                        self.Visual('搜索图标', histogram_process=True, threshold=0.85)
 
-                            self.mouse_down(1180, 552)
-                            time.sleep(2)
-                            self.mouse_up(1180, 552)
-                            self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
-                            self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+                        self.mouse_down(1180, 552)
+                        time.sleep(2)
+                        self.mouse_up(1180, 552)
+                        self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                        self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
 
-                        if event.task_config[self.mapp].get('糯米'):
-                            self.journal('糯米')
-                            self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
-                            self.input('糯米')
-                            self.Visual('搜索图标', histogram_process=True, threshold=0.85)
+                    if event.task_config[self.mapp].get('糯米'):
+                        self.journal('糯米')
+                        self.Visual('输入名称搜索', canny_process=True, threshold=0.6)
+                        self.input('糯米')
+                        self.Visual('搜索图标', histogram_process=True, threshold=0.85)
 
-                            self.mouse_down(1180, 552)
-                            time.sleep(2)
-                            self.mouse_up(1180, 552)
-                            self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
-                            self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
+                        self.mouse_down(1180, 552)
+                        time.sleep(2)
+                        self.mouse_up(1180, 552)
+                        self.mouse_down_up(1017, 620, tap_after_timeout=0.35)
+                        self.Visual('搜索返回图标', canny_process=True, threshold=0.6)
 
-                        self.close_win(2)
+                    self.close_win(2)
             elif switch == 10:
                 self.cause_index = 11
                 if self.record_event[7] and event.task_config[self.mapp].get('摇钱树'):
@@ -5815,14 +6003,14 @@ class DailyRedemption(BasicTask):
 
 TASK_MAPPING = {
     # EXCLUDE
-    '帮派修炼': FactionUnitingTask, '邸宅农场': MansionFarmTask,
+    '帮派修炼': FactionUnitingTask, '邸宅农场': MansionFarmTask, '占位任务': PlaceDingTask,
 
     # 导航任务
     '限时活动': None,
     # 基本任务
     '======': None,
     '课业任务': LessonTask, '帮派任务': FactionTask, '世界喊话': WorldShoutsTask, '江湖英雄榜': HeroListTask,
-    '日常副本': DailyCopiesTask, '悬赏任务': BountyMissionsTask, '侠缘喊话': ChivalryShoutTask,
+    '日常副本': DailyCopiesTask, '悬赏任务': BountyMissionsTask, '侠缘喊话': ChivalryShoutTask, '烽火雁门关': FiberHomeTask,
     '帮派设宴': GangBanquet, '破阵设宴': BreakingBanquet, '发布悬赏': PostBounty,
     '每日兑换': DailyRedemption, '坐观万象': SittingObserving, '狂饮豪拳': DrinkPunch,
     '茶馆说书': TeaStory, '山河器': RiverTask,
@@ -5839,12 +6027,12 @@ TASK_MAPPING = {
     '主线30级': MasterStrokeTask, '扫摆摊': SweepStalls, '扫集市': SweepMarketTask, '血战到底': BloodyBattleTask,
 }
 
-EXCLUDE_TASK_MAPPING = ['帮派修炼', '邸宅农场']
+EXCLUDE_TASK_MAPPING = ['帮派修炼', '邸宅农场', '占位任务']
 
 EXCLUDE_ADD_TASK = ['限时活动', '======', '######']
 
 TASK_SHOW = {'课业任务': (0, 1074), '日常副本': (0, 0), '悬赏任务': (0, 0), '每日兑换': (0, 537), '限时活动': (0, 3759),
-             '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148),
+             '扫摆摊': (0, 1074), '侠缘喊话': (0, 1611), '世界喊话': (0, 1611), '华山论剑': (0, 2148), '烽火雁门关': (0, 3222),
              '江湖英雄榜': (0, 2148), '采集任务': (0, 2685), '切换角色': (0, 2148), '江湖行商': (0, 2148)}
 
 # if __name__ == '__main__':

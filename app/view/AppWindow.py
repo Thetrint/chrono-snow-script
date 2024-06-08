@@ -226,6 +226,7 @@ class MainWindow(QWidget, Ui_MainWindow):
             "切角色5": self.script.checkBox_18.isChecked(),
             "江湖行商次数": self.script.spinBox_9.value(),
             "江湖行商喊话内容": self.script.lineEdit_49.text(),
+            "烽火雁门关次数": self.script.spinBox_10.value(),
             "商票上缴": self.script.checkBox_20.isChecked(),
             "队伍模式": self.script.comboBox_17.currentText(),
             "地图搜索": self.script.radioButton_2.isChecked(),
@@ -534,6 +535,8 @@ class MainWindow(QWidget, Ui_MainWindow):
 
             self.script.comboBox_17.setCurrentText('带队模式')
 
+            self.script.spinBox_10.setValue(1)
+
         try:
             self.script.listWidget.clear()
             for item in eval(config.get('日常任务', '执行列表')):
@@ -702,6 +705,8 @@ class MainWindow(QWidget, Ui_MainWindow):
             self.script.checkBox_2.setChecked(config.getboolean('日常任务', '邸宅农场'))
 
             self.script.comboBox_17.setCurrentText(config.getboolean('日常任务', '队伍模式'))
+
+            self.script.spinBox_10.setValue(config.getint('日常任务', '烽火雁门关次数'))
 
         except configparser.NoOptionError:
             pass
