@@ -10,7 +10,7 @@ app.setStyle(QStyleFactory.create('windowsvista'))
 # print(QStyleFactory.keys())
 
 # 创建RotatingFileHandler实例
-handler = RotatingFileHandler(filename='app.log', maxBytes=1024*1024, backupCount=1)
+handler = RotatingFileHandler(filename='app.log', maxBytes=1024*1024, backupCount=1, encoding='utf-8')
 
 # 配置全局日志记录器
 logging.basicConfig(

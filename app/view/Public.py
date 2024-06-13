@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QDialogButtonBox,
 TABLE_WINDOW = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 DPI_MAPP = {1.0: (1350, 789), 1.25: (1352, 797), 1.5: (1356, 806), 1.75: (1360, 814), 2.0: (1360, 822)}
 Mask = True
-VERSION = '1.2.0'
+VERSION = '1.3.1'
 
 START_ID = 1
 
